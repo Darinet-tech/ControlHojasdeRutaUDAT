@@ -1,0 +1,184 @@
+orden,codigo,grupo,efectividad,tiempo_min,descripcion
+1,01,Aparatos,No efectiva,25,Pendiente cordón de linea
+2,01-C,Aparatos,Efectiva,15,Cambio de cordón de línea
+3,01-R,Aparatos,Efectiva,15,Reparación de cordón de línea
+4,01-Z,Pizarra,Efectiva,25,Pendiente de cordón de línea pizarra
+5,01-ZC,Pizarra,Efectiva,25,Cambio de cordón de linea pizarra
+6,01-ZR,Pizarra,Efectiva,25,Reparación de cordón de línea pizarra
+7,02,Aparatos,No efectiva,25,Pendiente de cordón de brazo
+8,02-C,Aparatos,Efectiva,15,Cambio de cordón de brazo
+9,02-R,Aparatos,Efectiva,15,Reparación de cordón de brazo
+10,02-Z,Pizarra,Efectiva,25,Reparación de cordón de brazo pizarra
+11,02-ZC,Pizarra,Efectiva,25,Cambio de cordón de brazo pizarra
+12,02-ZR,Pizarra,Efectiva,25,Reparación de cordón de brazo pizarra
+13,03-R,Aparatos,Efectiva,25,Reparación de circuito de timbre
+14,03-Z,Pizarra,Efectiva,25,Pendiente de circuito de timbre Pizarra
+15,03-ZC,Pizarra,Efectiva,25,Cambio de circuito de timbre Pizarra
+16,03-ZR,Pizarra,Efectiva,25,Reparación de circuito de timbre Pizarra
+17,04-R,Aparatos,Efectiva,25,"Cubre el ajuste, limpieza, reparación del gancho"
+18,04-Z,Pizarra,Efectiva,25,Cubre el pendiente de gancho.
+19,04-ZC,Pizarra,Efectiva,25,Cubre el cambio de gancho o del aparato.
+20,04-ZR,Pizarra,Efectiva,25,"Cubre la reparación,ajuste y limpieza del gancho."
+21,05-R,Aparatos,Efectiva,25,"Cubre la, limpieza o reparación del teclado en aparatos"
+22,05-Z,Pizarra,Efectiva,25,Cubre el pendiente de teclado o disco del aparato telefónico.
+23,05-ZC,Pizarra,Efectiva,25,"Cambio de teclado o de disco,incluyendo cambio de aparato."
+24,05-ZR,Pizarra,Efectiva,25,"Reparación,limpieza y ajuste de teclado o disco del aparato telefónico."
+25,06-R,Aparatos,Efectiva,25,Cubre la limpieza o reparación del circuito impreso.
+26,06-Z,Pizarra,Efectiva,25,Incluye pendiente e identifica afectación en el circuito impreso del aparato.
+27,06-ZC,Pizarra,Efectiva,25,Cambio de circuito impreso del aparato telefónico
+28,06-ZR,Pizarra,Efectiva,25,Reparación de circuito impreso o cambio de aparato telefónico
+29,07-EC,Reparador,Efectiva,30,Cubre sustitución del conector exterior
+30,07-EP,Reparador,No efectiva,30,Pendiente de conector exterior
+31,07-ER,Reparador,Efectiva,30,Cubre la reparación del conector exterior
+32,07-IC,Reparador,Efectiva,20,Cubre sustitución del conector interior
+33,07-IP,Reparador,No efectiva,30,Pendiente de conector (RJ-11)
+34,07-IR,Reparador,Efectiva,30,Cubre la reparación del conector interior
+35,07-Z,Pizarra,Efectiva,30,"Incluye pendiente de manofón,caja conectiva interior o exterior"
+36,07-ZC,Pizarra,Efectiva,30,"Cambio de manofón,caja conectiva interior o exterior"
+37,07-ZR,Pizarra,Efectiva,30,"Reparación de manofón,caja conectiva interior o exterior"
+38,08,Aparatos,No efectiva,30,Pendiente de brazo
+39,08-C,Aparatos,Efectiva,30,Cubre reemplazo del manofón por deficiente Rx y Tx
+40,08-FA,Telefonia celular,Efectiva,30,Cambio del teléfono movil (aparato celular)
+41,08-R,Aparatos,Efectiva,30,Cubre reparación del manofón por deficiente Rx y Tx
+42,08-Z,Pizarra,Efectiva,30,"Cubre pendiente de equipo telefónico inteligente,analógico y otros"
+43,09,Aparatos,No efectiva,25,Pendiente equipo
+44,09-A,Aparatos,Efectiva,25,Indica reparaciones efectuadas a equipos telefónicos analógicos
+45,09-C,Aparatos,Efectiva,25,"Cambio de aparato a solicitud del cliente, cambio tecnológico o venta"
+46,09-R,Aparatos,Efectiva,25,
+47,09-T,Aparatos,Efectiva,25,"Sustitución de aparato a solicitud del cliente, cambio tecnológico o venta"
+48,09-Z,Pizarra,Efectiva,25,"Cambio de equipo telefónico Inteligente ,analógico y otros."
+49,10DQ-TXD,Datos,Efectiva,35,Fallos en elementos de rack en locales de TXD.
+50,10-FA,Telefonia celular,Efectiva,25,Cambio de antena del sistema TFA
+51,10LT-TXD,Datos,Efectiva,35,Fallos en elementos de rack para el equipamiento de acceso de transporte atendido por personal de Planta Interior.
+52,11DW-TXD,Datos,Efectiva,30,Fallos producidos por equipos inalambricos.
+53,11DW-TXD,Reparador,Efectiva,30,Fallo producidos por equipos inalámbricos
+54,11-FA,Telefonia celular,Efectiva,30,Rotura o perdida del porta SIM del sistema TFA
+55,12DV-TXD,Datos,Efectiva,30,Fallos producidos por los equipos terminales VSAT.
+56,12-FAb,Telefonia celular,Efectiva,30,Cambio de la tarjeta SIM del sistema TFA por bloqueo
+57,13-FAd,Telefonia celular,Efectiva,24,Cambio de la tarjeta SIM del sistema TFA por deterioro
+58,14-P,Telefonia publica,Efectiva,30,Pendiente por publica
+59,14-R,Telefonia publica,Efectiva,36,Referido a reparaciones de las publicas
+60,14-RD,Telefonia publica,Efectiva,20,Relaciomada con los trabajos de recaudación
+61,15-Z,Pizarra,Efectiva,25,Alambraje de pizarra
+62,16-Z,Pizarra,Efectiva,30,"Cubre limpieza y reparaciones o cordones ,plugs,jacks,etc."
+63,18DCG-TXD,Datos,Efectiva,30,Congestión de red por altos niveles de tráfico.
+64,18DD-TXD,Datos,Efectiva,30,Eventos de desborde de tráfico.
+65,18DE-TXD,Datos,Efectiva,25,Congestion de red por altos niveles de tráfico.
+66,18DV-TXD,Datos,Efectiva,25,Saturación provocado por virus o trafico mal intencionado.
+67,18-Z,Pizarra,Efectiva,30,Reparación y ajuste de relevadores.
+68,18-ZC,Pizarra,Efectiva,30,Cambio de relevador.
+69,19-Z,Pizarra,Efectiva,30,Equipos Misceláneos de Pizarras.
+70,1DMC-TXD,Datos,Efectiva,30,Cambio de MODEM por responsabilidad ETECSA
+71,1DMC-TXD,Reparador,Efectiva,30,Cambio de MODEM por responsabilidad ETECSA
+72,20DE-TXD,Datos,Efectiva,25,Interrupción en equipo terminal del usuario que esta bajo su responsabilidad.
+73,20-FA,Telefonia celular,Efectiva,25,"Cambio o reposición del soporte energético (bateria, cargador)"
+74,20-Z,Pizarra,Efectiva,25,"Reparaciones efectuadas en el soporte energético de las pizarras. UPS,Baterias,Rectificadores,etc"
+75,21,Reparador,No efectiva,30,Pendiente de alambre interior.
+76,21-C,Reparador,Efectiva,35,Reemplazo del alambre interior.
+77,21-D,Reparador,Efectiva,35,Cubre la reparación o reemplazo del BUS de abonado RDSI.
+78,21DC-TXD,Datos,Efectiva,35,Problemas de conectividad y configuración del lado del usuario.
+79,21-R,Reparador,Efectiva,35,Cubre la reparación del alambre interior.
+80,21-Z,Pizarra,Efectiva,35,"Incluye pendiente,reparación o cambio del Alambre Interior"
+81,21-ZC,Pizarra,Efectiva,35,Cambio de Alambraje Interior.
+82,21-ZR,Pizarra,Efectiva,35,"Incluye pendiente,reparación o cambio del Alambre Interior."
+83,22,Cable,No efectiva,35,Pendiente de MDF o cámara de distribución interior
+84,22-G,Cable,Efectiva,35,Reparación en MDF o cámara de distribución interior
+85,23,Cable,No efectiva,60,Pendiente de par de la red secundaria.
+86,23-C,Cable,Efectiva,60,Cambio de par de la red secundaria.
+87,23-R,Cable,Efectiva,60,Cubre las reparaciones de par de la red secundaria
+88,24,Cable,No efectiva,60,Pendiente de par de la red rígida o alimentador de la red flexible
+89,24-C,Cable,Efectiva,60,Cambio de par de la red rígida o alimentador de la red flexible
+90,24-R,Cable,Efectiva,60,Reparación de par de la red rígida o alimentador de la red flexible
+91,25,Reparador,No efectiva,45,Pendiente de alambre exterior.
+92,25-C,Reparador,Efectiva,45,Sustitución del alambre exterior (total).
+93,25-F,Reparador,Efectiva,50,Reparaciones de líneas aéreas
+94,25-R,Reparador,Efectiva,45,Cubre las reparaciones del alambre exterior o sustitución parcial
+95,25-Z,Pizarra,Efectiva,45,"Incluye pendiente,reparación o cambio del Alambre exterior."
+96,25-ZC,Pizarra,Efectiva,45,Cambio de Alambraje Exterior
+97,25-ZR,Pizarra,Efectiva,45,Reparación de Alambraje Exterior
+98,26-C,Cable,Efectiva,60,Cambio de caja terminal
+99,26-FA,Telefonia celular,Efectiva,45,Referidas a trabajo realizado en la interfaz inalámbrica por causa ajena al equipo.
+100,26-G,Cable,Efectiva,45,Cubre los cambios y reparación de las regletas de insercción en los gabinetes de distribución flexible
+101,26-M,Reparador,Efectiva,45,Fallo de naturaleza HW para el equipamiento ubicado en el lado del cliente
+102,26-R,Cable,Efectiva,60,Cubre las reparaciones de caja terminal
+103,26-T,Cable,Efectiva,60,Cubre los cambios de bajantes hacia otras cajas terminales
+104,26-WC,Red de acceso,Efectiva,35,Referidas a trabajos de sustitución de terminales de abonados(FAUWNT)
+105,26-WR,Red de acceso,Efectiva,45,"Referidas a trabajo realizado en los terminales de abonados(FAUWNT),por causas ajenas al equipamiento.(reorientación y otros)."
+106,26-X,Red de acceso,Efectiva,25,"Fallos de naturaleza hardware para el equipamiento del sistema ubicados en el lado del cliente,correspondiente a monocanales,bicanales,sexacanales,etc"
+107,27,Cable,No efectiva,45,Pendiente de reparación en el MDF principal
+108,27-G,Reparador,Efectiva,60,Referida al trabajo de reparación y cambio realizado en el jumpiaje de gabinetes
+109,27-R,Cable,Efectiva,45,Cubre las reparaciones en el MDF principal
+110,27RI-TXD,Datos,Efectiva,120,Fallas de naturleza de hardware para el equipamiento de acceso de transporte.
+111,29,CCA,Efectiva,12,Fallas en Equipo Común
+112,2DMF-TXD,Datos,Efectiva,25,Cambio de la fuente del modem responsabilidad de ETECSA.
+113,31,CCA,Efectiva,60,Saturación en los TV
+114,32,CCA,Efectiva,50,Retención en la central
+115,34,Mesa de prueba,Efectiva,15,Cubre los reportes en los cuales las pruebas no revelan ningún defecto y son reportadas por el cliente
+116,34-R,Mesa de prueba,Efectiva,15,Cubre la reprueba de un servicio no visitado y que aún no este determinada la causa de la interrupción que presenta y el mismo se encuentra trabajando bien
+117,35,Reparador,Efectiva,15,"Referida al cambio de aparato, Aparato en el Taller"
+118,35-A,Mesa de prueba,Efectiva,35,Encontrado Ok por el reparador
+119,35-D,Datos,No efectiva,25,Pendiente por grupo de datos
+120,35DS-TXD,Datos,Efectiva,30,Encontrado OK.(esto se lo imputo al cliente)
+121,35D-TXD,Datos,Efectiva,25,Encontrado OK.
+122,35-E,Energetica,Efectiva,25,Encontrado OK.
+123,35-OC,CCA,Efectiva,25,Encontrado OK por Conmutación
+124,35-P,Cable,Efectiva,25,Se refiere al encontrado OK en la visita del Interrupcionista
+125,35-Z,Pizarra,Efectiva,15,Encontrado OK.
+126,36,Reparador,No efectiva,25,Casa cerrada o no acceso al equipo
+127,36D-TXD,Datos,Efectiva,25,"Local cerrado, no acceso al equipo."
+128,36-V,Reparador,No efectiva,25,Visitada pendiente
+129,37,Reparador,No efectiva,25,Linea sin localizar
+130,38,Reparador,No efectiva,25,Pendiente de reparación en alambres por tuberias
+131,38-C,Reparador,Efectiva,50,Cubre los cambios en alambres por tuberias interrumpidos
+132,38-R,Reparador,Efectiva,50,Cubre las reparaciones en alambres por tuberias interrumpidos
+133,39,Reparador,No efectiva,25,No acceso
+134,39-A,Reparador,Efectiva,30,Mal uso del abonado
+135,39-C,Reparador,Efectiva,30,Faltan datos comerciales
+136,39-D,Mesa de prueba,Efectiva,25,Desconexión por falta de pago
+137,39DA-TXD,Datos,Efectiva,25,"Mala manipulacion del cliente(traslado de equipo a otro dpto, splitter invertido, equipo apagado)."
+138,39DD-TXD,Datos,Efectiva,30,Bloqueado por falta de pago.
+139,39DF-TXD,Datos,Efectiva,25,"Falta de fluido electrico en local del cliente, problemas de voltaje o backup."
+140,39DO-TXD,Datos,Efectiva,35,Circuito tomado para brindar otros servicios. Desconexiones por moviemiento de O/S.
+141,39-E,Reparador,Efectiva,30,Quejas recibidas de aparatos de extensiones de telefónos
+142,39-FA,Telefonia celular,Efectiva,30,Falta de fluido eléctrico más allá del tiempo de autonomia de las baterias del sistema TFA
+143,39-FP,Telefonia celular,Efectiva,30,Reclamos atendidos en los cuales no existe un problema técnico si no un mal uso del servicio
+144,39-M,Red de acceso,Efectiva,45,Afectaciones del servicio por eventos externos al sistema multiplicador de pares ubicado en el lado de abonado
+145,39-N,Mesa de prueba,Efectiva,35,Mal uso del cliente
+146,39-O,Mesa de prueba,Efectiva,15,Desconexiones por movimiento de O/S
+147,39-P,Mesa de prueba,Efectiva,45,Quejas recibidas por la central que al probarlo MP esta el servicio OK
+148,39-S,Mesa de prueba,Efectiva,52,Quejas recibidas por los servicios suplementarios
+149,39-W,Red de acceso,Efectiva,45,
+150,39-Z,Pizarra,Efectiva,35,Encontrado OK para PBX
+151,3DS-TXD,Reparador,Efectiva,35,Cambio del splitter lado usuario.
+152,3DS-TXD,Datos,Efectiva,35,Cambio del splitter lado usuario.
+153,41-Z,Pizarra,Efectiva,35,"Referida a la programación,(Software)."
+154,42-Z,Pizarra,Efectiva,60,Reemplazo de tarjetas y/o módulos de pizarra o perifericos.(Hardware).
+155,43SW-TXD,Datos,Efectiva,120,Falla de software de elementos de transporte.
+156,43-Z,Pizarra,Efectiva,60,Reset
+157,46-Z,Pizarra,Efectiva,60,Desconexión por falta de pago.
+158,4DR-TXD,Datos,Efectiva,30,Cambio del cable de red del lado usuario responsabilidad de ETECSA..
+159,5DH-TXD,Datos,Efectiva,120,"Fallas de naturaleza de hardware de tarjetas de usuario, dslam u otro equipamiento de acceso."
+160,60-A,CCA,Efectiva,35,Fallas de naturaleza hardware en unidades de abonado cuando existe el (HW) de repuesto disponible para el restablecimiento.
+161,60-B,Red de acceso,Efectiva,50,Fallas de naturaleza hardware en unidades de alimentación cuando existe el (HW) de repuesto disponible para el restablecimiento.
+162,60-E,CCA,Efectiva,35,Fallas de naturaleza hardware en unidades de tono y timbre en centrales digitales cuando existe el (HW) de repuesto disponible para el restablecimiento.
+163,60-FA,Telefonia celular,Efectiva,45,Fallo de naturaleza HW para el equipamiento del sistema TFA ubicados en la radio base
+164,60-M,Red de acceso,Efectiva,25,Fallos de naturaleza hardware que no constituyen errores de configuración para el equipamiento del sistema multiplicadores de pares ubicados en el lado de la central
+165,60-W,Red de acceso,Efectiva,60,Fallos de naturaleza hardware para el equipamiento del sistema WLL ubicados en la central
+166,60-X,CCA,Efectiva,25,Fallos de naturaleza software para el equipamiento del sistema WLL ubicados en la central.
+167,61,CCA,Efectiva,25,Fallos de naturaleza software que no constituyen errores de configuración.Esta fallas deben ser corregidas por el personal de asistencia Tecnica.
+168,61-FA,Telefonia celular,Efectiva,35,Fallos de naturaleza software para el equipamiento del sistema TFA.
+169,61-W,Red de acceso,Efectiva,60,Fallos de naturaleza software para el equipamiento del sistema WLL ubicados en la central.
+170,62-FA,Telefonia celular,Efectiva,45,"Interrupciones programadas del servicio para efectuar modificaciones,ampliaciones o pruebas del equipamiento del sistema de TFA."
+171,62-W,Red de acceso,Efectiva,35,"Interrupciones programadas del servicio para efectuar modificaciones,ampliaciones o pruebas del equipamiento del sistema WLL ubicado en la central."
+172,62-X,Red de acceso,Efectiva,35,"Interrupciones programadas del servicio para efectuar modificaciones,ampliaciones o pruebas del equipamiento del sistema monocanales,bicanales,sexacanales,etc.ubicado en la central."
+173,63-W,Red de acceso,Efectiva,45,Interrupciones del servicio por errores de configuración del sistema de gestión WLL.
+174,63-X,Red de acceso,Efectiva,,
+175,65B,CCA,Efectiva,20,Afectacion de servicios por descargas atmosfericas
+176,6DK-TXD,Datos,Efectiva,60,Fallos o mal funcionamiento por problemas de configuración en los equipos de acceso(DSLAM)
+177,70,Cable,No efectiva,60,Servicios pendientes por trabajos de las brigadas de líneas.
+178,70-R,Cable,Efectiva,60,"Cubre los trabajos realizados por la brigadas de línea relacionados con sustitución de postes , tensores en mal estado"
+179,77-A,Reparador,Efectiva,45,Perdida de Alimentación de DC por Baterías Agotadas
+180,7DP-TXD,Datos,Efectiva,120,Fallas de naturaleza de hardware no relacionadas a tarjetas de usuarios.
+181,7HW-TXD,Datos,Efectiva,60,Fallos de naturaleza de hardware de elementos de transporte.
+182,8DA-TXD,Datos,Efectiva,30,Interrupción del servicio debido a mantenimiento preventivo en los elementos de Acceso.
+183,9DI-TXD,Datos,Efectiva,120,Fallos provocados durante el proceso de cambio o instalación de equipamiento de acceso.
