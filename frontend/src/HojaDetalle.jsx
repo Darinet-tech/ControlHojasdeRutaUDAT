@@ -113,8 +113,8 @@ function FormularioAsignar({ catalogos, hoja, centrosDeLaHoja, ejecutar, verHist
     if (categoria === 'PREVENTIVO') cuerpo.tipo_mantenimiento = Number(mantenimiento);
     if (categoria === 'ORDEN_SERVICIO') { cuerpo.tipo_orden = Number(tipoOrden); cuerpo.numero_orden = numeroOrden.trim(); }
     if (categoria === 'ORDEN_TRABAJO') { cuerpo.numero_orden = numeroOrden.trim(); cuerpo.trabajos = [...trabajos]; }
-    const ok = await ejecutar(() => api.post(`/hojas/${hoja.id}/acciones/`, cuerpo));
-    if (ok) { setServicio(''); setNumeroOrden(''); setTrabajos(new Set()); }
+    // el formulario se vacía en cuanto el servidor confirma, sin esperar a que se vuelva a cargar la hoja
+    await ejecutar(() => api.post(`/hojas/${hoja.id}/acciones/`, cuerpo), () => { setServicio(''); setNumeroOrden(''); setTrabajos(new Set()); });
   }
 
   return (
@@ -405,10 +405,12 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
   useEffect(() => { cargar().catch((e) => setError(e.message)); }, [cargar]);
 
   // Ejecuta una operación, vuelve a leer la hoja y muestra el error de negocio si lo hay.
-  const ejecutar = useCallback(async (fn) => {
+  // `alExito` se ejecuta en cuanto el servidor confirma, antes de volver a leer la hoja (así no pisa lo que se teclee después).
+  const ejecutar = useCallback(async (fn, alExito) => {
     setError(''); setAviso('');
     try {
       const resultado = await fn();
+      if (alExito) alExito(resultado);
       await cargar();
       return resultado ?? true;
     } catch (e) {

@@ -31,8 +31,8 @@ function Analisis() {
     api.get(`/analisis/?periodo=${periodo}`).then((r) => vigente && setDatos(r)).catch((e) => vigente && setError(e.message));
     return () => { vigente = false; };
   }, [periodo]);
-  const mejores = [
-    { titulo: 'Más productivo', valor: (f) => f.nombre },
+  const mejores = (primera) => [
+    { titulo: primera, valor: (f) => f.nombre },
     { titulo: 'Productividad', valor: (f) => porcentaje(f.productividad_pct) },
     { titulo: 'Efectividad', valor: (f) => porcentaje(f.efectividad_pct) },
     { titulo: 'Servicios', valor: (f) => f.acciones },
@@ -56,7 +56,7 @@ function Analisis() {
             {periodo === 'anterior' ? `Jornada del ${datos.fecha.slice(8, 10)}/${datos.fecha.slice(5, 7)}/${datos.fecha.slice(0, 4)}` : periodo === 'mes' ? 'Mes en curso' : 'Año en curso'} · {datos.hojas} hoja(s) de ruta.
             La productividad de un operario es la de las hojas en que participó.
           </p>
-          <div className="resultados">
+          <div className="resultados analisis-rejilla">
             <div>
               <h3>Tiempo perdido por incidencias · {minutosATexto(datos.incidencias_min)}</h3>
               <TablaSimple vacio="Sin incidencias en este período." filas={datos.incidencias} columnas={[
@@ -65,11 +65,11 @@ function Analisis() {
             </div>
             <div>
               <h3>Operarios más productivos</h3>
-              <TablaSimple vacio="Aún no hay tiempo real registrado." filas={datos.operarios} columnas={mejores} />
+              <TablaSimple vacio="Aún no hay tiempo real registrado." filas={datos.operarios} columnas={mejores('Operario')} />
             </div>
             <div>
               <h3>Vehículos más productivos</h3>
-              <TablaSimple vacio="Sin vehículos registrados en las hojas." filas={datos.vehiculos} columnas={mejores.map((c) => (c.titulo === 'Más productivo' ? { ...c, titulo: 'Vehículo' } : c))} />
+              <TablaSimple vacio="Sin vehículos registrados en las hojas." filas={datos.vehiculos} columnas={mejores('Vehículo')} />
             </div>
           </div>
         </>
@@ -117,6 +117,19 @@ export default function Inicio({ usuario, irA, abrirHoja }) {
       boton: ['Abrir catálogo', () => window.open('http://127.0.0.1:8000/admin/catalogos/clave/', '_blank')],
     });
   }
+  if (datos?.catalogos?.trabajos_sin_norma > 0) atencion.push({
+    clave: 'tn', tipo: 'aviso', texto: `${datos.catalogos.trabajos_sin_norma} trabajo(s) de órdenes de trabajo sin norma de tiempo: se calculará sin tiempo normado hasta que se defina.`,
+    boton: ['Abrir catálogo', () => window.open('http://127.0.0.1:8000/admin/catalogos/tipotrabajo/', '_blank')],
+  });
+  const envio = datos?.catalogos?.informe_diario;
+  if (envio && envio.destinatarios === 0) atencion.push({
+    clave: 'ed', tipo: 'mal', texto: 'No hay destinatarios activos para el informe diario de las 16:00: no se enviará a nadie.',
+    boton: ['Definir destinatarios', () => window.open('http://127.0.0.1:8000/admin/operacion/destinatarioinforme/', '_blank')],
+  });
+  if (envio?.ultimo?.estado === 'ERROR') atencion.push({
+    clave: 'ee', tipo: 'mal', texto: `El último envío del informe diario (${diaMes(envio.ultimo.fecha)}) falló: ${envio.ultimo.detalle}`,
+    boton: ['Ver envíos', () => window.open('http://127.0.0.1:8000/admin/operacion/informeenviado/', '_blank')],
+  });
   const t = datos?.hoy;
 
   return (

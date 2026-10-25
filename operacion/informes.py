@@ -61,7 +61,7 @@ def _limpio(texto):
 
 # ---------------------------------------------------------------- datos
 
-def reunir_datos(fecha, brigada=None, centro=None, solo_hoja=None, usuario=None, ahora=None):
+def reunir_datos(fecha, brigada=None, centro=None, solo_hoja=None, usuario=None, ahora=None, corte=None):
     """Todo lo que lleva un informe del día (o de una sola hoja)."""
     ahora = ahora or timezone.now()
     resumen = resumen_periodo("dia", fecha, brigada=brigada, centro=centro, solo_hoja=solo_hoja, ahora=ahora)
@@ -110,7 +110,7 @@ def reunir_datos(fecha, brigada=None, centro=None, solo_hoja=None, usuario=None,
                              "minutos": i.minutos(hasta=ahora)} for i in h.incidencias.all()],
         })
     return {"fecha": fecha, "resumen": resumen, "hojas": detalle, "generado_en": ahora, "generado_por": nombre_de(usuario),
-            "una_hoja": bool(solo_hoja)}
+            "una_hoja": bool(solo_hoja), "corte": corte}
 
 
 def _filas(hoja):
@@ -256,13 +256,15 @@ def _pdf(datos):
             story.append(Paragraph("Observaciones", h2))
             story.append(Paragraph(esc(h["observaciones"]), base))
         cierre = (f"Cerrada el {timezone.localtime(h['cerrada_en']):%d/%m/%Y %H:%M} por {h['cerrada_por']}" if h["cerrada"] and h["cerrada_en"]
-                  else "Hoja abierta (no se ha cerrado el día)")
+                  else (f"Hoja abierta al corte de las {timezone.localtime(datos['corte']):%H:%M}" if datos["corte"] else "Hoja abierta (no se ha cerrado el día)"))
         story.append(Spacer(1, 4))
         story.append(Paragraph(esc(f"Elaborada por: {h['creada_por'] or '—'}  ·  {cierre}"), chico))
 
     # ---------- encabezado y pie de cada página
     pie_texto = f"Generado el {timezone.localtime(datos['generado_en']):%d/%m/%Y %H:%M}" + (f" por {datos['generado_por']}" if datos["generado_por"] else "")
     subtitulo = "Informe diario" if not datos["una_hoja"] else "Hoja de ruta"
+    if datos["corte"]:
+        subtitulo += f" · corte a las {timezone.localtime(datos['corte']):%H:%M}"
 
     def dibujar_cabecera(lienzo, doc):
         w, hgt = A4
@@ -344,7 +346,8 @@ def _excel(datos):
     ws.title = "Resumen"
     ws["A1"] = "Unidad de Asistencia Técnica · UDAT"
     ws["A1"].font = Font(bold=True, size=14, color=AZUL[1:])
-    ws["A2"] = ("Informe diario" if not datos["una_hoja"] else "Hoja de ruta") + " — " + fecha_larga(datos["fecha"])
+    ws["A2"] = (("Informe diario" if not datos["una_hoja"] else "Hoja de ruta") + " — " + fecha_larga(datos["fecha"])
+                + (f" · corte a las {timezone.localtime(datos['corte']):%H:%M}" if datos["corte"] else ""))
     ws["A3"] = f"Generado el {timezone.localtime(datos['generado_en']):%d/%m/%Y %H:%M}" + (f" por {datos['generado_por']}" if datos["generado_por"] else "")
     ws["A3"].font = Font(italic=True, color="555555")
     fila = tabla(ws, 5, "Indicadores del día", ["Hojas", "Servicios", "Con OK", "Sin OK", "Pasadas a otra brigada", "No visitadas", "En curso", "Efectividad", "Productividad", "Tiempo real (min)", "Incidencias (min)", "Tiempo disponible (min)", "Ocupación"],
@@ -456,15 +459,22 @@ def _excel(datos):
 TIPOS = {"pdf": "application/pdf", "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
 
 
-def generar_informe(fecha, formato="pdf", usuario=None, brigada=None, centro=None, solo_hoja=None, ahora=None):
-    """Devuelve (contenido, tipo_mime, nombre_de_archivo). Lo usa la API y, más adelante, el envío automático por correo."""
+def renderizar(datos, formato="pdf"):
+    """Devuelve (contenido, tipo_mime, nombre_de_archivo) a partir de los datos ya reunidos."""
     if formato not in TIPOS:
         raise ValueError("El formato debe ser pdf o xlsx.")
-    datos = reunir_datos(fecha, brigada, centro, solo_hoja, usuario, ahora)
     contenido = _pdf(datos) if formato == "pdf" else _excel(datos)
-    if solo_hoja and datos["hojas"]:
+    fecha = datos["fecha"]
+    if datos["una_hoja"] and datos["hojas"]:
         h = datos["hojas"][0]
         nombre = f"UDAT_hoja_de_ruta_{fecha:%Y-%m-%d}_{_limpio(h['centros'])}_{_limpio(h['brigada'])}_{h['id']}.{formato}"
     else:
         nombre = f"UDAT_informe_diario_{fecha:%Y-%m-%d}.{formato}"
     return contenido, TIPOS[formato], nombre
+
+
+def generar_informe(fecha, formato="pdf", usuario=None, brigada=None, centro=None, solo_hoja=None, ahora=None, corte=None):
+    """Devuelve (contenido, tipo_mime, nombre_de_archivo). Lo usan la API y el envío automático por correo."""
+    if formato not in TIPOS:
+        raise ValueError("El formato debe ser pdf o xlsx.")
+    return renderizar(reunir_datos(fecha, brigada, centro, solo_hoja, usuario, ahora, corte), formato)

@@ -15,10 +15,10 @@ from rest_framework.views import APIView
 
 from catalogos.models import (Brigada, CausaIncidencia, Centro, Clave, Operario, TipoMantenimiento, TipoOrden, TipoTrabajo,
                               Vehiculo)
-from operacion.models import Accion, HojaDeRuta, Incidencia, OrdenServicio
+from operacion.models import Accion, DestinatarioInforme, HojaDeRuta, Incidencia, InformeEnviado, OrdenServicio
 from operacion.informes import generar_informe
 from operacion.reportes import analisis_de_jefatura, resumen_periodo
-from catalogos.models import NormaTiempo
+from catalogos.models import NormaTiempo, NormaTrabajo
 from operacion.services import (asignar_no_visitadas, asignar_orden, asignar_pendientes, obtener_orden, cerrar_hoja, cerrar_sin_ok, certificar_ok,
                                 finalizar_incidencia, historial_servicio, iniciar_incidencia, ordenes_no_visitadas,
                                 ordenes_pendientes, pasar_a_brigada, resumen_hoja)
@@ -34,6 +34,7 @@ def _datos_usuario(usuario):
         "username": usuario.username,
         "nombre": usuario.get_full_name() or usuario.username,
         "grupos": list(usuario.groups.values_list("name", flat=True)),
+        "hoy": timezone.localdate(),  # el día lo decide el servidor (hora de Cuba), no el reloj del equipo del usuario
         "es_superusuario": usuario.is_superuser,
         "es_staff": usuario.is_staff,
         # El acceso al panel de administración es solo para quien gestiona catálogos (no para probadores ni jefes).
@@ -468,7 +469,16 @@ class InicioView(APIView):
                 "claves_por_revisar": Clave.objects.filter(revisar=True, activa=True).count(),
                 "claves_sin_norma": Clave.objects.filter(activa=True).exclude(
                     pk__in=NormaTiempo.objects.values("clave_id")).count(),
+                "trabajos_sin_norma": TipoTrabajo.objects.filter(activo=True).exclude(
+                    pk__in=NormaTrabajo.objects.values("tipo_trabajo_id")).count(),
+                "informe_diario": None,
             }
+            if request.user.is_superuser:  # la lista de destinatarios y el envío son cosa del administrador
+                ultimo = InformeEnviado.objects.exclude(estado=InformeEnviado.Estado.OMITIDO).first()
+                datos["catalogos"]["informe_diario"] = {
+                    "destinatarios": DestinatarioInforme.objects.filter(activo=True).count(),
+                    "ultimo": {"fecha": ultimo.fecha, "estado": ultimo.estado, "detalle": ultimo.detalle} if ultimo else None,
+                }
         return Response(datos)
 
 

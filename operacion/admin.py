@@ -2,7 +2,11 @@ from django import forms
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 
-from .models import Accion, HojaDeRuta, Incidencia, OrdenServicio
+from django.http import Http404, HttpResponse
+from django.urls import path, reverse
+from django.utils.html import format_html
+
+from .models import Accion, DestinatarioInforme, HojaDeRuta, Incidencia, InformeEnviado, OrdenServicio
 from .services import acciones_abiertas, cerrar_hoja, finalizar_incidencia, iniciar_incidencia, validar_operarios_libres
 
 
@@ -153,3 +157,49 @@ class AccionAdmin(AuditableAdmin):
     filter_horizontal = ("claves",)
     readonly_fields = ("ok", "pasada_a", "hora_fin", "tiempo_real_min", "cliente_contactado", "certificada_por",
                        "certificada_en")
+
+
+@admin.register(DestinatarioInforme)
+class DestinatarioInformeAdmin(admin.ModelAdmin):
+    """Quién recibe el informe diario de las 16:00. Lo gestiona el administrador."""
+
+    list_display = ("nombre", "correo", "activo")
+    list_editable = ("activo",)
+    search_fields = ("nombre", "correo")
+
+
+@admin.register(InformeEnviado)
+class InformeEnviadoAdmin(admin.ModelAdmin):
+    """Registro de auditoría: qué se envió, cuándo, a quién y con qué archivos (se pueden descargar)."""
+
+    list_display = ("fecha", "corte", "estado", "destinatarios", "descargas")
+    list_filter = ("estado", "fecha")
+    readonly_fields = ("fecha", "corte", "estado", "remitente", "destinatarios", "asunto", "detalle", "creado_en", "descargas")
+    exclude = ("pdf", "excel")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    @admin.display(description="Copia enviada")
+    def descargas(self, informe):
+        if not informe.pk or not informe.pdf:
+            return "—"
+        return format_html('<a href="{}">PDF</a> · <a href="{}">Excel</a>',
+                           reverse("admin:operacion_informeenviado_descargar", args=[informe.pk, "pdf"]),
+                           reverse("admin:operacion_informeenviado_descargar", args=[informe.pk, "xlsx"]))
+
+    def get_urls(self):
+        propias = [path("<int:pk>/descargar/<str:formato>/", self.admin_site.admin_view(self.descargar), name="operacion_informeenviado_descargar")]
+        return propias + super().get_urls()
+
+    def descargar(self, request, pk, formato):
+        informe = InformeEnviado.objects.filter(pk=pk).first()
+        contenido = informe and (informe.pdf if formato == "pdf" else informe.excel if formato == "xlsx" else None)
+        if not contenido or not self.has_view_permission(request, informe):
+            raise Http404("No hay copia de ese archivo.")
+        tipo = "application/pdf" if formato == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        return HttpResponse(bytes(contenido), content_type=tipo,
+                            headers={"Content-Disposition": f'attachment; filename="UDAT_informe_diario_{informe.fecha:%Y-%m-%d}.{formato}"'})

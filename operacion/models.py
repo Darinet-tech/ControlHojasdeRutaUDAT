@@ -217,3 +217,47 @@ class Accion(Auditable):
     @property
     def estado(self):
         return estado_de_accion(self.ok, self.pasada_a_id, self.no_visitada, self.hora_fin)
+
+
+class DestinatarioInforme(models.Model):
+    """Persona que recibe el informe diario automático. La lista la define el administrador."""
+
+    nombre = models.CharField(max_length=120)
+    correo = models.EmailField(unique=True)
+    activo = models.BooleanField(default=True, help_text="Desmarque para dejar de enviarle el informe sin borrarlo de la lista.")
+
+    class Meta:
+        verbose_name = "destinatario del informe diario"
+        verbose_name_plural = "destinatarios del informe diario"
+        ordering = ["nombre"]
+
+    def __str__(self):
+        return f"{self.nombre} <{self.correo}>"
+
+
+class InformeEnviado(models.Model):
+    """Registro (y copia, para auditoría) de cada informe diario enviado por correo, con el estado en el momento del corte."""
+
+    class Estado(models.TextChoices):
+        ENVIADO = "ENVIADO", "Enviado"
+        ERROR = "ERROR", "Error al enviar"
+        OMITIDO = "OMITIDO", "Omitido"
+
+    fecha = models.DateField(db_index=True, help_text="Día al que corresponde el informe.")
+    corte = models.DateTimeField(help_text="Momento del corte: el informe refleja el estado de las hojas en ese instante.")
+    estado = models.CharField(max_length=8, choices=Estado.choices)
+    remitente = models.CharField(max_length=200, blank=True)
+    destinatarios = models.TextField(blank=True)
+    asunto = models.CharField(max_length=200, blank=True)
+    detalle = models.TextField(blank=True, help_text="Motivo del error o de que se omitiera el envío.")
+    pdf = models.BinaryField(null=True, blank=True, editable=False)
+    excel = models.BinaryField(null=True, blank=True, editable=False)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "informe diario enviado"
+        verbose_name_plural = "informes diarios enviados"
+        ordering = ["-creado_en"]
+
+    def __str__(self):
+        return f"{self.fecha:%d/%m/%Y} · {self.get_estado_display()}"

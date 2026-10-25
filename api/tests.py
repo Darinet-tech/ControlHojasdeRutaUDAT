@@ -59,6 +59,7 @@ class SesionYPermisosTests(BaseAPI):
         self.assertEqual(r.data["grupos"], ["Probador"])
         self.assertFalse(r.data["es_staff"])
         self.assertEqual(api.get("/api/auth/me/").data["username"], "probador")
+        self.assertEqual(api.get("/api/auth/me/").data["hoy"], timezone.localdate())  # el servidor dice qué día es hoy
         self.assertEqual(api.post("/api/auth/logout/").status_code, 204)
         self.assertIn(api.get("/api/auth/me/").status_code, (401, 403))
 
@@ -480,7 +481,9 @@ class InicioAPITests(BaseOperacion):
         self.assertIsNone(self.api.get("/api/inicio/").data["catalogos"])  # el probador no
         admin = get_user_model().objects.create_superuser("adm_inicio", "a@a.cu", "x")
         self.api.force_authenticate(admin)
-        self.assertEqual(self.api.get("/api/inicio/").data["catalogos"], {"claves_por_revisar": 5, "claves_sin_norma": 0})
+        self.assertEqual(self.api.get("/api/inicio/").data["catalogos"], {
+            "claves_por_revisar": 5, "claves_sin_norma": 0, "trabajos_sin_norma": 2,  # los trabajos de las órdenes de trabajo aún no tienen norma
+            "informe_diario": {"destinatarios": 0, "ultimo": None}})
         Clave.objects.create(codigo="99-Z", grupo=GrupoClave.objects.first(), clasificacion="EFECTIVA")  # una clave nueva sin norma
         self.assertEqual(self.api.get("/api/inicio/").data["catalogos"]["claves_sin_norma"], 1)
 
@@ -605,3 +608,31 @@ class AnalisisAPITests(EscenarioDosDias, BaseOperacion):
         self.assertEqual((r["fecha"], r["hojas"], r["operarios"]), (None, 0, []))
         self.assertEqual(self.api.get("/api/analisis/?periodo=semana").status_code, 400)
         self.assertIn(APIClient().get("/api/analisis/").status_code, (401, 403))
+
+
+class AvisosDelEnvioEnInicioTests(BaseOperacion):
+    def setUp(self):
+        self.api = APIClient()
+        self.admin = get_user_model().objects.create_superuser("adm_envio", "a@a.cu", "x")
+        self.api.force_authenticate(self.admin)
+
+    def informe(self):
+        return self.api.get("/api/inicio/").data["catalogos"]["informe_diario"]
+
+    def test_el_administrador_ve_los_destinatarios_y_el_ultimo_envio(self):
+        from datetime import date
+        from operacion.models import DestinatarioInforme, InformeEnviado
+        self.assertEqual(self.informe(), {"destinatarios": 0, "ultimo": None})
+        DestinatarioInforme.objects.create(nombre="Jefe", correo="jefe@etecsa.cu")
+        DestinatarioInforme.objects.create(nombre="Baja", correo="baja@etecsa.cu", activo=False)
+        InformeEnviado.objects.create(fecha=date(2026, 10, 5), corte=timezone.now(), estado="ERROR", detalle="gaierror: no resuelve smtp.etecsa.cu")
+        InformeEnviado.objects.create(fecha=date(2026, 10, 6), corte=timezone.now(), estado="OMITIDO", detalle="Sin hojas")  # los omitidos no cuentan
+        r = self.informe()
+        self.assertEqual((r["destinatarios"], r["ultimo"]["estado"], r["ultimo"]["detalle"]), (1, "ERROR", "gaierror: no resuelve smtp.etecsa.cu"))
+
+    def test_el_especialista_ve_las_normas_pero_no_el_envio(self):
+        especialista = get_user_model().objects.create_user("esp_envio", password="x", is_staff=True)
+        especialista.groups.add(Group.objects.get(name="Especialista"))
+        self.api.force_authenticate(especialista)
+        catalogos = self.api.get("/api/inicio/").data["catalogos"]
+        self.assertEqual((catalogos["trabajos_sin_norma"], catalogos["informe_diario"]), (2, None))

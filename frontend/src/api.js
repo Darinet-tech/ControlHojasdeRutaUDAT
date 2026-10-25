@@ -54,7 +54,12 @@ export const puede = (usuario, permiso) => !!usuario && (usuario.es_superusuario
 
 // ---------------------------------------------------------------- utilidades de formato
 
+// El día de hoy lo da el servidor (hora de Cuba) al iniciar sesión; solo si aún no se conoce se usa el reloj del equipo.
+let hoyDelServidor = null;
+export const fijarHoy = (fecha) => { hoyDelServidor = fecha; };
+
 export function hoy() {
+  if (hoyDelServidor) return hoyDelServidor;
   const d = new Date();
   const dos = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${dos(d.getMonth() + 1)}-${dos(d.getDate())}`;

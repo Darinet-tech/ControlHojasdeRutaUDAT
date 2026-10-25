@@ -2,7 +2,7 @@
   /* Colores corporativos ETECSA: azul #050752 y verde #059E1A. El texto verde usa un tono más oscuro para que se lea bien. */
   --azul: #050752; --azul-hover: #12158f; --verde: #059E1A; --verde-texto: #047A16;
   /* Grises suaves para no cansar la vista: página, tarjetas y campos de texto (sin blanco puro). */
-  --fondo: #dfe3e9; --tarjeta: #eff1f5; --campo: #f8f9fb; --texto: #1c2430; --suave: #4b5666; --borde: #c3cad5;
+  --fondo: #d3d8e0; --tarjeta: #eff1f5; --campo: #f8f9fb; --texto: #1c2430; --suave: #435062; --borde: #b7bfcb;
   --primario: var(--azul); --primario-oscuro: var(--azul-hover);
   --ok: var(--verde-texto); --ok-fondo: #e3f5e9; --mal: #b42318; --mal-fondo: #fde8e6;
   --aviso: #8a5a00; --aviso-fondo: #fff1cf; --info: var(--azul); --info-fondo: #e6e7f6;
@@ -99,8 +99,14 @@ fieldset { border: 1px solid var(--borde); border-radius: 8px; margin: .9rem 0; 
 .tabla-envoltura { overflow-x: auto; } table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid var(--borde); font-size: .9rem; }
 
-.login { min-height: 100vh; display: grid; place-items: center; padding: 1rem; }
-.login-formulario { width: min(400px, 100%); display: flex; flex-direction: column; gap: .8rem; padding: 0; overflow: hidden; border-top: 0; }
+.login {
+  min-height: 100vh; display: grid; place-items: center; padding: 1rem;
+  /* Imagen de fondo: si existe /fondo-login.jpg (foto de la UDAT o de la empresa) se usa; si no, el diseño por defecto. */
+  background: linear-gradient(rgba(5, 7, 82, .38), rgba(5, 7, 82, .38)), url('/fondo-login.jpg') center / cover no-repeat,
+              url('/fondo-login.svg') center / cover no-repeat, var(--azul);
+}
+.login-formulario { box-shadow: 0 14px 44px rgba(0, 0, 0, .4); }
+.login-formulario { width: min(400px, 100%); display: flex; flex-direction: column; gap: .8rem; padding: 0; overflow: hidden; border: 1px solid rgba(255, 255, 255, .32); }
 .login-banda { background: var(--azul); border-bottom: 4px solid var(--verde); color: #fff; text-align: center; padding: 1.2rem 1rem; }
 .logo-etecsa-chico { height: 46px; width: 46px; display: block; margin: 0 auto .7rem; }
 .logo-udat { height: 88px; width: 88px; display: block; margin: 0 auto .6rem; }
@@ -153,3 +159,5 @@ a.boton { text-decoration: none; color: var(--texto); display: inline-block; }
 .opcion-pendientes { background: var(--aviso-fondo); border-color: #d9b45a; }
 .modal .lista-simple .fila { flex-wrap: nowrap; }
 .modal .lista-simple .fila > span:first-child { flex: 1 1 0; min-width: 0; }
+.analisis-rejilla { grid-template-columns: repeat(auto-fit, minmax(370px, 1fr)); }
+.analisis-rejilla th, .analisis-rejilla td { padding: .4rem .5rem; }

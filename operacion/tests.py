@@ -284,7 +284,8 @@ class PantallaAdminTests(BaseOperacion):
         for modelo in admin.site._registry:
             base = f"/admin/{modelo._meta.app_label}/{modelo._meta.model_name}/"
             for url in (base, base + "add/"):
-                self.assertEqual(self.client.get(url).status_code, 200, url)
+                esperado = 403 if url.endswith("informeenviado/add/") else 200  # el registro de envíos es de auditoría: no se crea a mano
+                self.assertEqual(self.client.get(url).status_code, esperado, url)
         hoja = HojaDeRuta.objects.get()
         self.assertEqual(self.client.get(self.reverse("admin:operacion_hojaderuta_change", args=[hoja.pk])).status_code, 200)
 

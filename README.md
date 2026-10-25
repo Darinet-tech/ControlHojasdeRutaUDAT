@@ -45,6 +45,32 @@ pantalla web exige el token CSRF (cookie `csrftoken` -> cabecera `X-CSRFToken`).
 Regla al asignar un servicio: si su número ya tiene una orden sin restablecer (p. ej. un pendiente) se reutiliza;
 si estaba restablecida se crea una orden nueva (reincidencia).
 
+## Informe diario por correo (16:00)
+Cada día a las 16:00 se envía por correo el informe del día (PDF + Excel) con el **corte a esa hora**, aunque haya hojas abiertas
+(el corte no cierra nada; el informe lo indica). Sale desde la cuenta del jefe de la UDAT (`leonel.hinojosa@etecsa.cu`) por
+`smtp.etecsa.cu` (sin usuario ni contraseña) hacia los **destinatarios activos que define el administrador** en
+`/admin` -> "Destinatarios del informe diario".
+- Si el día no tiene hojas de ruta no se envía nada. Si ya se envió, no se repite (`--forzar` lo envía de nuevo).
+- Cada envío queda en `/admin` -> "Informes diarios enviados" con su estado y **copia de los archivos** para auditoría.
+  Si falla (servidor caído, sin destinatarios...) queda registrado como error, Inicio avisa al administrador y se puede reintentar.
+- Prueba sin enviar nada: `python manage.py enviar_informe_diario --simular`
+- **Programarlo (Windows)**, una sola vez, en una consola de administrador:
+  `schtasks /Create /SC DAILY /ST 16:00 /TN "UDAT Informe diario" /TR "C:\ruta\mesa_pruebas\enviar_informe.bat" /F`
+  (el equipo debe tener la hora de Cuba). Los resultados se anotan en `logs\informe_diario.log`.
+- **Programarlo (Linux)**: `0 16 * * * cd /ruta/mesa_pruebas && .venv/bin/python manage.py enviar_informe_diario >> logs/informe_diario.log 2>&1`
+
+## PostgreSQL
+1. Instale PostgreSQL 16 o superior (postgresql.org). Anote la clave del usuario `postgres`.
+2. Cree el usuario y la base (en "SQL Shell (psql)" o pgAdmin):
+   ```sql
+   CREATE ROLE mesa LOGIN PASSWORD 'su_clave' CREATEDB;
+   CREATE DATABASE mesa_pruebas OWNER mesa ENCODING 'UTF8';
+   ```
+3. Copie `.env.example` como `.env` y ponga ahí la clave. Instale el conector: `pip install -r requirements-postgres.txt`.
+4. `python manage.py migrate`, `python manage.py cargar_inicial` y `python manage.py createsuperuser`.
+5. `python manage.py test` (necesita que el usuario tenga CREATEDB) debe pasar igual que con SQLite.
+Se empieza de cero: no se traslada lo registrado en SQLite. Copia de seguridad: `pg_dump -U mesa mesa_pruebas > copia.sql`.
+
 ## Pantalla web (React) — fase 3
 Carpeta `frontend/`. Requiere Node.js 20.19 o superior (o 22.12+).
 ```bash
@@ -123,11 +149,8 @@ norma) y el pie de elaboración y cierre.
 Logotipo de la aplicación: `frontend/public/logo-udat.svg` (una U con marca de verificación; otras propuestas en `logos/`).
 Se usa en la pantalla de entrada, la pestaña del navegador y el encabezado de los informes.
 
-## Pendiente (en este orden)
-1. Envío automático del informe diario por correo (servidor smtp.etecsa.cu) a un grupo definido por el administrador, con
-   corte a las 16:00 aunque haya hojas abiertas, y copia de lo enviado para auditoría.
-2. PostgreSQL (crear la base y probar las migraciones).
-3. Autenticación con LDAP.
+## Pendiente
+- Autenticación con LDAP (al final).
 (Los Excel históricos no se importan: se empieza de cero.)
 
 ## Varios centros por hoja
