@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { api, fechaLarga, hoy, puede } from './api.js';
+import { api, fechaLarga, fijarHoy, hoy, puede } from './api.js';
 import { Aviso, Chip, Modal } from './componentes.jsx';
 import HojaDetalle from './HojaDetalle.jsx';
 import Inicio from './Inicio.jsx';
@@ -28,8 +28,10 @@ export default function App() {
   const sinCerrar = useRef(0);
   const puedeCerrar = puede(usuario, 'operacion.add_hojaderuta');
 
+  // Al entrar (con sesión ya abierta o iniciándola ahora) se toma del servidor qué día es hoy.
+  const entrar = (u) => { fijarHoy(u.hoy); setFecha(u.hoy); setUsuario(u); };
   useEffect(() => {
-    api.get('/auth/me/').then(setUsuario).catch(() => setUsuario(null));
+    api.get('/auth/me/').then(entrar).catch(() => setUsuario(null));
   }, []);
 
   useEffect(() => {
@@ -83,7 +85,7 @@ export default function App() {
   const abrirHoja = (id) => { setSeccion('hojas'); setHojaAbierta(id); };
 
   if (usuario === undefined) return <p className="cargando">Cargando…</p>;
-  if (usuario === null) return <Login alEntrar={setUsuario} />;
+  if (usuario === null) return <Login alEntrar={entrar} />;
 
   return (
     <>

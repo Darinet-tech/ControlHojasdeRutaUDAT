@@ -18,6 +18,19 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def _cargar_env(ruta):
+    """Lee las líneas CLAVE=VALOR de un archivo .env (si existe), sin pisar lo que ya esté definido en el entorno."""
+    if ruta.exists():
+        for linea in ruta.read_text(encoding="utf-8").splitlines():
+            linea = linea.strip()
+            if linea and not linea.startswith("#") and "=" in linea:
+                clave, valor = linea.split("=", 1)
+                os.environ.setdefault(clave.strip(), valor.strip().strip('"').strip("'"))
+
+
+_cargar_env(BASE_DIR / ".env")
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -153,3 +166,14 @@ REST_FRAMEWORK = {
 # La pantalla web en desarrollo (Vite, puerto 5173) llama a la API desde otro puerto: se declara de confianza.
 CSRF_TRUSTED_ORIGINS = os.environ.get(
     'DJANGO_CSRF_TRUSTED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
+
+# ---- Informe diario por correo (corte a las 16:00). El servidor de correo no pide usuario ni contraseña.
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.etecsa.cu')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '25'))
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', '0') == '1'
+EMAIL_TIMEOUT = 30
+# Cuenta desde la que sale el informe: la del jefe de la UDAT.
+INFORME_REMITENTE = os.environ.get('INFORME_REMITENTE', 'Unidad de Asistencia Técnica (UDAT) <leonel.hinojosa@etecsa.cu>')
+INFORME_HORA_CORTE = datetime.time(16, 0)

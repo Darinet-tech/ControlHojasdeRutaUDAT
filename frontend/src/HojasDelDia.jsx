@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api, fechaLarga, puede } from './api.js';
 import { Aviso, Chip } from './componentes.jsx';
 
@@ -159,11 +159,14 @@ export default function HojasDelDia({ usuario, catalogos, fecha, setFecha, abrir
   const [error, setError] = useState('');
   const [creando, setCreando] = useState(crearInicial && puede(usuario, 'operacion.add_hojaderuta'));
 
-  const cargar = useCallback(() => {
+  // Si se cambia de fecha antes de que llegue la respuesta anterior, esa respuesta se descarta (no pisa la lista del día nuevo).
+  useEffect(() => {
+    let vigente = true;
+    setHojas(null);
     setError('');
-    api.get(`/hojas/?fecha=${fecha}`).then((r) => setHojas(r.results)).catch((e) => setError(e.message));
+    api.get(`/hojas/?fecha=${fecha}`).then((r) => vigente && setHojas(r.results)).catch((e) => vigente && setError(e.message));
+    return () => { vigente = false; };
   }, [fecha]);
-  useEffect(() => { setHojas(null); cargar(); }, [cargar]);
 
   const suma = (campo) => hojas.reduce((t, h) => t + h.resultados[campo], 0);
   const resumen = hojas && {
