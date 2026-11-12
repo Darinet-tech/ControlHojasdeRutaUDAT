@@ -191,3 +191,5 @@ EMAIL_TIMEOUT = 30
 # Cuenta desde la que sale el informe: la del jefe de la UDAT.
 INFORME_REMITENTE = os.environ.get('INFORME_REMITENTE', 'Unidad de Asistencia Técnica (UDAT) <leonel.hinojosa@etecsa.cu>')
 INFORME_HORA_CORTE = datetime.time(16, 0)
+# Las hojas que sigan abiertas se cierran solas a esta hora (después no se trabaja por la oscuridad). Formato HH:MM en el .env.
+HORA_CIERRE_AUTOMATICO = datetime.time.fromisoformat(os.environ.get('HORA_CIERRE_AUTOMATICO', '21:00'))

@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse
 from django.core.exceptions import ValidationError as ErrorDjango
@@ -176,6 +177,8 @@ class HojaViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Creat
     def perform_create(self, serializer):
         # La fecha y la hora de inicio no se escriben a mano: son las del momento en que se crea la hoja (hora de Cuba).
         ahora = timezone.localtime()
+        if ahora.time() >= settings.HORA_CIERRE_AUTOMATICO:
+            raise ErrorDjango(f"Después de las {settings.HORA_CIERRE_AUTOMATICO:%H:%M} no se crean hojas de ruta: ya terminó la jornada.")
         serializer.save(fecha=ahora.date(), hora_inicio=ahora.time().replace(microsecond=0),
                         creado_por=self.request.user, modificado_por=self.request.user)
 

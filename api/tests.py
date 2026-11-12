@@ -1,7 +1,10 @@
+from datetime import datetime, time
+from unittest import mock
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -11,6 +14,7 @@ from operacion.tests import BaseOperacion, crear_hoja
 from operacion.tests_reportes import EscenarioDosDias
 
 
+@override_settings(HORA_CIERRE_AUTOMATICO=time(23, 59, 59))  # que los tests no dependan de la hora a la que se ejecuten
 class BaseAPI(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -156,6 +160,18 @@ class FlujoDelProbadorTests(BaseAPI):
         self.assertEqual(r.status_code, 201, r.data)
         self.assertEqual(r.data["fecha"], str(antes.date()))  # lo enviado a mano se ignora
         self.assertTrue(antes.time().isoformat() <= r.data["hora_inicio"] <= despues.time().isoformat(), r.data["hora_inicio"])
+
+    def test_no_se_crean_hojas_despues_de_la_hora_de_cierre(self):
+        tarde = timezone.make_aware(datetime.combine(timezone.localdate(), time(21, 5)))
+        with mock.patch("django.utils.timezone.now", return_value=tarde), self.settings(HORA_CIERRE_AUTOMATICO=time(21, 0)):
+            r = self.api.post("/api/hojas/", {"brigada": self.rep.pk, "centros": [self.ng.pk], "operarios": [self.op3.pk]}, format="json")
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("21:00", str(r.data))
+
+    def test_la_accion_indica_si_fue_posterior_al_corte(self):
+        hoja = self.crear_hoja()
+        a = self.asignar(hoja, "46-555001")
+        self.assertFalse(a["posterior_al_corte"])
 
     def test_la_hoja_necesita_operarios(self):
         r = self.api.post("/api/hojas/", {"fecha": "2026-10-01", "brigada": self.rep.pk, "centros": [self.ng.pk],

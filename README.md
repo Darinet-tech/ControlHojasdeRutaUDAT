@@ -59,12 +59,20 @@ Cada día a las 16:00 se envía por correo el informe del día (PDF + Excel) con
   (el equipo debe tener la hora de Cuba). Los resultados se anotan en `logs\informe_diario.log`.
 - **Programarlo (Linux)**: `0 16 * * * cd /ruta/mesa_pruebas && .venv/bin/python manage.py enviar_informe_diario >> logs/informe_diario.log 2>&1`
 
-## Cierre automático de hojas de días anteriores
-Si una hoja queda abierta al terminar el día, cada noche se cierra sola: sus servicios sin cerrar pasan a **no visitados** y los
-contadores de incidencia se detienen al final de ese día. Así no se acumulan hojas viejas ni tiempos absurdos.
+## Cierre automático de hojas (21:00)
+Después de las 21:00 no se trabaja (oscuridad): toda hoja que siga abierta se cierra sola a esa hora. Sus servicios sin cerrar pasan a
+**no visitados** y los contadores de incidencia se detienen a las 21:00. Tampoco se pueden crear hojas pasada esa hora.
+La hora se cambia con `HORA_CIERRE_AUTOMATICO=HH:MM` en el `.env`. Si el equipo estuvo apagado, la siguiente ejecución cierra también las de días anteriores.
 - Prueba sin cerrar nada: `python manage.py cerrar_hojas_antiguas --simular`
-- **Windows** (consola de administrador): `schtasks /Create /SC DAILY /ST 00:05 /TN "UDAT Cierre de hojas" /TR "C:\ruta\mesa_pruebas\cerrar_hojas_antiguas.bat" /F`
-- **Linux**: `5 0 * * * cd /ruta/mesa_pruebas && .venv/bin/python manage.py cerrar_hojas_antiguas >> logs/cerrar_hojas.log 2>&1`
+- **Windows** (consola de administrador): `schtasks /Create /SC DAILY /ST 21:00 /TN "UDAT Cierre de hojas" /TR "C:uta\mesa_pruebas\cerrar_hojas_antiguas.bat" /F`
+- **Linux**: `0 21 * * * cd /ruta/mesa_pruebas && .venv/bin/python manage.py cerrar_hojas_antiguas >> logs/cerrar_hojas.log 2>&1`
+
+## Acciones posteriores al corte de las 16:00
+El parte de las 16:00 es una foto a esa hora y no cambia. Lo que se cierre **después** del corte (hasta las 21:00):
+- **se contabiliza en el día en que se hizo** (en las estadísticas del día, mes y año), nunca en el día siguiente;
+- se marca como "posterior al corte" en la hoja;
+- aparece en el parte del día siguiente como **"Complemento del día anterior"** (correo, PDF y Excel), solo para que conste.
+El complemento toma el último día con hojas anterior a la fecha del parte, así que también funciona después de fines de semana.
 
 ## PostgreSQL
 1. Instale PostgreSQL 16 o superior (postgresql.org). Anote la clave del usuario `postgres`.

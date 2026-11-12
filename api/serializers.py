@@ -7,7 +7,7 @@ from rest_framework import serializers
 from catalogos.models import (Brigada, CausaIncidencia, Centro, Clave, NormaTrabajo, Operario, TipoMantenimiento, TipoOrden,
                               TipoTrabajo, Vehiculo)
 from operacion.models import Accion, HojaDeRuta, Incidencia, OrdenServicio
-from operacion.services import norma_accion, resumen_hoja, sugerir_ok, validar_operarios_libres
+from operacion.services import momento_del_corte, norma_accion, resumen_hoja, sugerir_ok, validar_operarios_libres
 
 
 # ---------------------------------------------------------------- catálogos (solo lectura)
@@ -121,13 +121,17 @@ class AccionSerializer(serializers.ModelSerializer):
     norma_min = serializers.SerializerMethodField(help_text="Norma de la clave mayor (minutos).")
     sugerencia_ok = serializers.SerializerMethodField()
     estado = serializers.SerializerMethodField()
+    posterior_al_corte = serializers.SerializerMethodField(help_text="Se cerró después del corte de las 16:00: va en el complemento del parte siguiente.")
 
     class Meta:
         model = Accion
         fields = ["id", "hoja", "orden", "numero", "etiqueta", "categoria", "categoria_texto", "numero_servicio", "tipo_mantenimiento",
                   "tipo_orden", "numero_orden", "trabajos", "centro", "centro_codigo", "estado_orden", "claves",
                   "descripcion_trabajo", "observaciones", "estado", "ok", "cliente_contactado", "pasada_a",
-                  "pasada_a_nombre", "hora_fin", "tiempo_real_min", "norma_min", "sugerencia_ok"]
+                  "pasada_a_nombre", "hora_fin", "tiempo_real_min", "norma_min", "sugerencia_ok", "posterior_al_corte"]
+
+    def get_posterior_al_corte(self, accion):
+        return bool(accion.hora_fin and accion.hora_fin > momento_del_corte(accion.hoja.fecha))
 
     def get_norma_min(self, accion):
         return norma_accion(accion)

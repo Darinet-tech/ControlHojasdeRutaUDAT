@@ -15,8 +15,9 @@ from django.utils import timezone
 
 from catalogos.models import Clave
 
-from .models import Accion
+from .models import Accion, HojaDeRuta
 from .reportes import MAXIMO_LISTADO, Normas, hojas_del_periodo, resumen_periodo
+from .services import momento_del_corte
 
 LOGO = Path(settings.BASE_DIR) / "frontend" / "public" / "logo-etecsa.png"
 LOGO_UDAT = Path(settings.BASE_DIR) / "frontend" / "public" / "logo-udat.png"
@@ -60,6 +61,32 @@ def _limpio(texto):
 
 
 # ---------------------------------------------------------------- datos
+
+def complemento_del_dia_anterior(fecha):
+    """Acciones del último día con hojas anterior a `fecha` que se cerraron DESPUÉS del corte de las 16:00.
+
+    No estaban en el parte de ese día, pero se contabilizan en el día en que se hicieron; aquí solo se muestran para que consten
+    en el parte siguiente. None si no hubo ninguna."""
+    anterior = HojaDeRuta.objects.filter(fecha__lt=fecha).order_by("-fecha").values_list("fecha", flat=True).first()
+    if anterior is None:
+        return None
+    acciones = list(Accion.objects.filter(hoja__fecha=anterior, hora_fin__gt=momento_del_corte(anterior))
+                    .select_related("orden__tipo_orden", "orden__tipo_mantenimiento", "hoja__brigada", "pasada_a", "centro")
+                    .prefetch_related("hoja__centros", "claves", "trabajos").order_by("hora_fin"))
+    if not acciones:
+        return None
+    filas = []
+    for a in acciones:
+        estado = a.estado
+        detalle = [c.codigo for c in a.claves.all()] or sorted(t.nombre for t in a.trabajos.all())
+        filas.append({"hoja": f"{a.hoja.etiqueta_centros} · {a.hoja.brigada.nombre}", "descripcion": " ".join([a.orden.etiqueta] + detalle),
+                      "hora": hora_corta(a.hora_fin), "cliente": a.cliente_contactado, "estado": estado, "tiempo_real": a.tiempo_real_min,
+                      "resultado": f"Pasada a {a.pasada_a.nombre}" if estado == "PASADA_A_BRIGADA" else RESULTADO[estado]})
+    cuenta = lambda e: sum(1 for f in filas if f["estado"] == e)  # noqa: E731
+    return {"fecha": anterior, "corte": settings.INFORME_HORA_CORTE, "acciones": filas,
+            "totales": {"acciones": len(filas), "ok": cuenta("OK"), "sin_ok": cuenta("SIN_OK"), "pasadas": cuenta("PASADA_A_BRIGADA"),
+                        "tiempo_real_min": sum(f["tiempo_real"] or 0 for f in filas)}}
+
 
 def reunir_datos(fecha, brigada=None, centro=None, solo_hoja=None, usuario=None, ahora=None, corte=None):
     """Todo lo que lleva un informe del día (o de una sola hoja)."""
@@ -109,8 +136,10 @@ def reunir_datos(fecha, brigada=None, centro=None, solo_hoja=None, usuario=None,
             "incidencias": [{"causa": str(i.causa), "inicio": hora_corta(i.inicio), "fin": hora_corta(i.fin) if i.fin else "en curso",
                              "minutos": i.minutos(hasta=ahora)} for i in h.incidencias.all()],
         })
+    # el parte de un día completo (sin filtros) recoge lo que quedó fuera del corte del día anterior
+    complemento = None if (solo_hoja or brigada or centro) else complemento_del_dia_anterior(fecha)
     return {"fecha": fecha, "resumen": resumen, "hojas": detalle, "generado_en": ahora, "generado_por": nombre_de(usuario),
-            "una_hoja": bool(solo_hoja), "corte": corte}
+            "una_hoja": bool(solo_hoja), "corte": corte, "complemento": complemento}
 
 
 def _filas(hoja):
@@ -212,6 +241,18 @@ def _pdf(datos):
     else:
         story.append(Spacer(1, 12))
         story.append(Paragraph(esc("No hay hojas de ruta para este día."), base))
+
+    comp = datos.get("complemento")
+    if comp:
+        ct = comp["totales"]
+        story.append(Paragraph(esc(f"Complemento del {comp['fecha']:%d/%m/%Y}: acciones posteriores al corte de las {comp['corte']:%H:%M}"), h2))
+        story.append(Paragraph(esc(f"Estas acciones no estaban en el parte de ese día. Se contabilizan en el {comp['fecha']:%d/%m/%Y}, "
+                                   f"no en el de hoy. Total: {ct['acciones']} · con OK: {ct['ok']} · sin OK: {ct['sin_ok']} · "
+                                   f"pasadas: {ct['pasadas']} · tiempo real: {minutos_a_texto(ct['tiempo_real_min'])}."), chico))
+        story.append(tabla([["Hoja", "Servicio", "Hora", "Cliente", "Resultado", "T. real"]] +
+                           [[P(f["hoja"]), P(f["descripcion"]), f["hora"], P(f["cliente"]), P(f["resultado"]),
+                             "" if f["tiempo_real"] is None else str(f["tiempo_real"])] for f in comp["acciones"]],
+                           [34 * mm, 54 * mm, 14 * mm, 32 * mm, 32 * mm, 14 * mm]))
 
     # ---------- una página por hoja, con el formato de la hoja original
     for h in datos["hojas"]:
@@ -366,7 +407,12 @@ def _excel(datos):
                  [[n["servicio"], f"{n['centro']} · {n['brigada']}", "Sigue sin visitar" if n["sigue_sin_visitar"] else "Ya atendida"] for n in r["no_visitadas"]["lista"]])
     fila = tabla(ws, fila, f"Reincidencias ({r['reincidencias']['total']})", ["Servicio", "Órdenes", "Operarios que lo trabajaron"],
                  [[x["servicio"], x["ordenes"], ", ".join(x["operarios"])] for x in r["reincidencias"]["lista"]])
-    tabla(ws, fila, "Incidencias por causa", ["Causa", "Tiempo (min)", "Hojas"], [[f"{i['codigo']} · {i['nombre']}", i["minutos"], i["hojas"]] for i in r["incidencias"]])
+    fila = tabla(ws, fila, "Incidencias por causa", ["Causa", "Tiempo (min)", "Hojas"], [[f"{i['codigo']} · {i['nombre']}", i["minutos"], i["hojas"]] for i in r["incidencias"]])
+    comp = datos.get("complemento")
+    if comp:
+        tabla(ws, fila, f"Complemento del {comp['fecha']:%d/%m/%Y}: acciones posteriores al corte de las {comp['corte']:%H:%M} "
+                        f"(se contabilizan en el {comp['fecha']:%d/%m/%Y})", ["Hoja", "Servicio", "Hora", "Cliente", "Resultado", "T. real (min)"],
+              [[f["hoja"], f["descripcion"], f["hora"], f["cliente"], f["resultado"], f["tiempo_real"]] for f in comp["acciones"]])
     for col, ancho in zip("ABCDEFGHIJKLM", [38, 34, 14, 14, 20, 14, 12, 14, 14, 16, 16, 20, 12]):
         ws.column_dimensions[col].width = ancho
 

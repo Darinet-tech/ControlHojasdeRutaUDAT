@@ -31,6 +31,14 @@ def _cuerpo(datos, corte):
     if abiertas:
         lineas += ["", "Hojas todavía abiertas al corte (su información puede cambiar al terminar la jornada):"]
         lineas += [f"  - {h['centros']} · {h['brigada']} ({h['operarios_claves']})" for h in abiertas]
+    comp = datos.get("complemento")
+    if comp:
+        ct = comp["totales"]
+        lineas += ["", f"Complemento del {comp['fecha']:%d/%m/%Y} (acciones posteriores al corte de las {comp['corte']:%H:%M}; "
+                       f"se contabilizan en el {comp['fecha']:%d/%m/%Y}, no en este día):",
+                   f"  {ct['acciones']} acción(es) · con OK: {ct['ok']} · sin OK: {ct['sin_ok']} · pasadas: {ct['pasadas']} · "
+                   f"tiempo real: {minutos_a_texto(ct['tiempo_real_min'])}"]
+        lineas += [f"  - {f['hora']} {f['hoja']}: {f['descripcion']} → {f['resultado']}" for f in comp["acciones"]]
     lineas += ["", "Se adjuntan:", "  - PDF: resumen del día y cada hoja de ruta con el formato de la hoja original.",
                "  - Excel: resumen, hojas de ruta y hoja de auditoría con una fila por servicio.", "",
                "Mensaje generado automáticamente por el sistema de la UDAT."]

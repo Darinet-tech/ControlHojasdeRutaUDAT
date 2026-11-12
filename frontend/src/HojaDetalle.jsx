@@ -245,6 +245,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
           Cerrada a las {formatearHora(accion.hora_fin)} · tiempo real {minutosATexto(accion.tiempo_real_min)}
           {accion.norma_min !== null && ` · norma ${accion.norma_min} min`}
           {accion.ok && accion.cliente_contactado && ` · certificada con: ${accion.cliente_contactado}`}
+          {accion.posterior_al_corte && ' · posterior al corte de las 16:00 (va en el complemento del parte siguiente)'}
         </p>
       )}
 

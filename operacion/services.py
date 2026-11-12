@@ -110,6 +110,16 @@ def finalizar_incidencia(hoja, usuario, ahora=None):
     return activa
 
 
+def momento_de_cierre_automatico(fecha):
+    """Instante (hora de Cuba) en que se cierra sola la hoja de esa fecha si sigue abierta."""
+    return timezone.make_aware(datetime.combine(fecha, settings.HORA_CIERRE_AUTOMATICO))
+
+
+def momento_del_corte(fecha):
+    """Instante del corte diario (16:00) de esa fecha: lo que se haga después va al complemento del parte siguiente."""
+    return timezone.make_aware(datetime.combine(fecha, settings.INFORME_HORA_CORTE))
+
+
 def acciones_abiertas(hoja):
     """Acciones de la hoja que aún no se cerraron (sin OK, sin pase a otra brigada y sin cierre)."""
     return hoja.acciones.filter(hora_fin__isnull=True, no_visitada=False)
