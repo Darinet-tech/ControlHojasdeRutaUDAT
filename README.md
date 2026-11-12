@@ -15,6 +15,12 @@ python manage.py test                # la suite de pruebas de las reglas de nego
 ```
 Sin `POSTGRES_DB` en el entorno usa SQLite (solo para pruebas rápidas).
 
+## Uso como web normal y despliegue en el servidor
+Sin entorno de desarrollo: `npm run build` (en `frontend/`) compila la pantalla y `python servir.py` (o `iniciar_servidor.bat`) entrega
+la pantalla, la API y `/admin` en un solo puerto (por defecto `http://<equipo>:8000/`). Instrucciones completas para TI en **[DESPLIEGUE.md](DESPLIEGUE.md)**;
+`python empaquetar_entrega.py` genera el `.zip` que se les entrega (código + pantalla compilada, sin `.env`, copias ni datos).
+`.env.example` lista todas las variables de configuración.
+
 ## Roles (grupos creados por `cargar_inicial`)
 - **Probador**: crea hojas de ruta, órdenes y acciones, da el OK. Solo consulta catálogos. No borra.
 - **Especialista**: gestiona catálogos y normas.

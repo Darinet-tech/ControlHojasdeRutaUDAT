@@ -1,0 +1,3 @@
+# Servidor de producción recomendado (opcional): sin él, servir.py usa un servidor básico incluido en Python.
+-r requirements-postgres.txt
+waitress>=3.0

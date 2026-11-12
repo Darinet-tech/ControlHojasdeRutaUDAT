@@ -106,7 +106,7 @@ export default function App() {
           {usuario.nombre} <small>({usuario.grupos.join(', ') || (usuario.es_superusuario ? 'Administrador' : 'sin rol')})</small>
         </span>
         {usuario.puede_administrar && (
-          <a className="enlace" href="http://127.0.0.1:8000/admin/" target="_blank" rel="noreferrer">Administración</a>
+          <a className="enlace" href="/admin/" target="_blank" rel="noreferrer">Administración</a>
         )}
         <button className="boton" onClick={pedirSalida}>Salir</button>
       </header>

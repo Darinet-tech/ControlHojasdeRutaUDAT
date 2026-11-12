@@ -10,3 +10,7 @@ logs/*.log
 
 backups/
 *.dump
+
+staticfiles/
+
+entrega/

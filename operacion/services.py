@@ -444,7 +444,7 @@ def historial_servicio(numero_servicio, hasta=None, dias=None):
         Accion.objects.filter(orden__numero_servicio=numero_servicio).exclude(orden__numero_servicio="")
         .select_related("hoja__brigada", "orden")
         .prefetch_related("hoja__operarios", "claves")
-        .order_by("hoja__fecha", "numero")
+        .order_by("hoja__fecha", "pk")  # el pk desempata en orden cronológico (varias hojas el mismo día)
     )
     if hasta and dias:
         qs = qs.filter(hoja__fecha__gte=hasta - timedelta(days=dias), hoja__fecha__lte=hasta)

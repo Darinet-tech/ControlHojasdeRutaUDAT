@@ -115,25 +115,25 @@ export default function Inicio({ usuario, irA, abrirHoja }) {
     }));
     if (datos.catalogos?.claves_por_revisar > 0) atencion.push({
       clave: 'cr', tipo: 'aviso', texto: `${datos.catalogos.claves_por_revisar} clave(s) de cierre marcadas "por revisar" en el catálogo.`,
-      boton: ['Abrir catálogo', () => window.open('http://127.0.0.1:8000/admin/catalogos/clave/?revisar__exact=1', '_blank')],
+      boton: ['Abrir catálogo', () => window.open('/admin/catalogos/clave/?revisar__exact=1', '_blank')],
     });
     if (datos.catalogos?.claves_sin_norma > 0) atencion.push({
       clave: 'sn', tipo: 'aviso', texto: `${datos.catalogos.claves_sin_norma} clave(s) activas sin norma de tiempo: no se podrá calcular su productividad.`,
-      boton: ['Abrir catálogo', () => window.open('http://127.0.0.1:8000/admin/catalogos/clave/', '_blank')],
+      boton: ['Abrir catálogo', () => window.open('/admin/catalogos/clave/', '_blank')],
     });
   }
   if (datos?.catalogos?.trabajos_sin_norma > 0) atencion.push({
     clave: 'tn', tipo: 'aviso', texto: `${datos.catalogos.trabajos_sin_norma} trabajo(s) de órdenes de trabajo sin norma de tiempo: se calculará sin tiempo normado hasta que se defina.`,
-    boton: ['Abrir catálogo', () => window.open('http://127.0.0.1:8000/admin/catalogos/tipotrabajo/', '_blank')],
+    boton: ['Abrir catálogo', () => window.open('/admin/catalogos/tipotrabajo/', '_blank')],
   });
   const envio = datos?.catalogos?.informe_diario;
   if (envio && envio.destinatarios === 0) atencion.push({
     clave: 'ed', tipo: 'mal', texto: 'No hay destinatarios activos para el informe diario de las 16:00: no se enviará a nadie.',
-    boton: ['Definir destinatarios', () => window.open('http://127.0.0.1:8000/admin/operacion/destinatarioinforme/', '_blank')],
+    boton: ['Definir destinatarios', () => window.open('/admin/operacion/destinatarioinforme/', '_blank')],
   });
   if (envio?.ultimo?.estado === 'ERROR') atencion.push({
     clave: 'ee', tipo: 'mal', texto: `El último envío del informe diario (${diaMes(envio.ultimo.fecha)}) falló: ${envio.ultimo.detalle}`,
-    boton: ['Ver envíos', () => window.open('http://127.0.0.1:8000/admin/operacion/informeenviado/', '_blank')],
+    boton: ['Ver envíos', () => window.open('/admin/operacion/informeenviado/', '_blank')],
   });
   const t = datos?.hoy;
 
