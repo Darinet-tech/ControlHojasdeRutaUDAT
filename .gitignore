@@ -7,3 +7,6 @@ copia.sql
 *.sql
 
 logs/*.log
+
+backups/
+*.dump

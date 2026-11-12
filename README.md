@@ -85,6 +85,16 @@ El complemento toma el último día con hojas anterior a la fecha del parte, as�
 ## Seguridad del inicio de sesión
 El login admite 10 intentos por minuto desde un mismo equipo (después responde 429). Se cambia con `LOGIN_LIMITE` en el `.env`, p. ej. `20/min`.
 
+## Copia de seguridad de la base de datos
+`python manage.py respaldar_base` guarda una copia (formato `pg_dump -Fc`) en `backups/` con la fecha en el nombre y conserva las 14 más
+recientes (`--conservar N` lo cambia). Usa la conexión del `.env`; la clave no aparece en la línea de comandos. `backups/` y `*.dump`
+están fuera de git. Si no encuentra `pg_dump`, defina `PG_DUMP` en el `.env`.
+- **Windows** (una sola vez): `schtasks /Create /SC DAILY /ST 21:30 /TN "UDAT Respaldo de la base" /TR "C:\ruta\mesa_pruebas\respaldar_base.bat" /F`
+  (resultados en `logs\respaldo.log`).
+- **Linux**: `30 21 * * * cd /ruta/mesa_pruebas && .venv/bin/python manage.py respaldar_base >> logs/respaldo.log 2>&1`
+- **Restaurar** (en una base vacía): `pg_restore -h localhost -U <usuario> -d <base> --no-owner backups/<archivo>.dump`
+- Copie de vez en cuando la carpeta `backups/` a otro equipo o disco: si falla este equipo, las copias que están en él se pierden también.
+
 ## PostgreSQL
 1. Instale PostgreSQL 16 o superior (postgresql.org). Anote la clave del usuario `postgres`.
 2. Cree el usuario y la base (en "SQL Shell (psql)" o pgAdmin):
