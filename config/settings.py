@@ -166,6 +166,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 100,
     'EXCEPTION_HANDLER': 'api.errores.manejador_de_errores',
+    'DEFAULT_THROTTLE_RATES': {'login': os.environ.get('LOGIN_LIMITE', '10/min')},
 }
 
 # La pantalla web en desarrollo (Vite, puerto 5173) llama a la API desde otro puerto: se declara de confianza.

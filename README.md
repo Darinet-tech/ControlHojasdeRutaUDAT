@@ -82,6 +82,9 @@ El parte de las 16:00 es una foto a esa hora y no cambia. Lo que se cierre **des
 - aparece en el parte del día siguiente como **"Complemento del día anterior"** (correo, PDF y Excel), solo para que conste.
 El complemento toma el último día con hojas anterior a la fecha del parte, así que también funciona después de fines de semana.
 
+## Seguridad del inicio de sesión
+El login admite 10 intentos por minuto desde un mismo equipo (después responde 429). Se cambia con `LOGIN_LIMITE` en el `.env`, p. ej. `20/min`.
+
 ## PostgreSQL
 1. Instale PostgreSQL 16 o superior (postgresql.org). Anote la clave del usuario `postgres`.
 2. Cree el usuario y la base (en "SQL Shell (psql)" o pgAdmin):

@@ -192,6 +192,23 @@ class FlujoDelProbadorTests(BaseAPI):
         self.api.post(f"/api/hojas/{hoja}/cerrar/")
         self.assertEqual(self.api.get("/api/inicio/").data["hojas_abiertas_hoy"], [])
 
+    def test_la_busqueda_de_ordenes_encuentra_tambien_las_ordenes_de_trabajo(self):
+        hoja = self.crear_hoja()
+        poste = TipoTrabajo.objects.get(nombre="Sustitución de poste(s)")
+        self.asignar(hoja, "", categoria="ORDEN_TRABAJO", numero_orden="OT-7788", trabajos=[poste.pk])
+        self.asignar(hoja, "46-777001")
+        self.assertEqual([o["numero_orden"] for o in self.api.get("/api/ordenes/?numero=7788").data["results"]], ["OT-7788"])
+        self.assertEqual([o["numero_servicio"] for o in self.api.get("/api/ordenes/?numero=777001").data["results"]], ["46-777001"])
+
+    def test_el_login_limita_los_intentos_por_minuto(self):
+        from django.core.cache import cache
+        cache.clear()
+        api = APIClient()
+        codigos = [api.post("/api/auth/login/", {"username": "probador", "password": "mala"}).status_code for _ in range(12)]
+        cache.clear()  # que no afecte a otros tests
+        self.assertEqual(codigos[:10], [400] * 10)
+        self.assertEqual(codigos[10:], [429, 429])
+
     def test_la_hoja_necesita_operarios(self):
         r = self.api.post("/api/hojas/", {"fecha": "2026-10-01", "brigada": self.rep.pk, "centros": [self.ng.pk],
                                           "operarios": []}, format="json")

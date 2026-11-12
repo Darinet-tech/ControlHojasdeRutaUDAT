@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse
 from django.core.exceptions import ValidationError as ErrorDjango
 from django.db import transaction
+from django.db.models import Q
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -13,6 +14,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from catalogos.models import (Brigada, CausaIncidencia, Centro, Clave, Operario, TipoMantenimiento, TipoOrden, TipoTrabajo,
@@ -60,6 +62,8 @@ class SesionView(APIView):
 class LoginView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]  # frena la adivinación de contraseñas: límite de intentos por minuto y equipo
+    throttle_scope = "login"
 
     def post(self, request):
         usuario = authenticate(request, username=request.data.get("username"), password=request.data.get("password"))
@@ -341,7 +345,7 @@ class AccionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 # ---------------------------------------------------------------- órdenes de servicio
 
 class OrdenViewSet(viewsets.ReadOnlyModelViewSet):
-    """Filtros: ?numero=texto  ?estado=PENDIENTE  ?brigada_pendiente="""
+    """Filtros: ?numero=texto (número de servicio o de orden)  ?estado=PENDIENTE  ?brigada_pendiente="""
 
     queryset = OrdenServicio.objects.select_related("tipo_orden", "brigada_pendiente").prefetch_related(
         "acciones__hoja", "acciones__centro")
@@ -350,7 +354,7 @@ class OrdenViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         qs, p = super().get_queryset(), self.request.query_params
         if p.get("numero"):
-            qs = qs.filter(numero_servicio__icontains=p["numero"])
+            qs = qs.filter(Q(numero_servicio__icontains=p["numero"]) | Q(numero_orden__icontains=p["numero"]))  # servicio u orden (las de trabajo no tienen servicio)
         if p.get("estado"):
             qs = qs.filter(estado=p["estado"])
         if p.get("brigada_pendiente"):

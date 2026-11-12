@@ -5,3 +5,5 @@ __pycache__/
 copia.sql
 copia.sql
 *.sql
+
+logs/*.log
