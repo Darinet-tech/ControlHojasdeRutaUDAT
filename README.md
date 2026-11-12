@@ -21,6 +21,10 @@ la pantalla, la API y `/admin` en un solo puerto (por defecto `http://<equipo>:8
 `python empaquetar_entrega.py` genera el `.zip` que se les entrega (código + pantalla compilada, sin `.env`, copias ni datos).
 `.env.example` lista todas las variables de configuración.
 
+## Tema claro / oscuro
+Cada usuario elige con el botón **☾ Oscuro / ☀ Claro** (cabecera y pantalla de inicio de sesión). La primera vez sigue la preferencia del sistema y después
+recuerda la elección **en ese navegador**. Al imprimir o exportar siempre se usa el tema claro. Los colores del tema están en las variables de `frontend/src/estilos.css`.
+
 ## Roles (grupos creados por `cargar_inicial`)
 - **Probador**: crea hojas de ruta, órdenes y acciones, da el OK. Solo consulta catálogos. No borra.
 - **Especialista**: gestiona catálogos y normas.

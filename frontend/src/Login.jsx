@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api } from './api.js';
-import { Aviso } from './componentes.jsx';
+import { Aviso, BotonTema } from './componentes.jsx';
 
 export default function Login({ alEntrar }) {
   const [username, setUsername] = useState('');
@@ -23,6 +23,7 @@ export default function Login({ alEntrar }) {
 
   return (
     <main className="login">
+      <BotonTema className="login-tema" />
       <form className="tarjeta login-formulario" onSubmit={enviar}>
         <div className="login-banda">
           <img className="logo-etecsa-chico" src="/logo-etecsa.png" alt="ETECSA" />

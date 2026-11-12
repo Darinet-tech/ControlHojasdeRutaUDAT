@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, fechaLarga, fijarHoy, hoy, puede } from './api.js';
-import { Aviso, Chip, Modal } from './componentes.jsx';
+import { Aviso, BotonTema, Chip, Modal } from './componentes.jsx';
 import HojaDetalle from './HojaDetalle.jsx';
 import Inicio from './Inicio.jsx';
 import HojasDelDia from './HojasDelDia.jsx';
@@ -108,6 +108,7 @@ export default function App() {
         {usuario.puede_administrar && (
           <a className="enlace" href="/admin/" target="_blank" rel="noreferrer">Administración</a>
         )}
+        <BotonTema />
         <button className="boton" onClick={pedirSalida}>Salir</button>
       </header>
       <main className="contenido">

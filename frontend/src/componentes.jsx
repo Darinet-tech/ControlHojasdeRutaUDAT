@@ -1,4 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { fijarTema, temaActual } from './tema.js';
+
+export function BotonTema({ className = '' }) {
+  const [tema, setTema] = useState(temaActual());
+  const alternar = () => { const nuevo = tema === 'oscuro' ? 'claro' : 'oscuro'; fijarTema(nuevo); setTema(nuevo); };
+  return (
+    <button type="button" className={`boton boton-tema ${className}`} onClick={alternar} aria-pressed={tema === 'oscuro'}
+      title={tema === 'oscuro' ? 'Cambiar al tema claro' : 'Cambiar al tema oscuro'}>
+      {tema === 'oscuro' ? '☀ Claro' : '☾ Oscuro'}
+    </button>
+  );
+}
 
 export function Chip({ tipo = 'neutro', children, titulo }) {
   return (

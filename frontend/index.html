@@ -6,6 +6,14 @@
     <title>UDAT · Unidad de Asistencia Técnica</title>
     <link rel="icon" type="image/svg+xml" href="/logo-udat.svg" />
     <meta name="theme-color" content="#050752" />
+    <script>
+      // Aplica el tema antes de pintar la página (evita el parpadeo blanco en el tema oscuro).
+      try {
+        var t = localStorage.getItem('udat-tema');
+        if (t !== 'claro' && t !== 'oscuro') t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oscuro' : 'claro';
+        document.documentElement.dataset.tema = t;
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
