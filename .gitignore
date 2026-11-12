@@ -2,3 +2,6 @@ db.sqlite3
 __pycache__/
 .env
 *.pyc
+copia.sql
+copia.sql
+*.sql

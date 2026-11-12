@@ -14,6 +14,8 @@ import datetime
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -35,10 +37,13 @@ _cargar_env(BASE_DIR / ".env")
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dev-inseguro-cambiar-en-produccion')
+# Seguro por defecto: sin DJANGO_DEBUG=1 en el .env se asume producción (DEBUG apagado).
+DEBUG = os.environ.get('DJANGO_DEBUG', '0') == '1'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
+# En producción la clave es obligatoria; la clave de desarrollo solo se admite con DEBUG=1.
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY') or ('dev-inseguro-solo-desarrollo' if DEBUG else None)
+if not SECRET_KEY:
+    raise ImproperlyConfigured('Falta DJANGO_SECRET_KEY en el .env (o DJANGO_DEBUG=1 para desarrollo).')
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
@@ -166,6 +171,15 @@ REST_FRAMEWORK = {
 # La pantalla web en desarrollo (Vite, puerto 5173) llama a la API desde otro puerto: se declara de confianza.
 CSRF_TRUSTED_ORIGINS = os.environ.get(
     'DJANGO_CSRF_TRUSTED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
+
+# ---- Cookies y HTTPS: se activan en producción. Si el servidor aún va por http (intranet sin certificado),
+# ponga DJANGO_HTTPS=0 en el .env, porque con las cookies "secure" no se podría iniciar sesión.
+if not DEBUG and os.environ.get('DJANGO_HTTPS', '1') == '1':
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SSL_REDIRECT', '1') == '1'
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') if os.environ.get('DJANGO_TRAS_PROXY') == '1' else None
+    SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_HSTS_SEGUNDOS', '0'))  # súbalo (p. ej. 31536000) cuando HTTPS esté estable
 
 # ---- Informe diario por correo (corte a las 16:00). El servidor de correo no pide usuario ni contraseña.
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.etecsa.cu')

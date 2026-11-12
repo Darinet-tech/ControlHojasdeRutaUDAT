@@ -167,7 +167,8 @@ def _cerrar(accion, usuario, ahora):
     accion.hora_fin = ahora
     bruto = (ahora - inicio).total_seconds() / 60
     # Las incidencias (lluvia, transporte...) ocurridas entre las dos horas no cuentan como tiempo de trabajo.
-    accion.tiempo_real_min = max(0, round(bruto - _minutos_incidencia(accion.hoja, inicio, ahora)))
+    # Tope = máximo del campo (smallint): cerrar una acción de una hoja de días atrás no debe dar error 500 en PostgreSQL.
+    accion.tiempo_real_min = min(32767, max(0, round(bruto - _minutos_incidencia(accion.hoja, inicio, ahora))))
     accion.modificado_por = usuario
 
 
