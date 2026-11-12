@@ -200,8 +200,8 @@ class HojaSerializer(serializers.ModelSerializer):
         model = HojaDeRuta
         fields = ["id", "fecha", "brigada", "brigada_nombre", "centros", "centros_codigos", "centros_etiqueta", "vehiculo",
                   "vehiculo_chapa", "operarios", "operarios_nombres", "hora_inicio", "observaciones", "cerrada",
-                  "cerrada_en", "cantidad_acciones", "resultados", "incidencia_activa"]
-        read_only_fields = ["fecha", "hora_inicio", "cerrada", "cerrada_en"]  # fecha y hora de inicio las pone el servidor al crear
+                  "cerrada_en", "reabierta_en", "cantidad_acciones", "resultados", "incidencia_activa"]
+        read_only_fields = ["fecha", "hora_inicio", "cerrada", "cerrada_en", "reabierta_en"]  # fecha y hora de inicio las pone el servidor al crear
         extra_kwargs = {
             "centros": {"error_messages": {"empty": "Indique al menos un centro."}},
             "operarios": {"error_messages": {"empty": "La hoja de ruta necesita al menos un operario."}},

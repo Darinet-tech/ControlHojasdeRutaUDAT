@@ -50,6 +50,9 @@ ROLES = {
 }
 
 
+# Permisos a medida (no siguen el patrón añadir/cambiar/ver): el jefe puede reabrir una hoja cerrada.
+PERMISOS_EXTRA = {"Jefe": ["reabrir_hojaderuta"]}
+
 # Definido por el negocio (no por el PDF, que tiene errores): estas claves NO restablecen el servicio.
 NO_EFECTIVAS = {"01", "02", "14-P", "21", "22", "23", "24", "25", "27", "29", "36", "36-V", "36D-TXD", "37", "38",
                 "39", "70"}
@@ -141,5 +144,6 @@ class Command(BaseCommand):
         for nombre, apps in ROLES.items():
             grupo, _ = Group.objects.get_or_create(name=nombre)
             codenames = [f"{a}_{m}" for app, (modelos, acciones) in apps.items() for m in modelos for a in acciones]
+            codenames += PERMISOS_EXTRA.get(nombre, [])
             grupo.permissions.set(Permission.objects.filter(codename__in=codenames,
                                                             content_type__app_label__in=list(apps)))

@@ -1,4 +1,6 @@
 """Cierra las hojas de ruta que siguen abiertas pasada la hora de cierre (21:00 por defecto) o de días anteriores."""
+from datetime import timedelta
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db.models import Q
@@ -20,7 +22,10 @@ class Command(BaseCommand):
         hoy = ahora.date()
         pasada_la_hora = ahora.time() >= settings.HORA_CIERRE_AUTOMATICO
         filtro = Q(fecha__lt=hoy) | (Q(fecha=hoy) if pasada_la_hora else Q(pk__in=[]))
-        hojas = HojaDeRuta.objects.filter(cerrada=False).filter(filtro).select_related("brigada").prefetch_related("centros").order_by("fecha")
+        gracia = ahora - timedelta(hours=settings.HORAS_GRACIA_REAPERTURA)  # las hojas recién reabiertas se respetan
+        hojas = (HojaDeRuta.objects.filter(cerrada=False).filter(filtro)
+                 .exclude(reabierta_en__gt=gracia))
+        hojas = hojas.select_related("brigada").prefetch_related("centros").order_by("fecha")
         if not hojas:
             self.stdout.write("No hay hojas abiertas que cerrar.")
             return

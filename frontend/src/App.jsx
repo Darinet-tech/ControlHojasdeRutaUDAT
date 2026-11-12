@@ -124,7 +124,8 @@ export default function App() {
       </main>
       {alertaSalida && (
         <Modal titulo="Hay hojas de ruta sin cerrar" alCerrar={() => setAlertaSalida(null)}>
-          <p>Antes de salir, recuerde cerrar las hojas de ruta: al cerrarlas se detienen los contadores de incidencias y lo que no se atendió pasa a <strong>no visitado</strong> para el siguiente día.</p>
+          <p>Antes de salir, recuerde cerrar las hojas de ruta: al cerrarlas se detienen los contadores de incidencias y lo que no se atendió pasa a <strong>no visitado</strong> para el siguiente día.
+            {usuario.hora_cierre && <> Las que sigan abiertas se cerrarán solas a las <strong>{usuario.hora_cierre}</strong>.</>}</p>
           <ul className="lista-simple">
             {alertaSalida.map((h) => (
               <li key={h.id} className="fila">

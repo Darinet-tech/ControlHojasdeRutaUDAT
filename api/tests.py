@@ -173,6 +173,25 @@ class FlujoDelProbadorTests(BaseAPI):
         a = self.asignar(hoja, "46-555001")
         self.assertFalse(a["posterior_al_corte"])
 
+    def test_solo_el_jefe_reabre_una_hoja_cerrada(self):
+        hoja = self.crear_hoja()
+        self.api.post(f"/api/hojas/{hoja}/cerrar/")
+        r = self.api.post(f"/api/hojas/{hoja}/reabrir/")  # el probador no puede
+        self.assertEqual(r.status_code, 403)
+        self.api.force_authenticate(self.jefe)
+        r = self.api.post(f"/api/hojas/{hoja}/reabrir/")
+        self.assertEqual((r.status_code, r.data["cerrada"]), (200, False))
+        self.assertIsNotNone(r.data["reabierta_en"])
+        self.assertEqual(self.api.post(f"/api/hojas/{hoja}/reabrir/").status_code, 400)  # ya está abierta
+
+    def test_inicio_avisa_de_las_hojas_de_hoy_sin_cerrar(self):
+        hoja = self.crear_hoja()
+        datos = self.api.get("/api/inicio/").data
+        self.assertEqual([h["id"] for h in datos["hojas_abiertas_hoy"]], [hoja])
+        self.assertRegex(datos["hora_cierre"], r"^\d\d:\d\d$")
+        self.api.post(f"/api/hojas/{hoja}/cerrar/")
+        self.assertEqual(self.api.get("/api/inicio/").data["hojas_abiertas_hoy"], [])
+
     def test_la_hoja_necesita_operarios(self):
         r = self.api.post("/api/hojas/", {"fecha": "2026-10-01", "brigada": self.rep.pk, "centros": [self.ng.pk],
                                           "operarios": []}, format="json")

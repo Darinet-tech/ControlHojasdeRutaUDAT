@@ -395,6 +395,7 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
   const [centroServicio, setCentroServicio] = useState('');
   const [historial, setHistorial] = useState(null);
   const [confirmandoCierre, setConfirmandoCierre] = useState(false);
+  const [confirmandoReapertura, setConfirmandoReapertura] = useState(false);
 
   const cargar = useCallback(async () => {
     const h = await api.get(`/hojas/${id}/`);
@@ -431,6 +432,11 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
   const r = hoja.resumen;
   const sinNorma = hoja.acciones.filter((a) => a.hora_fin && a.norma_min === null).length;
 
+  async function reabrirHoja() {
+    setConfirmandoReapertura(false);
+    await ejecutar(() => api.post(`/hojas/${id}/reabrir/`));
+  }
+
   async function cerrarHoja() {
     setConfirmandoCierre(false);
     const res = await ejecutar(() => api.post(`/hojas/${id}/cerrar/`));
@@ -448,6 +454,9 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
           <a className="boton" href={`/api/hojas/${id}/informe/?formato=xlsx`} title="Hoja de ruta con el formato original, en Excel">Excel</a>
         </span>
         {editable && <button className="boton boton-peligro empujar" onClick={() => setConfirmandoCierre(true)}>Cerrar hoja del día</button>}
+        {hoja.cerrada && puede(usuario, 'operacion.reabrir_hojaderuta') && !confirmandoReapertura && (
+          <button className="boton empujar" onClick={() => setConfirmandoReapertura(true)}>Reabrir hoja</button>
+        )}
       </div>
       <p className="suave capitalizar">
         {fechaLarga(hoja.fecha)} · {hoja.operarios_nombres.join(', ')}{hoja.vehiculo_chapa && ` · vehículo ${hoja.vehiculo_chapa}`} · jornada desde las {hoja.hora_inicio?.slice(0, 5)}
@@ -456,6 +465,17 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
       <Aviso alCerrar={() => setError('')}>{error}</Aviso>
       <Aviso tipo="aviso" alCerrar={() => setAviso('')}>{aviso}</Aviso>
       {hoja.cerrada && <Aviso tipo="info">Esta hoja está cerrada: solo consulta.</Aviso>}
+      {!hoja.cerrada && hoja.reabierta_en && <Aviso tipo="aviso">Esta hoja se reabrió el {new Date(hoja.reabierta_en).toLocaleString('es')}. Recuerde cerrarla al terminar.</Aviso>}
+      {confirmandoReapertura && (
+        <div className="aviso aviso-aviso">
+          <span>¿Reabrir esta hoja? Los servicios que quedaron como <strong>no visitados</strong> con su cierre vuelven a estar abiertos en ella.
+            Queda registrado quién la reabrió. Si no la cierra, se cerrará sola pasadas unas horas.</span>
+          <span>
+            <button className="boton boton-peligro" onClick={reabrirHoja}>Sí, reabrir</button>{' '}
+            <button className="boton" onClick={() => setConfirmandoReapertura(false)}>Cancelar</button>
+          </span>
+        </div>
+      )}
       {confirmandoCierre && (
         <div className="aviso aviso-aviso">
           <span>¿Cerrar la hoja del día? Se detienen los contadores y los servicios sin cerrar pasan a <strong>no visitados</strong> para el siguiente día. Ya no se podrá modificar.</span>

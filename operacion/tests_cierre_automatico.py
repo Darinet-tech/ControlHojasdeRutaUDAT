@@ -103,3 +103,60 @@ class ComplementoDelCorteTests(BaseOperacion):
 
     def test_sin_acciones_posteriores_no_hay_complemento(self):
         self.assertIsNone(complemento_del_dia_anterior(self.DIA))  # no hay ningún día anterior con hojas
+
+
+class ReaperturaTests(BaseOperacion):
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from django.contrib.auth.models import Group
+        self.jefe = get_user_model().objects.create_user("jefe1")
+        call_command("cargar_inicial", verbosity=0)  # asigna los permisos de cada rol
+        self.jefe.groups.add(Group.objects.get(name="Jefe"))
+        self.dia = timezone.localdate() - timedelta(days=1)
+        self.hoja_x = self.hoja(fecha=self.dia)
+        self.sin_cerrar = self.accion(self.hoja_x, "46-400001", ["25-R"])
+
+    def cerrar(self):
+        from .services import cerrar_hoja
+        cerrar_hoja(self.hoja_x, self.user, ahora=a_las(self.dia, 21))
+        self.hoja_x.refresh_from_db(); self.sin_cerrar.refresh_from_db()
+
+    def test_reabrir_devuelve_los_no_visitados_a_la_hoja(self):
+        from .services import reabrir_hoja
+        self.cerrar()
+        self.assertTrue(self.sin_cerrar.no_visitada)
+        reabrir_hoja(self.hoja_x, self.jefe)
+        self.hoja_x.refresh_from_db(); self.sin_cerrar.refresh_from_db()
+        self.assertFalse(self.hoja_x.cerrada)
+        self.assertEqual((self.hoja_x.reabierta_por, self.sin_cerrar.no_visitada, self.sin_cerrar.orden.estado), (self.jefe, False, "ABIERTA"))
+
+    def test_no_se_puede_reabrir_si_el_servicio_ya_se_trajo_a_otra_hoja(self):
+        from django.core.exceptions import ValidationError
+        from .services import asignar_orden, reabrir_hoja
+        self.cerrar()
+        hoja_hoy = self.hoja(fecha=timezone.localdate(), operarios=[self.op3])
+        asignar_orden(hoja_hoy, self.sin_cerrar.orden, self.user)
+        with self.assertRaises(ValidationError):
+            reabrir_hoja(self.hoja_x, self.jefe)
+
+    def test_una_hoja_abierta_no_se_reabre(self):
+        from django.core.exceptions import ValidationError
+        from .services import reabrir_hoja
+        with self.assertRaises(ValidationError):
+            reabrir_hoja(self.hoja_x, self.jefe)
+
+    def test_el_cierre_automatico_respeta_una_hoja_recien_reabierta(self):
+        from .services import reabrir_hoja
+        self.cerrar()
+        reabrir_hoja(self.hoja_x, self.jefe)  # reabierta ahora: hay horas de gracia
+        salida = io.StringIO()
+        call_command("cerrar_hojas_antiguas", stdout=salida)
+        self.hoja_x.refresh_from_db()
+        self.assertFalse(self.hoja_x.cerrada)
+        # pasadas las horas de gracia, se vuelve a cerrar sola
+        from django.conf import settings
+        despues = timezone.now() + timedelta(hours=settings.HORAS_GRACIA_REAPERTURA + 1)
+        with mock.patch("django.utils.timezone.now", return_value=despues):
+            call_command("cerrar_hojas_antiguas", stdout=salida)
+        self.hoja_x.refresh_from_db()
+        self.assertTrue(self.hoja_x.cerrada)

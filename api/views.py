@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -22,7 +23,7 @@ from operacion.reportes import analisis_de_jefatura, resumen_periodo
 from catalogos.models import NormaTiempo, NormaTrabajo
 from operacion.services import (asignar_no_visitadas, asignar_orden, asignar_pendientes, obtener_orden, cerrar_hoja, cerrar_sin_ok, certificar_ok,
                                 finalizar_incidencia, historial_servicio, iniciar_incidencia, ordenes_no_visitadas,
-                                ordenes_pendientes, pasar_a_brigada, resumen_hoja)
+                                ordenes_pendientes, pasar_a_brigada, reabrir_hoja, resumen_hoja)
 
 from . import serializers as s
 
@@ -36,6 +37,7 @@ def _datos_usuario(usuario):
         "nombre": usuario.get_full_name() or usuario.username,
         "grupos": list(usuario.groups.values_list("name", flat=True)),
         "hoy": timezone.localdate(),  # el día lo decide el servidor (hora de Cuba), no el reloj del equipo del usuario
+        "hora_cierre": f"{settings.HORA_CIERRE_AUTOMATICO:%H:%M}",  # a esa hora las hojas abiertas se cierran solas
         "es_superusuario": usuario.is_superuser,
         "es_staff": usuario.is_staff,
         # El acceso al panel de administración es solo para quien gestiona catálogos (no para probadores ni jefes).
@@ -220,6 +222,14 @@ class HojaViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Creat
         hoja = cerrar_hoja(self.get_object(), request.user)
         resumen = resumen_hoja(hoja)
         return Response({"cerrada": True, "no_visitadas": resumen["no_visitadas"], "resumen": resumen})
+
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    def reabrir(self, request, pk=None):
+        """Reabre una hoja cerrada. Solo quien tiene el permiso de reabrir (el jefe y el administrador)."""
+        if not request.user.has_perm("operacion.reabrir_hojaderuta"):
+            raise PermissionDenied("Solo el jefe o el administrador pueden reabrir una hoja cerrada.")
+        hoja = reabrir_hoja(self.get_object(), request.user)
+        return Response(s.HojaDetalleSerializer(hoja).data)
 
     @action(detail=True, methods=["post"], url_path="asignar-pendientes")
     def asignar_pendientes(self, request, pk=None):
@@ -463,6 +473,9 @@ class InicioView(APIView):
             "mes": {k: mes[k] for k in ("hojas", "acciones", "ok", "efectividad_pct", "productividad_pct", "ocupacion_pct")},
             "hojas_hoy": dia["hojas"],
             "hojas_abiertas_anteriores": abiertas,
+            "hojas_abiertas_hoy": [{"id": h["id"], "etiqueta": f"{h['centro']} · {h['brigada']}", "en_curso": h["en_curso"]}
+                                   for h in dia["hojas"] if not h["cerrada"]],
+            "hora_cierre": f"{settings.HORA_CIERRE_AUTOMATICO:%H:%M}",
             "incidencias_activas": incidencias,
             "no_visitadas": [{"brigada_id": b.pk, "brigada": b.nombre, "cantidad": n}
                              for b in brigadas if (n := ordenes_no_visitadas(b).count())],

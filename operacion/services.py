@@ -151,6 +151,35 @@ def cerrar_hoja(hoja, usuario, ahora=None):
     return hoja
 
 
+@transaction.atomic
+def reabrir_hoja(hoja, usuario, ahora=None):
+    """Reabre una hoja cerrada (p. ej. se cerró por error o el cierre automático llegó con trabajo en curso).
+
+    - Los servicios que el cierre dejó como NO VISITADOS vuelven a estar abiertos en esta hoja.
+    - No se puede si alguno de esos servicios ya se trajo a otra hoja: quedaría duplicado.
+    - Las incidencias que el cierre detuvo no se reactivan (el contador se arranca de nuevo si hace falta).
+    - El cierre automático no vuelve a cerrar la hoja durante las horas de gracia (`HORAS_GRACIA_REAPERTURA`)."""
+    if not hoja.cerrada:
+        raise ValidationError("La hoja de ruta no está cerrada.")
+    ahora = ahora or timezone.now()
+    devueltas = list(hoja.acciones.filter(no_visitada=True).select_related("orden"))
+    for accion in devueltas:
+        if accion.orden.acciones.filter(pk__gt=accion.pk).exists():
+            raise ValidationError(f"No se puede reabrir: el servicio {accion.orden.etiqueta} ya se trajo a otra hoja.")
+    for accion in devueltas:
+        accion.no_visitada = False
+        accion.modificado_por = usuario
+        accion.save()
+        orden = accion.orden
+        if orden.estado == OrdenServicio.Estado.NO_VISITADA and orden.brigada_pendiente_id == hoja.brigada_id:
+            orden.estado, orden.brigada_pendiente = OrdenServicio.Estado.ABIERTA, None
+            orden.save(update_fields=["estado", "brigada_pendiente", "modificado_en"])
+    hoja.cerrada, hoja.cerrada_en, hoja.cerrada_por = False, None, None
+    hoja.reabierta_en, hoja.reabierta_por, hoja.modificado_por = ahora, usuario, usuario
+    hoja.save()
+    return hoja
+
+
 # ---------------------------------------------------------------- cierre de acciones
 
 def _cerrar(accion, usuario, ahora):

@@ -67,6 +67,14 @@ La hora se cambia con `HORA_CIERRE_AUTOMATICO=HH:MM` en el `.env`. Si el equipo 
 - **Windows** (consola de administrador): `schtasks /Create /SC DAILY /ST 21:00 /TN "UDAT Cierre de hojas" /TR "C:\ruta\mesa_pruebas\cerrar_hojas_antiguas.bat" /F`
 - **Linux**: `0 21 * * * cd /ruta/mesa_pruebas && .venv/bin/python manage.py cerrar_hojas_antiguas >> logs/cerrar_hojas.log 2>&1`
 
+## Avisos y reapertura de hojas
+- Al pulsar "Salir" (o cerrar la pestaña) con hojas sin cerrar, la app avisa y recuerda que se cerrarán solas a la hora de cierre.
+- Inicio muestra las hojas de hoy que siguen abiertas y las de días anteriores.
+- **Reabrir una hoja cerrada** (por error o porque el cierre automático llegó con trabajo en curso): solo el **Jefe** y el administrador
+  (permiso `reabrir_hojaderuta`). Los servicios que el cierre dejó como no visitados vuelven a estar abiertos en la hoja; no se puede si
+  alguno ya se trajo a otra hoja. Queda registrado quién y cuándo, y el cierre automático no la vuelve a cerrar durante 12 horas.
+- Al actualizar una instalación existente: `python manage.py migrate` y `python manage.py cargar_inicial` (da el permiso al grupo Jefe).
+
 ## Acciones posteriores al corte de las 16:00
 El parte de las 16:00 es una foto a esa hora y no cambia. Lo que se cierre **después** del corte (hasta las 21:00):
 - **se contabiliza en el día en que se hizo** (en las estadísticas del día, mes y año), nunca en el día siguiente;

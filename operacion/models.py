@@ -71,11 +71,16 @@ class HojaDeRuta(Auditable):
     cerrada_por = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", editable=False
     )
+    reabierta_en = models.DateTimeField(null=True, blank=True, editable=False, help_text="Última vez que se reabrió una hoja cerrada.")
+    reabierta_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", editable=False
+    )
 
     class Meta:
         verbose_name = "hoja de ruta"
         verbose_name_plural = "hojas de ruta"
         ordering = ["-fecha", "brigada__nombre"]
+        permissions = [("reabrir_hojaderuta", "Puede reabrir una hoja de ruta cerrada")]
 
     def __str__(self):
         return f"{self.fecha:%d/%m/%Y} · {self.brigada} · {self.etiqueta_centros}"

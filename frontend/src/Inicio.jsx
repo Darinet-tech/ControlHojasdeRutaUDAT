@@ -93,6 +93,11 @@ export default function Inicio({ usuario, irA, abrirHoja }) {
       texto: `La hoja ${h.etiqueta} del ${diaMes(h.fecha)} sigue abierta${h.en_curso ? ` con ${h.en_curso} servicio(s) sin cerrar` : ''}. Hay que cerrarla para que lo no atendido pase a "no visitado".`,
       boton: ['Abrir hoja', () => abrirHoja(h.id)],
     }));
+    (datos.hojas_abiertas_hoy || []).forEach((h) => atencion.push({
+      clave: `hh${h.id}`, tipo: 'aviso',
+      texto: `La hoja ${h.etiqueta} de hoy sigue abierta${h.en_curso ? ` con ${h.en_curso} servicio(s) sin cerrar` : ''}. Se cerrará sola a las ${datos.hora_cierre}.`,
+      boton: ['Abrir hoja', () => abrirHoja(h.id)],
+    }));
     datos.incidencias_activas.forEach((i) => atencion.push({
       clave: `in${i.hoja}`, tipo: 'aviso',
       texto: `Contador activo: ${i.causa} en la hoja ${i.etiqueta} (${minutosATexto(i.minutos)}).`,
