@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, fechaLarga, puede } from './api.js';
+import { api, fechaLarga, hoy, puede } from './api.js';
 import { Aviso, Chip } from './componentes.jsx';
 
 function NuevaHoja({ catalogos, fecha, hojasDelDia, alCrear, alCancelar }) {
@@ -7,7 +7,6 @@ function NuevaHoja({ catalogos, fecha, hojasDelDia, alCrear, alCancelar }) {
   const [brigada, setBrigada] = useState(brigadas[0]?.id ?? '');
   const [centrosElegidos, setCentrosElegidos] = useState(new Set());
   const [vehiculo, setVehiculo] = useState('');
-  const [horaInicio, setHoraInicio] = useState('08:00');
   const [elegidos, setElegidos] = useState(new Set());
   const [filtro, setFiltro] = useState('');
   const [error, setError] = useState('');
@@ -57,8 +56,8 @@ function NuevaHoja({ catalogos, fecha, hojasDelDia, alCrear, alCancelar }) {
     setEnviando(true);
     try {
       const hoja = await api.post('/hojas/', {
-        fecha, brigada: Number(brigada), centros: [...centrosElegidos], vehiculo: vehiculo ? Number(vehiculo) : null,
-        hora_inicio: horaInicio, operarios: [...elegidos],
+        brigada: Number(brigada), centros: [...centrosElegidos], vehiculo: vehiculo ? Number(vehiculo) : null,
+        operarios: [...elegidos], // la fecha y la hora de inicio las pone el servidor al crear la hoja
       });
       if (traer && noVisitadas.length > 0) {
         try { await api.post(`/hojas/${hoja.id}/asignar-no-visitadas/`); } catch { /* la hoja ya existe: se pueden traer desde ella */ }
@@ -77,6 +76,7 @@ function NuevaHoja({ catalogos, fecha, hojasDelDia, alCrear, alCancelar }) {
   return (
     <form className="tarjeta" onSubmit={enviar} aria-label="Nueva hoja de ruta">
       <h2>Nueva hoja de ruta · {fechaLarga(fecha)}</h2>
+      <p className="suave">La fecha y la hora de inicio son las del momento en que se crea la hoja.</p>
       <Aviso>{error}</Aviso>
       <div className="rejilla-formulario">
         <label>Brigada
@@ -89,9 +89,6 @@ function NuevaHoja({ catalogos, fecha, hojasDelDia, alCrear, alCancelar }) {
             <option value="">Sin vehículo</option>
             {vehiculos.map((v) => <option key={v.id} value={v.id}>{v.chapa}</option>)}
           </select>
-        </label>
-        <label>Inicio de jornada
-          <input type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} required />
         </label>
       </div>
 
@@ -183,7 +180,7 @@ export default function HojasDelDia({ usuario, catalogos, fecha, setFecha, abrir
         <label className="en-linea">Fecha
           <input type="date" value={fecha} onChange={(e) => e.target.value && setFecha(e.target.value)} />
         </label>
-        {puede(usuario, 'operacion.add_hojaderuta') && !creando && (
+        {puede(usuario, 'operacion.add_hojaderuta') && !creando && fecha === hoy() && (
           <button className="boton boton-principal" onClick={() => setCreando(true)}>＋ Nueva hoja de ruta</button>
         )}
       </div>

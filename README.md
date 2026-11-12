@@ -59,6 +59,13 @@ Cada día a las 16:00 se envía por correo el informe del día (PDF + Excel) con
   (el equipo debe tener la hora de Cuba). Los resultados se anotan en `logs\informe_diario.log`.
 - **Programarlo (Linux)**: `0 16 * * * cd /ruta/mesa_pruebas && .venv/bin/python manage.py enviar_informe_diario >> logs/informe_diario.log 2>&1`
 
+## Cierre automático de hojas de días anteriores
+Si una hoja queda abierta al terminar el día, cada noche se cierra sola: sus servicios sin cerrar pasan a **no visitados** y los
+contadores de incidencia se detienen al final de ese día. Así no se acumulan hojas viejas ni tiempos absurdos.
+- Prueba sin cerrar nada: `python manage.py cerrar_hojas_antiguas --simular`
+- **Windows** (consola de administrador): `schtasks /Create /SC DAILY /ST 00:05 /TN "UDAT Cierre de hojas" /TR "C:\ruta\mesa_pruebas\cerrar_hojas_antiguas.bat" /F`
+- **Linux**: `5 0 * * * cd /ruta/mesa_pruebas && .venv/bin/python manage.py cerrar_hojas_antiguas >> logs/cerrar_hojas.log 2>&1`
+
 ## PostgreSQL
 1. Instale PostgreSQL 16 o superior (postgresql.org). Anote la clave del usuario `postgres`.
 2. Cree el usuario y la base (en "SQL Shell (psql)" o pgAdmin):

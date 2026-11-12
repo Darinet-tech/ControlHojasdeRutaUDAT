@@ -174,7 +174,10 @@ class HojaViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Creat
         return qs
 
     def perform_create(self, serializer):
-        serializer.save(creado_por=self.request.user, modificado_por=self.request.user)
+        # La fecha y la hora de inicio no se escriben a mano: son las del momento en que se crea la hoja (hora de Cuba).
+        ahora = timezone.localtime()
+        serializer.save(fecha=ahora.date(), hora_inicio=ahora.time().replace(microsecond=0),
+                        creado_por=self.request.user, modificado_por=self.request.user)
 
     def perform_update(self, serializer):
         if serializer.instance.cerrada:

@@ -6,6 +6,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from catalogos.models import Brigada, CausaIncidencia, Centro, Clave, Operario, TipoMantenimiento, TipoOrden, TipoTrabajo
+from operacion.models import HojaDeRuta
 from operacion.tests import BaseOperacion, crear_hoja
 from operacion.tests_reportes import EscenarioDosDias
 
@@ -35,10 +36,12 @@ class BaseAPI(TestCase):
         return Clave.objects.get(codigo=codigo).pk
 
     def crear_hoja(self, brigada=None, operarios=None, fecha=None):
-        r = self.api.post("/api/hojas/", {"fecha": fecha or str(timezone.localdate()), "brigada": (brigada or self.rep).pk,
+        r = self.api.post("/api/hojas/", {"brigada": (brigada or self.rep).pk,
                                           "centros": [self.ng.pk], "operarios": operarios or [self.op1.pk, self.op2.pk]},
                           format="json")
         self.assertEqual(r.status_code, 201, r.data)
+        if fecha:  # la API siempre crea la hoja con la fecha de hoy; para simular días pasados se retrocede en la base
+            HojaDeRuta.objects.filter(pk=r.data["id"]).update(fecha=fecha)
         return r.data["id"]
 
     def asignar(self, hoja, numero, **extra):
@@ -145,6 +148,15 @@ class FlujoDelProbadorTests(BaseAPI):
         self.assertTrue(detalle["cerrada"])
         self.assertEqual((len(detalle["acciones"]), len(detalle["incidencias"])), (2, 1))
 
+    def test_la_fecha_y_la_hora_de_inicio_las_pone_el_servidor(self):
+        antes = timezone.localtime().replace(microsecond=0)
+        r = self.api.post("/api/hojas/", {"fecha": "2026-01-01", "hora_inicio": "03:00", "brigada": self.rep.pk,
+                                          "centros": [self.ng.pk], "operarios": [self.op1.pk]}, format="json")
+        despues = timezone.localtime()
+        self.assertEqual(r.status_code, 201, r.data)
+        self.assertEqual(r.data["fecha"], str(antes.date()))  # lo enviado a mano se ignora
+        self.assertTrue(antes.time().isoformat() <= r.data["hora_inicio"] <= despues.time().isoformat(), r.data["hora_inicio"])
+
     def test_la_hoja_necesita_operarios(self):
         r = self.api.post("/api/hojas/", {"fecha": "2026-10-01", "brigada": self.rep.pk, "centros": [self.ng.pk],
                                           "operarios": []}, format="json")
@@ -236,22 +248,23 @@ class ApiNavegableTests(BaseAPI):
 
 class OperarioUnaHojaPorDiaAPITests(BaseAPI):
     def test_no_se_puede_crear_otra_hoja_con_un_operario_ocupado(self):
-        self.crear_hoja(operarios=[self.op1.pk], fecha="2026-10-05")
-        r = self.api.post("/api/hojas/", {"fecha": "2026-10-05", "brigada": self.cable.pk, "centros": [self.ng.pk],
+        primera = self.crear_hoja(operarios=[self.op1.pk])
+        r = self.api.post("/api/hojas/", {"brigada": self.cable.pk, "centros": [self.ng.pk],
                                           "operarios": [self.op1.pk, self.op2.pk]}, format="json")
         self.assertEqual(r.status_code, 400)
         self.assertIn("Operario Uno ya está en la hoja NG · Red de Abonados", r.data["operarios"][0])
-        self.assertEqual(self.api.get("/api/hojas/?fecha=2026-10-05").data["count"], 1)  # no quedó nada a medias
-        self.crear_hoja(operarios=[self.op1.pk], fecha="2026-10-06")  # otro día: permitido
+        hoy = timezone.localdate()
+        self.assertEqual(self.api.get(f"/api/hojas/?fecha={hoy}").data["count"], 1)  # no quedó nada a medias
+        HojaDeRuta.objects.filter(pk=primera).update(fecha="2026-10-05")
+        self.crear_hoja(operarios=[self.op1.pk])  # la primera ya es de otro día: hoy el operario está libre
 
     def test_tampoco_al_modificar_la_hoja(self):
-        h1 = self.crear_hoja(operarios=[self.op1.pk], fecha="2026-10-05")
-        h2 = self.crear_hoja(operarios=[self.op2.pk], fecha="2026-10-05")
+        h1 = self.crear_hoja(operarios=[self.op1.pk])
+        h2 = self.crear_hoja(operarios=[self.op2.pk])
         r = self.api.patch(f"/api/hojas/{h2}/", {"operarios": [self.op1.pk]}, format="json")
         self.assertEqual(r.status_code, 400)
-        h3 = self.crear_hoja(operarios=[self.op1.pk], fecha="2026-10-07")
-        r = self.api.patch(f"/api/hojas/{h3}/", {"fecha": "2026-10-05"}, format="json")  # mover la hoja a un día ocupado
-        self.assertEqual(r.status_code, 400)
+        r = self.api.patch(f"/api/hojas/{h2}/", {"fecha": "2026-10-05"}, format="json")  # la fecha no se puede cambiar a mano
+        self.assertEqual((r.status_code, r.data["fecha"]), (200, str(timezone.localdate())))
         self.assertEqual(self.api.patch(f"/api/hojas/{h1}/", {"observaciones": "ok"}, format="json").status_code, 200)
         self.assertEqual(self.api.patch(f"/api/hojas/{h2}/", {"operarios": [self.op2.pk, self.op3.pk]}, format="json").status_code, 200)
 
@@ -343,10 +356,11 @@ class VariosCentrosAPITests(BaseAPI):
         self.fo = Centro.objects.get(codigo="FO")
 
     def hoja_con(self, centros, operarios=None, fecha="2026-10-05"):
-        r = self.api.post("/api/hojas/", {"fecha": fecha, "brigada": self.rep.pk, "centros": [c.pk for c in centros],
+        r = self.api.post("/api/hojas/", {"brigada": self.rep.pk, "centros": [c.pk for c in centros],
                                           "operarios": operarios or [self.op1.pk]}, format="json")
         self.assertEqual(r.status_code, 201, r.data)
-        return r.data
+        HojaDeRuta.objects.filter(pk=r.data["id"]).update(fecha=fecha)  # simula un día pasado (la API siempre crea la hoja con la fecha de hoy)
+        return {**r.data, "fecha": fecha}
 
     def test_una_hoja_puede_tener_varios_centros(self):
         hoja = self.hoja_con([self.ng, self.fi])
@@ -553,16 +567,18 @@ class CategoriasAPITests(BaseAPI):
 
     def test_traer_los_pendientes_a_la_hoja_de_la_brigada(self):
         fi = Centro.objects.get(codigo="FI")
+        HojaDeRuta.objects.filter(pk=self.hoja).update(fecha="2026-10-04")  # la hoja del setUp (de hoy) libera a los operarios
         for numero, centro in (("46-6201", self.ng), ("46-6202", fi)):
-            hoja = self.api.post("/api/hojas/", {"fecha": "2026-10-05", "brigada": self.rep.pk, "centros": [centro.pk],
-                                                 "operarios": [self.op1.pk if centro == self.ng else self.op2.pk]}, format="json").data["id"]
+            r = self.api.post("/api/hojas/", {"brigada": self.rep.pk, "centros": [centro.pk],
+                                                 "operarios": [self.op1.pk if centro == self.ng else self.op2.pk]}, format="json"); hoja = r.data["id"]
+            HojaDeRuta.objects.filter(pk=hoja).update(fecha="2026-10-05")
             a = self.api.post(f"/api/hojas/{hoja}/acciones/", {"numero_servicio": numero}, format="json").data["id"]
             self.api.patch(f"/api/acciones/{a}/", {"claves": [self.clave("23")]}, format="json")
             self.api.post(f"/api/acciones/{a}/pasar-a-brigada/", {"brigada": self.cable.pk}, format="json")
         base = f"/api/ordenes/pendientes/?brigada={self.cable.pk}"
         self.assertEqual(len(self.api.get(base).data), 2)
         self.assertEqual([o["etiqueta"] for o in self.api.get(f"{base}&centro={self.ng.pk}").data], ["46-6201"])
-        hoja_cable = self.api.post("/api/hojas/", {"fecha": "2026-10-06", "brigada": self.cable.pk, "centros": [self.ng.pk],
+        hoja_cable = self.api.post("/api/hojas/", {"brigada": self.cable.pk, "centros": [self.ng.pk],
                                                    "operarios": [self.cab1.pk]}, format="json").data["id"]
         r = self.api.post(f"/api/hojas/{hoja_cable}/asignar-pendientes/")
         self.assertEqual((r.status_code, [a["etiqueta"] for a in r.data], [a["centro_codigo"] for a in r.data]), (201, ["46-6201"], ["NG"]))
