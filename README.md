@@ -64,7 +64,7 @@ Después de las 21:00 no se trabaja (oscuridad): toda hoja que siga abierta se c
 **no visitados** y los contadores de incidencia se detienen a las 21:00. Tampoco se pueden crear hojas pasada esa hora.
 La hora se cambia con `HORA_CIERRE_AUTOMATICO=HH:MM` en el `.env`. Si el equipo estuvo apagado, la siguiente ejecución cierra también las de días anteriores.
 - Prueba sin cerrar nada: `python manage.py cerrar_hojas_antiguas --simular`
-- **Windows** (consola de administrador): `schtasks /Create /SC DAILY /ST 21:00 /TN "UDAT Cierre de hojas" /TR "C:uta\mesa_pruebas\cerrar_hojas_antiguas.bat" /F`
+- **Windows** (consola de administrador): `schtasks /Create /SC DAILY /ST 21:00 /TN "UDAT Cierre de hojas" /TR "C:\ruta\mesa_pruebas\cerrar_hojas_antiguas.bat" /F`
 - **Linux**: `0 21 * * * cd /ruta/mesa_pruebas && .venv/bin/python manage.py cerrar_hojas_antiguas >> logs/cerrar_hojas.log 2>&1`
 
 ## Acciones posteriores al corte de las 16:00
