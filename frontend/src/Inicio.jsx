@@ -108,6 +108,11 @@ export default function Inicio({ usuario, irA, abrirHoja }) {
       texto: `${n.brigada}: ${n.cantidad} servicio(s) quedaron sin visitar y se pueden traer a la próxima hoja.`,
       boton: puede(usuario, 'operacion.add_hojaderuta') ? ['Crear hoja de ruta', () => irA('hojas', { crear: true })] : null,
     }));
+    (datos.sin_solucion || []).forEach((n) => atencion.push({
+      clave: `ss${n.brigada_id}`, tipo: 'aviso',
+      texto: `${n.brigada}: ${n.cantidad} servicio(s) quedaron sin solución (cerrados sin OK) y hay que retomarlos; en cada uno se ve la observación de la visita anterior.`,
+      boton: puede(usuario, 'operacion.add_hojaderuta') ? ['Crear hoja de ruta', () => irA('hojas', { crear: true })] : null,
+    }));
     datos.pendientes.forEach((n) => atencion.push({
       clave: `pe${n.brigada_id}`, tipo: 'info',
       texto: `${n.brigada}: ${n.cantidad} servicio(s) pendiente(s) que otras brigadas pasaron a la suya.`,

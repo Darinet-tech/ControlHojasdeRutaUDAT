@@ -21,6 +21,18 @@ la pantalla, la API y `/admin` en un solo puerto (por defecto `http://<equipo>:8
 `python empaquetar_entrega.py` genera el `.zip` que se les entrega (código + pantalla compilada, sin `.env`, copias ni datos).
 `.env.example` lista todas las variables de configuración.
 
+## Flujo de la hoja de ruta en el día
+1. **Crear la hoja** (brigada, centros, operarios, vehículo): queda como *Borrador*.
+2. **Insertar los servicios** del día. Con el primero aparece **Generar hoja de ruta**: al pulsarlo la hoja pasa a *Generada* y se puede imprimir (PDF).
+   Durante la jornada se pueden seguir agregando servicios; quedan marcados «Agregada durante la jornada».
+3. **Editar** mientras la hoja esté abierta: botón *Editar hoja* (centros, operarios, vehículo, observaciones; no se quita un centro que ya tiene servicios),
+   cambiar el centro de un servicio abierto y *Quitar de la hoja* un servicio asignado por error (solo si no está cerrado).
+4. **Claves y cierre de cada servicio:** *Seleccionar claves* abre una lista desplegable (agrupada, con filtro) donde se marcan una o varias.
+   Con claves se activan **Dar OK** y **Pasar a otra brigada**. El campo **Observaciones** es opcional.
+   **Cerrar sin OK** se activa con claves *o* con una observación (p. ej. «Clave 36. Cita para 15/11 a las 10:00»).
+5. **Seguimiento al día siguiente:** lo cerrado sin OK no cuenta como efectivo, pero queda *sin solución* para la brigada: al crear la hoja siguiente
+   se ofrece retomarlo, y en cada servicio se ve la **visita anterior** (claves y observación) para encaminar la solución.
+
 ## Tema claro / oscuro
 Cada usuario elige con el botón **☾ Oscuro / ☀ Claro** (cabecera y pantalla de inicio de sesión). La primera vez sigue la preferencia del sistema y después
 recuerda la elección **en ese navegador**. Al imprimir o exportar siempre se usa el tema claro. Los colores del tema están en las variables de `frontend/src/estilos.css`.

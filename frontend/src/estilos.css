@@ -182,3 +182,15 @@ a.boton { text-decoration: none; color: var(--texto); display: inline-block; }
 .boton-tema { white-space: nowrap; }
 .login-tema { position: fixed; top: .8rem; right: .8rem; z-index: 6; }
 .observaciones { margin: .5rem 0; font-weight: 600; } .observaciones textarea { width: 100%; resize: vertical; font-weight: 400; }
+
+/* Selector desplegable de claves */
+.boton-claves { padding: .2rem .7rem; font-size: .85rem; }
+.panel-claves { border: 1px solid var(--borde); border-radius: 8px; padding: .6rem; margin-top: .4rem; background: var(--campo); display: grid; gap: .5rem; }
+.panel-claves > input { width: 100%; }
+.lista-claves { max-height: 280px; overflow: auto; border: 1px solid var(--borde); border-radius: 6px; background: var(--tarjeta); }
+.grupo-claves { position: sticky; top: 0; background: var(--chip); color: var(--texto); font-weight: 700; font-size: .8rem; letter-spacing: .04em; text-transform: uppercase; padding: .25rem .6rem; }
+.fila-clave { display: flex; flex-direction: row; align-items: center; gap: .5rem; padding: .3rem .6rem; border-bottom: 1px solid var(--borde); cursor: pointer; }
+.fila-clave:hover { background: var(--info-fondo); }
+.fila-clave span { flex: 1; font-size: .88rem; } .fila-clave small { white-space: nowrap; }
+.antecedente { margin: .4rem 0; padding: .4rem .6rem; border-left: 4px solid var(--aviso); background: var(--aviso-fondo); color: var(--texto); border-radius: 4px; font-size: .9rem; }
+

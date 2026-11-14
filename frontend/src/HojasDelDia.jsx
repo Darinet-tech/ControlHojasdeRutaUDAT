@@ -14,6 +14,8 @@ function NuevaHoja({ catalogos, fecha, hojasDelDia, alCrear, alCancelar }) {
   const [noVisitadas, setNoVisitadas] = useState([]);
   const [traer, setTraer] = useState(true);
   const [pendientes, setPendientes] = useState([]);
+  const [sinSolucion, setSinSolucion] = useState([]);
+  const [traerSinSolucion, setTraerSinSolucion] = useState(true);
   const [traerPendientes, setTraerPendientes] = useState(true);
 
   // Un operario no puede estar en más de una hoja el mismo día: los que ya están en otra hoja se bloquean.
@@ -23,11 +25,12 @@ function NuevaHoja({ catalogos, fecha, hojasDelDia, alCrear, alCancelar }) {
   // Servicios que esta brigada no visitó en días anteriores (en cualquiera de los centros elegidos): se pueden traer solos.
   const idsCentros = [...centrosElegidos].sort().join(',');
   useEffect(() => {
-    if (!brigada || !idsCentros) { setNoVisitadas([]); setPendientes([]); return undefined; }
+    if (!brigada || !idsCentros) { setNoVisitadas([]); setPendientes([]); setSinSolucion([]); return undefined; }
     let vigente = true;
     const centrosUrl = idsCentros.split(',').map((c) => `centro=${c}`).join('&');
     api.get(`/ordenes/no-visitadas/?brigada=${brigada}&${centrosUrl}`).then((r) => vigente && setNoVisitadas(r)).catch(() => vigente && setNoVisitadas([]));
     api.get(`/ordenes/pendientes/?brigada=${brigada}&${centrosUrl}`).then((r) => vigente && setPendientes(r)).catch(() => vigente && setPendientes([]));
+    api.get(`/ordenes/sin-solucion/?brigada=${brigada}&${centrosUrl}`).then((r) => vigente && setSinSolucion(r)).catch(() => vigente && setSinSolucion([]));
     return () => { vigente = false; };
   }, [brigada, idsCentros]);
 
@@ -61,6 +64,9 @@ function NuevaHoja({ catalogos, fecha, hojasDelDia, alCrear, alCancelar }) {
       });
       if (traer && noVisitadas.length > 0) {
         try { await api.post(`/hojas/${hoja.id}/asignar-no-visitadas/`); } catch { /* la hoja ya existe: se pueden traer desde ella */ }
+      }
+      if (traerSinSolucion && sinSolucion.length > 0) {
+        try { await api.post(`/hojas/${hoja.id}/asignar-sin-solucion/`); } catch { /* la hoja ya existe: se pueden traer desde ella */ }
       }
       if (traerPendientes && pendientes.length > 0) {
         try { await api.post(`/hojas/${hoja.id}/asignar-pendientes/`); } catch { /* la hoja ya existe: se pueden traer desde ella */ }
@@ -128,6 +134,20 @@ function NuevaHoja({ catalogos, fecha, hojasDelDia, alCrear, alCancelar }) {
             <span>Traer a la hoja los <strong>{noVisitadas.length} servicio(s) no visitado(s)</strong> de días anteriores</span>
           </label>
           <small className="suave">{noVisitadas.map((o) => `${o.numero_servicio} (${o.ultima_fecha?.slice(8, 10)}/${o.ultima_fecha?.slice(5, 7)})`).join(' · ')}</small>
+        </div>
+      )}
+
+      {sinSolucion.length > 0 && (
+        <div className="opcion-traer">
+          <label className="casilla">
+            <input type="checkbox" checked={traerSinSolucion} onChange={(e) => setTraerSinSolucion(e.target.checked)} />
+            <span>Retomar los <strong>{sinSolucion.length} servicio(s) que quedaron sin solución</strong> (cerrados sin OK) en días anteriores</span>
+          </label>
+          <ul className="lista-simple">
+            {sinSolucion.map((o) => (
+              <li key={o.id}><small className="suave">{o.etiqueta}{o.ultimas_claves.length > 0 && ` · claves ${o.ultimas_claves.join(', ')}`}{o.ultima_observacion && ` · «${o.ultima_observacion}»`}</small></li>
+            ))}
+          </ul>
         </div>
       )}
 
@@ -216,6 +236,7 @@ export default function HojasDelDia({ usuario, catalogos, fecha, setFecha, abrir
             <div className="fila">
               <strong>{h.centros_etiqueta} · {h.brigada_nombre}</strong>
               {h.cerrada ? <Chip>Cerrada</Chip> : <Chip tipo="info">Abierta</Chip>}
+              {!h.cerrada && !h.generada && <Chip tipo="aviso" titulo="Aún no se ha generado la hoja de ruta">Borrador</Chip>}
             </div>
             <div className="suave">{h.operarios_nombres.join(', ')}</div>
             <div className="fila fila-chips">

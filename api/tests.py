@@ -727,3 +727,92 @@ class AvisosDelEnvioEnInicioTests(BaseOperacion):
         self.api.force_authenticate(especialista)
         catalogos = self.api.get("/api/inicio/").data["catalogos"]
         self.assertEqual((catalogos["trabajos_sin_norma"], catalogos["informe_diario"]), (2, None))
+
+
+class FlujoDeLaHojaAPITests(BaseAPI):
+    def test_generar_la_hoja_exige_servicios_y_se_puede_seguir_agregando(self):
+        hoja = self.crear_hoja()
+        self.assertFalse(self.api.get(f"/api/hojas/{hoja}/").data["generada"])
+        r = self.api.post(f"/api/hojas/{hoja}/generar/")  # todavía sin servicios
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("al menos un servicio", str(r.data))
+        primera = self.asignar(hoja, "46-910001")
+        r = self.api.post(f"/api/hojas/{hoja}/generar/")
+        self.assertEqual((r.status_code, r.data["generada"]), (200, True))
+        self.assertIsNotNone(r.data["generada_en"])
+        self.assertEqual(self.api.post(f"/api/hojas/{hoja}/generar/").status_code, 400)  # ya está generada
+        extra = self.asignar(hoja, "46-910002")  # situación operativa: se agrega durante la jornada
+        acciones = {a["numero_servicio"]: a for a in self.api.get(f"/api/hojas/{hoja}/").data["acciones"]}
+        self.assertFalse(acciones["46-910001"]["agregada_despues"])
+        self.assertTrue(acciones["46-910002"]["agregada_despues"])
+        self.assertEqual((primera["numero"], extra["numero"]), (1, 2))
+
+    def test_editar_la_hoja_abierta_pero_no_quitar_un_centro_con_servicios(self):
+        hoja = self.crear_hoja()
+        self.asignar(hoja, "46-910010")
+        fi = Centro.objects.get(codigo="FI")
+        r = self.api.patch(f"/api/hojas/{hoja}/", {"centros": [self.ng.pk, fi.pk], "observaciones": "Sale tarde"}, format="json")
+        self.assertEqual((r.status_code, r.data["centros_etiqueta"], r.data["observaciones"]), (200, "FI + NG", "Sale tarde"))
+        r = self.api.patch(f"/api/hojas/{hoja}/", {"centros": [fi.pk]}, format="json")  # NG ya tiene un servicio
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("NG", str(r.data))
+        self.api.post(f"/api/hojas/{hoja}/cerrar/")
+        self.assertEqual(self.api.patch(f"/api/hojas/{hoja}/", {"observaciones": "x"}, format="json").status_code, 400)  # cerrada
+
+    def test_cambiar_el_centro_de_un_servicio_abierto(self):
+        fi = Centro.objects.get(codigo="FI")
+        hoja = self.crear_hoja()
+        self.api.patch(f"/api/hojas/{hoja}/", {"centros": [self.ng.pk, fi.pk]}, format="json")
+        a = self.asignar(hoja, "46-910020", centro=self.ng.pk)
+        r = self.api.patch(f"/api/acciones/{a['id']}/", {"centro": fi.pk}, format="json")
+        self.assertEqual((r.status_code, r.data["centro_codigo"]), (200, "FI"))
+        otro = Centro.objects.get(codigo="FO")
+        self.assertEqual(self.api.patch(f"/api/acciones/{a['id']}/", {"centro": otro.pk}, format="json").status_code, 400)
+
+    def test_quitar_un_servicio_asignado_por_error(self):
+        from operacion.models import Accion, OrdenServicio
+        hoja = self.crear_hoja()
+        a = self.asignar(hoja, "46-910030")
+        self.assertEqual(self.api.post(f"/api/acciones/{a['id']}/quitar/").status_code, 204)
+        self.assertFalse(Accion.objects.filter(pk=a["id"]).exists())
+        self.assertFalse(OrdenServicio.objects.filter(pk=a["orden"]).exists())  # la orden se creó solo para esa acción
+        cerrada = self.asignar(hoja, "46-910031")
+        self.api.patch(f"/api/acciones/{cerrada['id']}/", {"claves": [self.clave("25-R")]}, format="json")
+        self.api.post(f"/api/acciones/{cerrada['id']}/ok/", {"cliente_contactado": "C"}, format="json")
+        r = self.api.post(f"/api/acciones/{cerrada['id']}/quitar/")
+        self.assertEqual(r.status_code, 400)  # ya cerrada: no se quita
+
+    def test_quitar_un_no_visitado_lo_devuelve_a_la_lista_del_dia_siguiente(self):
+        hoja1 = self.crear_hoja(fecha="2026-10-05")
+        self.asignar(hoja1, "46-910040")
+        self.api.post(f"/api/hojas/{hoja1}/cerrar/")
+        hoja2 = self.crear_hoja()
+        r = self.api.post(f"/api/hojas/{hoja2}/asignar-no-visitadas/")
+        self.assertEqual(len(r.data), 1)
+        self.api.post(f"/api/acciones/{r.data[0]['id']}/quitar/")
+        ofrecidas = self.api.get(f"/api/ordenes/no-visitadas/?brigada={self.rep.pk}").data
+        self.assertEqual([o["numero_servicio"] for o in ofrecidas], ["46-910040"])
+
+    def test_cerrado_sin_ok_queda_en_seguimiento_con_su_observacion(self):
+        hoja1 = self.crear_hoja()
+        a = self.asignar(hoja1, "46-910050")
+        self.api.patch(f"/api/acciones/{a['id']}/", {"claves": [self.clave("23")]}, format="json")
+        r = self.api.post(f"/api/acciones/{a['id']}/cerrar-sin-ok/", {"observaciones": "Cita para 15/11 a las 10:00"}, format="json")
+        self.assertEqual((r.status_code, r.data["estado"], r.data["estado_orden"]), (200, "SIN_OK", "SIN_SOLUCION"))
+        self.assertEqual(self.api.get(f"/api/ordenes/sin-solucion/?brigada={self.cable.pk}").data, [])  # solo para su brigada
+        self.api.post(f"/api/hojas/{hoja1}/cerrar/")
+        from operacion.models import HojaDeRuta
+        HojaDeRuta.objects.filter(pk=hoja1).update(fecha="2026-10-05")
+        # al día siguiente la brigada ve por qué quedó pendiente y lo retoma
+        pendientes = self.api.get(f"/api/ordenes/sin-solucion/?brigada={self.rep.pk}&centro={self.ng.pk}").data
+        self.assertEqual([(o["numero_servicio"], o["ultima_observacion"], o["ultimas_claves"]) for o in pendientes],
+                         [("46-910050", "Cita para 15/11 a las 10:00", ["23"])])
+        self.assertEqual(self.api.get("/api/inicio/").data["sin_solucion"][0]["cantidad"], 1)
+        hoja2 = self.crear_hoja(operarios=[self.op3.pk])
+        r = self.api.post(f"/api/hojas/{hoja2}/asignar-sin-solucion/")
+        self.assertEqual((r.status_code, [x["numero_servicio"] for x in r.data], r.data[0]["estado_orden"]), (201, ["46-910050"], "ABIERTA"))
+        previa = r.data[0]["visita_anterior"]
+        self.assertEqual((previa["observaciones"], previa["claves"], previa["estado"]), ("Cita para 15/11 a las 10:00", ["23"], "SIN_OK"))
+        self.assertEqual(self.api.get(f"/api/ordenes/sin-solucion/?brigada={self.rep.pk}").data, [])  # ya está en trabajo
+        # escribir el mismo número de servicio también retoma la orden (no crea otra)
+        self.assertEqual(self.api.post(f"/api/hojas/{hoja2}/asignar-sin-solucion/").data, [])

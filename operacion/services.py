@@ -263,6 +263,11 @@ def cerrar_sin_ok(accion, usuario, ahora=None, observaciones=None):
             raise ValidationError("Escriba una observación (o registre al menos una clave) para dejar constancia de la visita antes de cerrar sin OK.")
     _cerrar(accion, usuario, ahora)
     accion.save()
+    # El servicio no se resolvió: queda en seguimiento para la brigada en la siguiente jornada, con la observación como antecedente.
+    orden = accion.orden
+    orden.estado = OrdenServicio.Estado.SIN_SOLUCION
+    orden.brigada_pendiente = accion.hoja.brigada
+    orden.save(update_fields=["estado", "brigada_pendiente", "modificado_en"])
     return accion
 
 
@@ -280,13 +285,22 @@ def ordenes_pendientes(brigada, centros=None):
     return qs.exclude(Exists(_en_trabajo()))
 
 
-def ordenes_no_visitadas(brigada, centros=None):
-    """Servicios que la brigada no visitó en días anteriores (opcionalmente de ciertos centros), listos para el nuevo día."""
-    qs = OrdenServicio.objects.filter(estado=OrdenServicio.Estado.NO_VISITADA, brigada_pendiente=brigada)
+def _ordenes_de_la_brigada(estado, brigada, centros=None):
+    qs = OrdenServicio.objects.filter(estado=estado, brigada_pendiente=brigada)
     if centros is not None:
         centros = [centros] if not hasattr(centros, "__iter__") else list(centros)
         qs = qs.filter(acciones__centro__in=centros).distinct()
     return qs.exclude(Exists(_en_trabajo()))
+
+
+def ordenes_no_visitadas(brigada, centros=None):
+    """Servicios que la brigada no visitó en días anteriores (opcionalmente de ciertos centros), listos para el nuevo día."""
+    return _ordenes_de_la_brigada(OrdenServicio.Estado.NO_VISITADA, brigada, centros)
+
+
+def ordenes_sin_solucion(brigada, centros=None):
+    """Servicios que la brigada visitó pero cerró sin OK (p. ej. cita para otra fecha): se retoman con su observación."""
+    return _ordenes_de_la_brigada(OrdenServicio.Estado.SIN_SOLUCION, brigada, centros)
 
 
 CAMPOS_POR_CATEGORIA = {  # lo que corresponde introducir en cada tipo de acción; el resto no se acepta
@@ -367,7 +381,7 @@ def asignar_orden(hoja, orden, usuario, centro=None, trabajos=None):
     if hoja.acciones.filter(orden=orden, hora_fin__isnull=True, no_visitada=False).exists():
         raise ValidationError("Ese servicio ya está asignado a esta hoja y sigue abierto.")
     centro = _centro_del_servicio(hoja, orden, centro)
-    if orden.estado == OrdenServicio.Estado.NO_VISITADA:
+    if orden.estado in (OrdenServicio.Estado.NO_VISITADA, OrdenServicio.Estado.SIN_SOLUCION):
         orden.estado, orden.brigada_pendiente = OrdenServicio.Estado.ABIERTA, None
         orden.save(update_fields=["estado", "brigada_pendiente", "modificado_en"])
     numero = (hoja.acciones.aggregate(m=Max("numero"))["m"] or 0) + 1
@@ -396,6 +410,64 @@ def asignar_no_visitadas(hoja, usuario, ordenes=None):
         candidatas = candidatas.filter(pk__in=[o.pk for o in ordenes])
     with transaction.atomic():
         return [asignar_orden(hoja, orden, usuario) for orden in candidatas.order_by("creado_en")]
+
+
+def asignar_sin_solucion(hoja, usuario, ordenes=None):
+    """Asigna a la hoja los servicios que quedaron sin solución de su brigada y de cualquiera de sus centros (o solo los indicados)."""
+    candidatas = ordenes_sin_solucion(hoja.brigada, hoja.centros.all())
+    if ordenes is not None:
+        candidatas = candidatas.filter(pk__in=[o.pk for o in ordenes])
+    with transaction.atomic():
+        return [asignar_orden(hoja, orden, usuario) for orden in candidatas.order_by("creado_en")]
+
+
+def _restaurar_estado_orden(orden):
+    """Deja la orden como estaba según su última acción registrada (al quitar una acción asignada por error)."""
+    ultima = orden.acciones.select_related("hoja").order_by("-hoja__fecha", "-pk").first()
+    if ultima is None:
+        orden.delete()  # se creó solo para esa acción
+        return
+    E = OrdenServicio.Estado
+    if ultima.ok:
+        estado, brigada = E.RESTABLECIDA, None
+    elif ultima.pasada_a_id:
+        estado, brigada = E.PENDIENTE, ultima.pasada_a
+    elif ultima.no_visitada:
+        estado, brigada = E.NO_VISITADA, ultima.hoja.brigada
+    elif ultima.hora_fin:
+        estado, brigada = E.SIN_SOLUCION, ultima.hoja.brigada
+    else:
+        estado, brigada = E.ABIERTA, None
+    orden.estado, orden.brigada_pendiente = estado, brigada
+    orden.save(update_fields=["estado", "brigada_pendiente", "modificado_en"])
+
+
+@transaction.atomic
+def quitar_accion(accion, usuario):
+    """Quita de la hoja un servicio que aún no se cerró (se asignó por error). La orden vuelve a su estado anterior."""
+    if accion.hoja.cerrada:
+        raise ValidationError("La hoja de ruta está cerrada.")
+    if accion.hora_fin is not None or accion.no_visitada:
+        raise ValidationError("Solo se puede quitar un servicio que todavía no está cerrado.")
+    orden = accion.orden
+    accion.delete()
+    _restaurar_estado_orden(orden)
+
+
+@transaction.atomic
+def generar_hoja(hoja, usuario, ahora=None):
+    """Genera oficialmente la hoja de ruta cuando ya se insertaron los servicios del día.
+
+    Después se pueden seguir agregando servicios por situaciones operativas; quedan marcados como agregados durante la jornada."""
+    if hoja.cerrada:
+        raise ValidationError("La hoja de ruta está cerrada.")
+    if hoja.generada_en:
+        raise ValidationError("La hoja de ruta ya se generó.")
+    if not hoja.acciones.exists():
+        raise ValidationError("Agregue al menos un servicio antes de generar la hoja de ruta.")
+    hoja.generada_en, hoja.generada_por, hoja.modificado_por = ahora or timezone.now(), usuario, usuario
+    hoja.save()
+    return hoja
 
 
 def resumen_hoja(hoja, ahora=None):

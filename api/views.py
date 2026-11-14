@@ -23,9 +23,10 @@ from operacion.models import Accion, DestinatarioInforme, HojaDeRuta, Incidencia
 from operacion.informes import generar_informe
 from operacion.reportes import analisis_de_jefatura, resumen_periodo
 from catalogos.models import NormaTiempo, NormaTrabajo
-from operacion.services import (asignar_no_visitadas, asignar_orden, asignar_pendientes, obtener_orden, cerrar_hoja, cerrar_sin_ok, certificar_ok,
-                                finalizar_incidencia, historial_servicio, iniciar_incidencia, ordenes_no_visitadas,
-                                ordenes_pendientes, pasar_a_brigada, reabrir_hoja, resumen_hoja)
+from operacion.services import (asignar_no_visitadas, asignar_orden, asignar_pendientes, asignar_sin_solucion, generar_hoja, obtener_orden,
+                                cerrar_hoja, cerrar_sin_ok, certificar_ok, finalizar_incidencia, historial_servicio, iniciar_incidencia,
+                                ordenes_no_visitadas, ordenes_pendientes, ordenes_sin_solucion, pasar_a_brigada, quitar_accion,
+                                reabrir_hoja, resumen_hoja)
 
 from . import serializers as s
 
@@ -227,6 +228,21 @@ class HojaViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Creat
         resumen = resumen_hoja(hoja)
         return Response({"cerrada": True, "no_visitadas": resumen["no_visitadas"], "resumen": resumen})
 
+    @action(detail=True, methods=["post"])
+    def generar(self, request, pk=None):
+        """Genera oficialmente la hoja de ruta una vez insertados los servicios del día (después se pueden agregar más)."""
+        hoja = generar_hoja(self.get_object(), request.user)
+        return Response(s.HojaDetalleSerializer(hoja).data)
+
+    @action(detail=True, methods=["post"], url_path="asignar-sin-solucion")
+    def asignar_sin_solucion(self, request, pk=None):
+        """Trae a la hoja los servicios que quedaron sin solución (cerrados sin OK) de días anteriores, con su observación.
+        Opcional: {"ordenes": [ids]} para traer solo algunos."""
+        ids = request.data.get("ordenes")
+        ordenes = list(OrdenServicio.objects.filter(pk__in=ids)) if ids is not None else None
+        acciones = asignar_sin_solucion(self.get_object(), request.user, ordenes)
+        return Response(s.AccionSerializer(acciones, many=True).data, status=status.HTTP_201_CREATED)
+
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
     def reabrir(self, request, pk=None):
         """Reabre una hoja cerrada. Solo quien tiene el permiso de reabrir (el jefe y el administrador)."""
@@ -320,6 +336,12 @@ class AccionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Upd
         return self._respuesta(accion)
 
     @action(detail=True, methods=["post"])
+    def quitar(self, request, pk=None):
+        """Quita de la hoja un servicio asignado por error, mientras no esté cerrado."""
+        quitar_accion(self.get_object(), request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=["post"])
     def ok(self, request, pk=None):
         """El probador certificó el trabajo (en un correctivo, hablando con el cliente, cuyo nombre es obligatorio)."""
         datos = s.DarOkSerializer(data=request.data)
@@ -351,7 +373,7 @@ class OrdenViewSet(viewsets.ReadOnlyModelViewSet):
     """Filtros: ?numero=texto (número de servicio o de orden)  ?estado=PENDIENTE  ?brigada_pendiente="""
 
     queryset = OrdenServicio.objects.select_related("tipo_orden", "brigada_pendiente").prefetch_related(
-        "acciones__hoja", "acciones__centro")
+        "acciones__hoja", "acciones__centro", "acciones__claves")
     serializer_class = s.OrdenSerializer
 
     def get_queryset(self):
@@ -371,7 +393,7 @@ class OrdenViewSet(viewsets.ReadOnlyModelViewSet):
         if brigada is None:
             raise ErrorDjango("Indique la brigada: ?brigada=<id>")
         ids = request.query_params.getlist("centro")
-        qs = ordenes_pendientes(brigada, list(Centro.objects.filter(pk__in=ids)) if ids else None).select_related("tipo_orden", "brigada_pendiente").prefetch_related("acciones__hoja", "acciones__centro")
+        qs = ordenes_pendientes(brigada, list(Centro.objects.filter(pk__in=ids)) if ids else None).select_related("tipo_orden", "brigada_pendiente").prefetch_related("acciones__hoja", "acciones__centro", "acciones__claves")
         return Response(s.OrdenSerializer(qs, many=True).data)
 
     @action(detail=False, methods=["get"], url_path="no-visitadas")
@@ -382,7 +404,18 @@ class OrdenViewSet(viewsets.ReadOnlyModelViewSet):
             raise ErrorDjango("Indique la brigada: ?brigada=<id>")
         ids = request.query_params.getlist("centro")
         centros = list(Centro.objects.filter(pk__in=ids)) if ids else None
-        qs = ordenes_no_visitadas(brigada, centros).select_related("tipo_orden", "brigada_pendiente").prefetch_related("acciones__hoja", "acciones__centro")
+        qs = ordenes_no_visitadas(brigada, centros).select_related("tipo_orden", "brigada_pendiente").prefetch_related("acciones__hoja", "acciones__centro", "acciones__claves")
+        return Response(s.OrdenSerializer(qs, many=True).data)
+
+    @action(detail=False, methods=["get"], url_path="sin-solucion")
+    def sin_solucion(self, request):
+        """Servicios que la brigada cerró sin OK en días anteriores y debe retomar: ?brigada=<id>&centro=<id> (centro se puede repetir)."""
+        brigada = Brigada.objects.filter(pk=request.query_params.get("brigada")).first()
+        if brigada is None:
+            raise ErrorDjango("Indique la brigada: ?brigada=<id>")
+        ids = request.query_params.getlist("centro")
+        centros = list(Centro.objects.filter(pk__in=ids)) if ids else None
+        qs = ordenes_sin_solucion(brigada, centros).select_related("tipo_orden", "brigada_pendiente").prefetch_related("acciones__hoja", "acciones__centro", "acciones__claves")
         return Response(s.OrdenSerializer(qs, many=True).data)
 
     @action(detail=False, methods=["get"])
@@ -488,6 +521,8 @@ class InicioView(APIView):
                              for b in brigadas if (n := ordenes_no_visitadas(b).count())],
             "pendientes": [{"brigada_id": b.pk, "brigada": b.nombre, "cantidad": n}
                            for b in brigadas if (n := ordenes_pendientes(b).count())],
+            "sin_solucion": [{"brigada_id": b.pk, "brigada": b.nombre, "cantidad": n}
+                             for b in brigadas if (n := ordenes_sin_solucion(b).count())],
             "catalogos": None,
         }
         if request.user.is_staff and (request.user.is_superuser or request.user.has_perm("catalogos.change_clave")):

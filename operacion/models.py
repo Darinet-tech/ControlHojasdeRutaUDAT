@@ -71,6 +71,13 @@ class HojaDeRuta(Auditable):
     cerrada_por = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", editable=False
     )
+    generada_en = models.DateTimeField(
+        null=True, blank=True, editable=False,
+        help_text="Cuando se generó oficialmente la hoja de ruta (al terminar de insertar los servicios del día). Vacío = borrador.",
+    )
+    generada_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", editable=False
+    )
     reabierta_en = models.DateTimeField(null=True, blank=True, editable=False, help_text="Última vez que se reabrió una hoja cerrada.")
     reabierta_por = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", editable=False
@@ -128,6 +135,7 @@ class OrdenServicio(Auditable):
         ABIERTA = "ABIERTA", "Abierta"
         PENDIENTE = "PENDIENTE", "Pendiente de otra brigada"
         NO_VISITADA = "NO_VISITADA", "No visitada (pasa al siguiente día)"
+        SIN_SOLUCION = "SIN_SOLUCION", "Sin solución (seguimiento al día siguiente)"
         RESTABLECIDA = "RESTABLECIDA", "Restablecida (OK)"
 
     class Categoria(models.TextChoices):

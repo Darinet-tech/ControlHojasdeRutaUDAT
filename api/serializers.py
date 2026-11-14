@@ -122,13 +122,30 @@ class AccionSerializer(serializers.ModelSerializer):
     sugerencia_ok = serializers.SerializerMethodField()
     estado = serializers.SerializerMethodField()
     posterior_al_corte = serializers.SerializerMethodField(help_text="Se cerró después del corte de las 16:00: va en el complemento del parte siguiente.")
+    agregada_despues = serializers.SerializerMethodField(help_text="Se agregó a la hoja después de generarla (durante la jornada).")
+    visita_anterior = serializers.SerializerMethodField(help_text="Antecedente: la última visita cerrada a este mismo servicio.")
 
     class Meta:
         model = Accion
         fields = ["id", "hoja", "orden", "numero", "etiqueta", "categoria", "categoria_texto", "numero_servicio", "tipo_mantenimiento",
                   "tipo_orden", "numero_orden", "trabajos", "centro", "centro_codigo", "estado_orden", "claves",
                   "descripcion_trabajo", "observaciones", "estado", "ok", "cliente_contactado", "pasada_a",
-                  "pasada_a_nombre", "hora_fin", "tiempo_real_min", "norma_min", "sugerencia_ok", "posterior_al_corte"]
+                  "pasada_a_nombre", "hora_fin", "tiempo_real_min", "norma_min", "sugerencia_ok", "posterior_al_corte", "agregada_despues",
+                  "visita_anterior"]
+
+    def get_agregada_despues(self, accion):
+        generada = accion.hoja.generada_en
+        return bool(generada and accion.creado_en > generada)
+
+    def get_visita_anterior(self, accion):
+        previa = (accion.orden.acciones.filter(pk__lt=accion.pk).exclude(hora_fin__isnull=True, no_visitada=False)
+                  .select_related("hoja").prefetch_related("claves").order_by("-pk").first())
+        if previa is None:
+            return None
+        claves = [c.codigo for c in previa.claves.all()]
+        if not (claves or previa.observaciones):
+            return None
+        return {"fecha": previa.hoja.fecha, "estado": previa.estado, "claves": claves, "observaciones": previa.observaciones}
 
     def get_posterior_al_corte(self, accion):
         return bool(accion.hora_fin and accion.hora_fin > momento_del_corte(accion.hoja.fecha))
@@ -148,10 +165,16 @@ class ActualizarAccionSerializer(serializers.ModelSerializer):
 
     claves = serializers.PrimaryKeyRelatedField(many=True, queryset=Clave.objects.filter(activa=True), required=False)
     trabajos = serializers.PrimaryKeyRelatedField(many=True, queryset=TipoTrabajo.objects.filter(activo=True), required=False)
+    centro = serializers.PrimaryKeyRelatedField(queryset=Centro.objects.all(), required=False)
 
     class Meta:
         model = Accion
-        fields = ["claves", "trabajos", "descripcion_trabajo", "observaciones"]
+        fields = ["claves", "trabajos", "descripcion_trabajo", "observaciones", "centro"]
+
+    def validate_centro(self, centro):
+        if centro.pk not in set(self.instance.hoja.centros.values_list("pk", flat=True)):
+            raise serializers.ValidationError(f"El centro {centro.codigo} no es uno de los centros de la hoja.")
+        return centro
 
 
 class CrearAccionSerializer(serializers.Serializer):
@@ -199,17 +222,21 @@ class HojaSerializer(serializers.ModelSerializer):
     cantidad_acciones = serializers.SerializerMethodField()
     resultados = serializers.SerializerMethodField()
     incidencia_activa = serializers.SerializerMethodField()
+    generada = serializers.SerializerMethodField()
 
     class Meta:
         model = HojaDeRuta
         fields = ["id", "fecha", "brigada", "brigada_nombre", "centros", "centros_codigos", "centros_etiqueta", "vehiculo",
                   "vehiculo_chapa", "operarios", "operarios_nombres", "hora_inicio", "observaciones", "cerrada",
-                  "cerrada_en", "reabierta_en", "cantidad_acciones", "resultados", "incidencia_activa"]
-        read_only_fields = ["fecha", "hora_inicio", "cerrada", "cerrada_en", "reabierta_en"]  # fecha y hora de inicio las pone el servidor al crear
+                  "cerrada_en", "reabierta_en", "generada", "generada_en", "cantidad_acciones", "resultados", "incidencia_activa"]
+        read_only_fields = ["fecha", "hora_inicio", "cerrada", "cerrada_en", "reabierta_en", "generada_en"]  # fecha y hora de inicio las pone el servidor al crear
         extra_kwargs = {
             "centros": {"error_messages": {"empty": "Indique al menos un centro."}},
             "operarios": {"error_messages": {"empty": "La hoja de ruta necesita al menos un operario."}},
         }
+
+    def get_generada(self, hoja):
+        return hoja.generada_en is not None
 
     def get_centros_codigos(self, hoja):
         return sorted(c.codigo for c in hoja.centros.all())
@@ -248,6 +275,11 @@ class HojaSerializer(serializers.ModelSerializer):
     def validate(self, datos):
         """Un operario no puede estar en más de una hoja de ruta el mismo día."""
         hoja = self.instance
+        if hoja and "centros" in datos:  # no se puede quitar un centro que ya tiene servicios asignados
+            usados = set(hoja.acciones.exclude(centro__isnull=True).values_list("centro_id", flat=True))
+            quitados = sorted(c.codigo for c in hoja.centros.all() if c.pk in usados and c.pk not in {x.pk for x in datos["centros"]})
+            if quitados:
+                raise serializers.ValidationError({"centros": f"No se puede quitar el centro {', '.join(quitados)}: ya tiene servicios en esta hoja."})
         if "operarios" in datos:
             fecha = hoja.fecha if hoja else timezone.localdate()
             operarios = datos.get("operarios", list(hoja.operarios.all()) if hoja else [])
@@ -277,12 +309,14 @@ class OrdenSerializer(serializers.ModelSerializer):
     estado_texto = serializers.CharField(source="get_estado_display", read_only=True)
     ultima_fecha = serializers.SerializerMethodField(help_text="Fecha de la última acción sobre la orden.")
     ultimo_centro = serializers.SerializerMethodField(help_text="Código del centro de la última acción.")
+    ultima_observacion = serializers.SerializerMethodField(help_text="Observación de la última acción: por qué quedó pendiente.")
+    ultimas_claves = serializers.SerializerMethodField(help_text="Claves de la última acción.")
 
     class Meta:
         model = OrdenServicio
         fields = ["id", "etiqueta", "categoria", "categoria_texto", "numero_orden", "numero_servicio", "tipo_orden", "tipo_orden_codigo",
                   "fecha_reporte", "estado", "estado_texto",
-                  "brigada_pendiente", "brigada_pendiente_nombre", "ultima_fecha", "ultimo_centro"]
+                  "brigada_pendiente", "brigada_pendiente_nombre", "ultima_fecha", "ultimo_centro", "ultima_observacion", "ultimas_claves"]
 
     def _ultima(self, orden):
         acciones = sorted(orden.acciones.all(), key=lambda a: (a.hoja.fecha, a.pk))
@@ -291,6 +325,14 @@ class OrdenSerializer(serializers.ModelSerializer):
     def get_ultima_fecha(self, orden):
         ultima = self._ultima(orden)
         return ultima.hoja.fecha.isoformat() if ultima else None
+
+    def get_ultima_observacion(self, orden):
+        ultima = self._ultima(orden)
+        return ultima.observaciones if ultima else ""
+
+    def get_ultimas_claves(self, orden):
+        ultima = self._ultima(orden)
+        return sorted(c.codigo for c in ultima.claves.all()) if ultima else []
 
     def get_ultimo_centro(self, orden):
         ultima = self._ultima(orden)

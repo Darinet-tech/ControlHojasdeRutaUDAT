@@ -5,15 +5,25 @@ import { Aviso, Chip, Estadistica, Modal, tipoDeClasificacion } from './componen
 // ---------------------------------------------------------------- selector de claves
 
 function SelectorDeClaves({ catalogo, seleccionadas, alCambiar, deshabilitado }) {
+  const [abierto, setAbierto] = useState(false);
   const [texto, setTexto] = useState('');
+  const [marcadas, setMarcadas] = useState(new Set());
   const ids = seleccionadas.map((c) => c.id);
   const q = texto.trim().toLowerCase();
-  const coincidencias = q
-    ? catalogo.filter((c) => !ids.includes(c.id) && `${c.codigo} ${c.descripcion} ${c.grupo}`.toLowerCase().includes(q))
-        .sort((a, b) => (b.codigo.toLowerCase() === q) - (a.codigo.toLowerCase() === q) ||
-          (b.codigo.toLowerCase().startsWith(q)) - (a.codigo.toLowerCase().startsWith(q)))
-        .slice(0, 8)
-    : [];
+
+  const abrir = () => { setMarcadas(new Set(ids)); setTexto(''); setAbierto(true); };
+  const alternar = (id) => setMarcadas((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const aplicar = () => {
+    setAbierto(false);
+    const nuevas = [...marcadas];
+    if (nuevas.length !== ids.length || nuevas.some((i) => !ids.includes(i))) alCambiar(nuevas);
+  };
+
+  // las claves, agrupadas por su grupo (Cable, Datos...), filtradas por lo que se escriba
+  const grupos = new Map();
+  catalogo
+    .filter((c) => !q || `${c.codigo} ${c.descripcion} ${c.grupo}`.toLowerCase().includes(q))
+    .forEach((c) => { if (!grupos.has(c.grupo)) grupos.set(c.grupo, []); grupos.get(c.grupo).push(c); });
 
   return (
     <div className="claves">
@@ -27,26 +37,37 @@ function SelectorDeClaves({ catalogo, seleccionadas, alCambiar, deshabilitado })
             )}
           </Chip>
         ))}
+        {!deshabilitado && !abierto && (
+          <button type="button" className="boton boton-claves" aria-expanded="false" onClick={abrir}>
+            {seleccionadas.length === 0 ? 'Seleccionar claves ▾' : 'Cambiar claves ▾'}
+          </button>
+        )}
       </div>
-      {!deshabilitado && (
-        <>
-          <input placeholder="Agregar clave: escriba el código o parte de la descripción…" value={texto}
-            onChange={(e) => setTexto(e.target.value)} aria-label="Buscar clave" />
-          {coincidencias.length > 0 && (
-            <ul className="sugerencias">
-              {coincidencias.map((c) => (
-                <li key={c.id}>
-                  <button type="button" onClick={() => { alCambiar([...ids, c.id]); setTexto(''); }}>
+      {!deshabilitado && abierto && (
+        <div className="panel-claves" role="group" aria-label="Claves de cierre">
+          <input placeholder="Filtrar por código o descripción…" value={texto} onChange={(e) => setTexto(e.target.value)} aria-label="Filtrar claves" autoFocus />
+          <div className="lista-claves">
+            {grupos.size === 0 && <p className="suave">Ninguna clave coincide.</p>}
+            {[...grupos].map(([grupo, claves]) => (
+              <div key={grupo}>
+                <div className="grupo-claves">{grupo}</div>
+                {claves.map((c) => (
+                  <label key={c.id} className="casilla fila-clave">
+                    <input type="checkbox" checked={marcadas.has(c.id)} onChange={() => alternar(c.id)} />
                     <Chip tipo={tipoDeClasificacion[c.clasificacion]}>{c.codigo}</Chip>
                     <span>{c.descripcion || <em>(sin descripción)</em>}</span>
-                    <small className="suave">{c.grupo} · {c.norma_min ?? '?'} min</small>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          {q && coincidencias.length === 0 && <p className="suave">Ninguna clave coincide.</p>}
-        </>
+                    <small className="suave">{c.norma_min ?? '?'} min</small>
+                  </label>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div className="fila">
+            <span className="suave">{marcadas.size} clave(s) seleccionada(s)</span>
+            <button type="button" className="boton boton-principal empujar" onClick={aplicar}>Aceptar</button>
+            <button type="button" className="boton" onClick={() => setAbierto(false)}>Cancelar</button>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -226,8 +247,26 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
         {hoja.centros.length > 1 && accion.centro_codigo && <Chip tipo="info" titulo="Centro del servicio">📍 {accion.centro_codigo}</Chip>}
         <Chip tipo={tipo}>{texto}</Chip>
         {accion.estado_orden === 'PENDIENTE' && abierta && <Chip tipo="aviso">Orden pendiente</Chip>}
+        {accion.agregada_despues && <Chip tipo="info" titulo="Se agregó después de generar la hoja de ruta">Agregada durante la jornada</Chip>}
         {accion.numero_servicio && <button className="enlace empujar" onClick={() => verHistorial(accion.numero_servicio)}>Ver historial</button>}
       </div>
+
+      {accion.visita_anterior && (
+        <p className="antecedente">
+          <strong>Visita anterior ({accion.visita_anterior.fecha.slice(8, 10)}/{accion.visita_anterior.fecha.slice(5, 7)}):</strong>{' '}
+          {{ SIN_OK: 'cerrada sin OK', OK: 'OK', PASADA_A_BRIGADA: 'pasada a otra brigada', NO_VISITADA: 'no se visitó' }[accion.visita_anterior.estado] || ''}
+          {accion.visita_anterior.claves.length > 0 && ` · claves ${accion.visita_anterior.claves.join(', ')}`}
+          {accion.visita_anterior.observaciones && ` · «${accion.visita_anterior.observaciones}»`}
+        </p>
+      )}
+
+      {editable && abierta && hoja.centros.length > 1 && (
+        <label className="en-linea">Centro del servicio
+          <select value={accion.centro ?? ''} onChange={(e) => ejecutar(() => api.patch(`/acciones/${accion.id}/`, { centro: Number(e.target.value) }))}>
+            {catalogos.centros.filter((c) => hoja.centros.includes(c.id)).map((c) => <option key={c.id} value={c.id}>{c.codigo} · {c.nombre}</option>)}
+          </select>
+        </label>
+      )}
 
       {esOT ? (
         <SelectorDeTrabajos catalogo={catalogos.tiposTrabajo} seleccionados={accion.trabajos} deshabilitado={!editable || !abierta}
@@ -239,9 +278,9 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
       )}
 
       {editable && abierta ? (
-        <label className="observaciones">Observaciones (opcional; obligatoria para cerrar sin OK si no hay claves)
+        <label className="observaciones">Observaciones (opcional)
           <textarea rows={2} value={observaciones} maxLength={500} onChange={(e) => setObservaciones(e.target.value)} onBlur={guardarObservaciones}
-            placeholder="Ej.: Cliente ausente, no se pudo acceder al domicilio; queda pendiente de reprogramar." />
+            placeholder="Ej.: Cita para 15/11 a las 10:00. Al día siguiente se verá aquí por qué quedó pendiente." />
         </label>
       ) : (
         accion.observaciones && <p className="suave"><strong>Observaciones:</strong> {accion.observaciones}</p>
@@ -274,7 +313,8 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
             ➜ Pasar a otra brigada
           </button>
           <button className="boton" disabled={sinClaves && !hayObservacion} onClick={() => setModo('sinok')}>Cerrar sin OK</button>
-          {sinClaves && <span className="suave">{esOT ? 'Seleccione al menos un trabajo para dar OK o pasar a otra brigada.' : 'Registre al menos una clave para dar OK o pasar a otra brigada.'} Para cerrar sin OK basta con una observación.</span>}
+          <button className="boton boton-peligro empujar" onClick={() => setModo('quitar')} title="Quitar de la hoja un servicio asignado por error">Quitar de la hoja</button>
+          {sinClaves && <span className="suave">{esOT ? 'Seleccione al menos un trabajo para dar OK o pasar a otra brigada.' : 'Seleccione al menos una clave para dar OK o pasar a otra brigada.'} Para cerrar sin OK basta con una observación.</span>}
         </div>
       )}
 
@@ -299,9 +339,16 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
           <button type="button" className="boton" onClick={() => setModo(null)}>Cancelar</button>
         </form>
       )}
+      {modo === 'quitar' && (
+        <div className="confirmacion">
+          <span>¿Quitar este servicio de la hoja? Se elimina (no queda registrado como visita).</span>
+          <button className="boton boton-peligro" onClick={() => confirmar(() => api.post(`/acciones/${accion.id}/quitar/`))}>Sí, quitar</button>
+          <button className="boton" onClick={() => setModo(null)}>Cancelar</button>
+        </div>
+      )}
       {modo === 'sinok' && (
         <div className="confirmacion">
-          <span>¿Cerrar sin OK? No contará como acción efectiva y quedará la traza de la visita{hayObservacion ? ' con su observación' : ''}.</span>
+          <span>¿Cerrar sin OK? No contará como acción efectiva; quedará la traza de la visita{hayObservacion ? ' con su observación' : ''} y el servicio se ofrecerá a la brigada en la siguiente jornada.</span>
           <button className="boton boton-peligro" onClick={() => confirmar(() => api.post(`/acciones/${accion.id}/cerrar-sin-ok/`, { observaciones: observaciones.trim() }))}>Sí, cerrar sin OK</button>
           <button className="boton" onClick={() => setModo(null)}>Cancelar</button>
         </div>
@@ -402,12 +449,82 @@ function Historial({ numero, alCerrar }) {
   );
 }
 
+// ---------------------------------------------------------------- editar la hoja (centros, vehículo, operarios, observaciones)
+
+function EditarHoja({ hoja, catalogos, ejecutar, alCerrar }) {
+  const [centros, setCentros] = useState(new Set(hoja.centros));
+  const [operarios, setOperarios] = useState(new Set(hoja.operarios));
+  const [vehiculo, setVehiculo] = useState(hoja.vehiculo ?? '');
+  const [observaciones, setObservaciones] = useState(hoja.observaciones || '');
+  const [filtro, setFiltro] = useState('');
+  const conServicios = new Set(hoja.acciones.filter((a) => a.centro).map((a) => a.centro));
+  const alternar = (set, setSet, id) => setSet((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const lista = catalogos.operarios
+    .filter((o) => `${o.nombre} ${o.clave}`.toLowerCase().includes(filtro.toLowerCase()))
+    .sort((a, b) => (operarios.has(b.id) - operarios.has(a.id)) || a.nombre.localeCompare(b.nombre));
+
+  async function guardar(e) {
+    e.preventDefault();
+    const r = await ejecutar(() => api.patch(`/hojas/${hoja.id}/`, {
+      centros: [...centros], operarios: [...operarios], vehiculo: vehiculo ? Number(vehiculo) : null, observaciones,
+    }));
+    if (r !== null) alCerrar();
+  }
+
+  return (
+    <form className="tarjeta" onSubmit={guardar} aria-label="Editar la hoja de ruta">
+      <h2>Editar la hoja de ruta</h2>
+      <p className="suave">Los cambios valen mientras la hoja esté abierta. La brigada, la fecha y la hora de inicio no se cambian.</p>
+      <div className="rejilla-formulario">
+        <label>Vehículo (chapa)
+          <select value={vehiculo} onChange={(e) => setVehiculo(e.target.value)}>
+            <option value="">Sin vehículo</option>
+            {catalogos.vehiculos.map((v) => <option key={v.id} value={v.id}>{v.chapa}</option>)}
+          </select>
+        </label>
+      </div>
+      <fieldset>
+        <legend>Centros de la hoja ({centros.size})</legend>
+        <div className="rejilla-centros">
+          {catalogos.centros.map((c) => (
+            <label key={c.id} className="casilla">
+              <input type="checkbox" checked={centros.has(c.id)} disabled={conServicios.has(c.id) && centros.has(c.id)} onChange={() => alternar(centros, setCentros, c.id)} />
+              <span>{c.codigo} · {c.nombre}{conServicios.has(c.id) && <small className="suave"> (tiene servicios)</small>}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Operarios ({operarios.size} seleccionado{operarios.size === 1 ? '' : 's'})</legend>
+        <input placeholder="Buscar por nombre o clave…" value={filtro} onChange={(e) => setFiltro(e.target.value)} />
+        <div className="lista-operarios">
+          {lista.map((o) => (
+            <label key={o.id} className="casilla">
+              <input type="checkbox" checked={operarios.has(o.id)} onChange={() => alternar(operarios, setOperarios, o.id)} />
+              <span>{o.nombre} <small className="suave">{o.clave} · {o.brigada_nombre}</small></span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <label className="observaciones">Observaciones de la hoja
+        <textarea rows={2} value={observaciones} onChange={(e) => setObservaciones(e.target.value)} />
+      </label>
+      <div className="acciones-formulario">
+        <button type="button" className="boton" onClick={alCerrar}>Cancelar</button>
+        <button className="boton boton-principal" disabled={centros.size === 0 || operarios.size === 0}>Guardar cambios</button>
+      </div>
+    </form>
+  );
+}
+
 // ---------------------------------------------------------------- pantalla de la hoja
 
 export default function HojaDetalle({ id, usuario, catalogos, volver }) {
   const [hoja, setHoja] = useState(null);
   const [pendientes, setPendientes] = useState([]);
   const [noVisitadas, setNoVisitadas] = useState([]);
+  const [sinSolucion, setSinSolucion] = useState([]);
+  const [editando, setEditando] = useState(false);
   const [error, setError] = useState('');
   const [aviso, setAviso] = useState('');
   const [centroServicio, setCentroServicio] = useState('');
@@ -421,6 +538,7 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
     const centrosUrl = h.centros.map((c) => `centro=${c}`).join('&');
     setPendientes(h.cerrada ? [] : await api.get(`/ordenes/pendientes/?brigada=${h.brigada}&${centrosUrl}`));
     setNoVisitadas(h.cerrada ? [] : await api.get(`/ordenes/no-visitadas/?brigada=${h.brigada}&${centrosUrl}`));
+    setSinSolucion(h.cerrada ? [] : await api.get(`/ordenes/sin-solucion/?brigada=${h.brigada}&${centrosUrl}`));
   }, [id]);
   useEffect(() => { cargar().catch((e) => setError(e.message)); }, [cargar]);
 
@@ -450,6 +568,13 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
   const r = hoja.resumen;
   const sinNorma = hoja.acciones.filter((a) => a.hora_fin && a.norma_min === null).length;
 
+  const puedeEditar = !hoja.cerrada && puede(usuario, 'operacion.change_hojaderuta');
+
+  async function generarHoja() {
+    const r = await ejecutar(() => api.post(`/hojas/${id}/generar/`));
+    if (r) setAviso('Hoja de ruta generada. Ya puede imprimirla (PDF). Si durante la jornada hace falta otro servicio, se puede seguir agregando.');
+  }
+
   async function reabrirHoja() {
     setConfirmandoReapertura(false);
     await ejecutar(() => api.post(`/hojas/${id}/reabrir/`));
@@ -467,11 +592,18 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
         <button className="boton" onClick={volver}>← Hojas del día</button>
         <h1>{hoja.centros_etiqueta} · {hoja.brigada_nombre}</h1>
         {hoja.cerrada ? <Chip>Cerrada</Chip> : <Chip tipo="info">Abierta</Chip>}
+        {hoja.generada
+          ? <Chip tipo="ok" titulo={`Generada el ${new Date(hoja.generada_en).toLocaleString('es')}`}>Generada {formatearHora(hoja.generada_en)}</Chip>
+          : !hoja.cerrada && <Chip tipo="aviso" titulo="Aún no se ha generado la hoja de ruta">Borrador</Chip>}
         <span className="fila descargas" aria-label="Descargar la hoja">
           <a className="boton" href={`/api/hojas/${id}/informe/?formato=pdf`} target="_blank" rel="noreferrer" title="Hoja de ruta con el formato original, para imprimir o auditar">PDF</a>
           <a className="boton" href={`/api/hojas/${id}/informe/?formato=xlsx`} title="Hoja de ruta con el formato original, en Excel">Excel</a>
         </span>
-        {editable && <button className="boton boton-peligro empujar" onClick={() => setConfirmandoCierre(true)}>Cerrar hoja del día</button>}
+        {puedeEditar && !editando && <button className="boton" onClick={() => setEditando(true)}>Editar hoja</button>}
+        {editable && !hoja.generada && hoja.acciones.length > 0 && (
+          <button className="boton boton-principal empujar" onClick={generarHoja} title="Cuando ya insertó todos los servicios del día">Generar hoja de ruta</button>
+        )}
+        {editable && <button className={`boton boton-peligro ${hoja.generada || hoja.acciones.length === 0 ? 'empujar' : ''}`} onClick={() => setConfirmandoCierre(true)}>Cerrar hoja del día</button>}
         {hoja.cerrada && puede(usuario, 'operacion.reabrir_hojaderuta') && !confirmandoReapertura && (
           <button className="boton empujar" onClick={() => setConfirmandoReapertura(true)}>Reabrir hoja</button>
         )}
@@ -484,6 +616,10 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
       <Aviso tipo="aviso" alCerrar={() => setAviso('')}>{aviso}</Aviso>
       {hoja.cerrada && <Aviso tipo="info">Esta hoja está cerrada: solo consulta.</Aviso>}
       {!hoja.cerrada && hoja.reabierta_en && <Aviso tipo="aviso">Esta hoja se reabrió el {new Date(hoja.reabierta_en).toLocaleString('es')}. Recuerde cerrarla al terminar.</Aviso>}
+      {editando && <EditarHoja hoja={hoja} catalogos={catalogos} ejecutar={ejecutar} alCerrar={() => setEditando(false)} />}
+      {!hoja.cerrada && !hoja.generada && hoja.acciones.length === 0 && editable && (
+        <Aviso tipo="info">Inserte los servicios del día. Cuando termine, aparecerá el botón «Generar hoja de ruta».</Aviso>
+      )}
       {confirmandoReapertura && (
         <div className="aviso aviso-aviso">
           <span>¿Reabrir esta hoja? Los servicios que quedaron como <strong>no visitados</strong> con su cierre vuelven a estar abiertos en ella.
@@ -563,6 +699,26 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
               <li key={o.id} className="fila">
                 <span>{o.etiqueta} <small className="suave">no visitada el {o.ultima_fecha?.slice(8, 10)}/{o.ultima_fecha?.slice(5, 7)}</small></span>
                 <button className="boton empujar" onClick={() => ejecutar(() => api.post(`/hojas/${id}/asignar-no-visitadas/`, { ordenes: [o.id] }))}>Asignar solo esta</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {editable && sinSolucion.length > 0 && (
+        <div className="tarjeta no-visitadas">
+          <div className="fila">
+            <strong>Sin solución de días anteriores ({hoja.brigada_nombre} · {hoja.centros_etiqueta})</strong>
+            <button className="boton boton-principal empujar" onClick={() => ejecutar(() => api.post(`/hojas/${id}/asignar-sin-solucion/`))}>
+              Retomar los {sinSolucion.length} en esta hoja
+            </button>
+          </div>
+          <ul className="lista-simple">
+            {sinSolucion.map((o) => (
+              <li key={o.id} className="fila">
+                <span>{o.etiqueta} <small className="suave">{o.ultima_fecha?.slice(8, 10)}/{o.ultima_fecha?.slice(5, 7)}
+                  {o.ultimas_claves.length > 0 && ` · claves ${o.ultimas_claves.join(', ')}`}{o.ultima_observacion && ` · «${o.ultima_observacion}»`}</small></span>
+                <button className="boton empujar" onClick={() => ejecutar(() => api.post(`/hojas/${id}/asignar-sin-solucion/`, { ordenes: [o.id] }))}>Retomar solo este</button>
               </li>
             ))}
           </ul>
