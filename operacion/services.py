@@ -249,9 +249,18 @@ def pasar_a_brigada(accion, brigada, usuario, ahora=None):
 
 
 @transaction.atomic
-def cerrar_sin_ok(accion, usuario, ahora=None):
-    """Cierra la acción sin OK ni pase a otra brigada (p. ej. no efectiva por causa del cliente). No es efectiva."""
-    _exigir_trabajo_registrado(accion, "cerrar la acción")
+def cerrar_sin_ok(accion, usuario, ahora=None, observaciones=None):
+    """Cierra la acción sin OK ni pase a otra brigada (p. ej. no efectiva por causa del cliente). No es efectiva.
+
+    Debe quedar traza de la visita: una observación (la indicada ahora o la ya escrita en la acción) o, al menos,
+    las claves (o trabajos) que dio el operario. Si no se solucionó la interrupción, la observación explica qué pasó."""
+    if observaciones is not None:
+        accion.observaciones = observaciones.strip()
+    if not accion.observaciones.strip():
+        try:
+            _exigir_trabajo_registrado(accion, "cerrar la acción")
+        except ValidationError:
+            raise ValidationError("Escriba una observación (o registre al menos una clave) para dejar constancia de la visita antes de cerrar sin OK.")
     _cerrar(accion, usuario, ahora)
     accion.save()
     return accion

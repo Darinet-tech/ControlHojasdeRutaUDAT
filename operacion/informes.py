@@ -120,7 +120,7 @@ def reunir_datos(fecha, brigada=None, centro=None, solo_hoja=None, usuario=None,
             "hora": hora_corta(a.hora_fin), "cliente": a.cliente_contactado, "estado": estado,
             "resultado": f"Pasada a {a.pasada_a.nombre}" if estado == "PASADA_A_BRIGADA" else RESULTADO[estado],
             "tiempo_real": a.tiempo_real_min, "norma": max([m for m in minutos if m is not None], default=None),
-            "descripcion_trabajo": a.descripcion_trabajo, "certificada_por": nombre_de(a.certificada_por),
+            "descripcion_trabajo": a.descripcion_trabajo, "observaciones": a.observaciones, "certificada_por": nombre_de(a.certificada_por),
             "creada_por": nombre_de(a.creado_por),
         })
     detalle = []
@@ -270,7 +270,7 @@ def _pdf(datos):
         filas = [["Trabajo", "Descripción del Trabajo", "Hora", "Cliente", "Resultado", "T. real", "Norma"]]
         estilos = []
         for n, a in _filas(h):
-            filas.append([str(n), P(a["descripcion"]), a["hora"], P(a["cliente"]), P(a["resultado"]),
+            filas.append([str(n), P(a["descripcion"] + (f" · Obs.: {a['observaciones']}" if a["observaciones"] else "")), a["hora"], P(a["cliente"]), P(a["resultado"]),
                           "" if a["tiempo_real"] is None else str(a["tiempo_real"]), "" if a["norma"] is None else str(a["norma"])])
             color = {"OK": verde, "SIN_OK": colors.HexColor("#b42318"), "PASADA_A_BRIGADA": colors.HexColor("#8a5a00"),
                      "NO_VISITADA": colors.HexColor("#4b5666"), "EN_CURSO": azul}[a["estado"]]
@@ -473,13 +473,13 @@ def _excel(datos):
     wa = wb.create_sheet("Auditoría")
     cab = ["Fecha", "Brigada", "Centros de la hoja", "Operarios", "Vehículo", "N.º", "Tipo de acción", "Servicio telefónico", "Tipo de mantenimiento",
            "Tipo de orden", "N.º de orden", "Trabajos (orden de trabajo)", "Centro del servicio", "Claves", "Resultado",
-           "Hora de fin", "Tiempo real (min)", "Norma (min)", "Cliente (certificó OK)", "Certificada por", "Registrada por", "Hoja cerrada"]
+           "Hora de fin", "Tiempo real (min)", "Norma (min)", "Cliente (certificó OK)", "Observaciones", "Certificada por", "Registrada por", "Hoja cerrada"]
     encabezado(wa, 1, cab)
     fila = 2
     for h in datos["hojas"]:
         for a in h["acciones"]:
             valores = [h["fecha"], h["brigada"], h["centros_claves"], h["operarios_claves"], h["vehiculo"], a["numero"], a["categoria"], a["servicio"],
-                       a["tipo_mantenimiento"], a["tipo"], a["numero_orden"], ", ".join(a["trabajos"]), a["centro"], " ".join(a["claves"]), a["resultado"], a["hora"], a["tiempo_real"], a["norma"], a["cliente"], a["certificada_por"], a["creada_por"], "Sí" if h["cerrada"] else "No"]
+                       a["tipo_mantenimiento"], a["tipo"], a["numero_orden"], ", ".join(a["trabajos"]), a["centro"], " ".join(a["claves"]), a["resultado"], a["hora"], a["tiempo_real"], a["norma"], a["cliente"], a["observaciones"], a["certificada_por"], a["creada_por"], "Sí" if h["cerrada"] else "No"]
             for j, v in enumerate(valores, start=1):
                 c = wa.cell(fila, j, v)
                 c.border = borde
@@ -488,7 +488,7 @@ def _excel(datos):
             fila += 1
     wa.freeze_panes = "A2"
     wa.auto_filter.ref = f"A1:{get_column_letter(len(cab))}{max(fila - 1, 1)}"
-    for j, ancho in enumerate([12, 20, 12, 14, 12, 6, 16, 16, 14, 10, 12, 30, 12, 24, 22, 10, 12, 10, 24, 22, 22, 12], start=1):
+    for j, ancho in enumerate([12, 20, 12, 14, 12, 6, 16, 16, 14, 10, 12, 30, 12, 24, 22, 10, 12, 10, 24, 36, 22, 22, 12], start=1):
         wa.column_dimensions[get_column_letter(j)].width = ancho
 
     for hoja_excel in (ws, wa):  # todas las hojas del libro se imprimen en horizontal, ajustadas al ancho de la página

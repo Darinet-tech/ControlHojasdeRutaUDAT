@@ -182,6 +182,10 @@ class PasarABrigadaSerializer(serializers.Serializer):
     brigada = serializers.PrimaryKeyRelatedField(queryset=Brigada.objects.filter(activa=True))
 
 
+class CerrarSinOkSerializer(serializers.Serializer):
+    observaciones = serializers.CharField(required=False, allow_blank=True, default=None, allow_null=True)
+
+
 class DarOkSerializer(serializers.Serializer):
     cliente_contactado = serializers.CharField(max_length=120, required=False, allow_blank=True, default="")  # obligatorio solo en correctivos
 

@@ -209,6 +209,29 @@ class FlujoDelProbadorTests(BaseAPI):
         self.assertEqual(codigos[:10], [400] * 10)
         self.assertEqual(codigos[10:], [429, 429])
 
+    def test_cerrar_sin_ok_sin_claves_exige_una_observacion_y_la_guarda(self):
+        hoja = self.crear_hoja()
+        a = self.asignar(hoja, "46-888001")["id"]
+        r = self.api.post(f"/api/acciones/{a}/cerrar-sin-ok/", {}, format="json")  # sin claves ni observación: no hay traza
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("observación", str(r.data))
+        r = self.api.post(f"/api/acciones/{a}/cerrar-sin-ok/", {"observaciones": "  Cliente ausente; se reprograma.  "}, format="json")
+        self.assertEqual((r.status_code, r.data["estado"], r.data["observaciones"]), (200, "SIN_OK", "Cliente ausente; se reprograma."))
+        self.assertFalse(r.data["ok"])
+
+    def test_la_observacion_escrita_antes_basta_para_cerrar_sin_ok(self):
+        hoja = self.crear_hoja()
+        a = self.asignar(hoja, "46-888002")["id"]
+        self.api.patch(f"/api/acciones/{a}/", {"observaciones": "No se pudo acceder"}, format="json")
+        r = self.api.post(f"/api/acciones/{a}/cerrar-sin-ok/", {}, format="json")
+        self.assertEqual((r.status_code, r.data["estado"]), (200, "SIN_OK"))
+
+    def test_dar_ok_sigue_exigiendo_claves(self):
+        hoja = self.crear_hoja()
+        a = self.asignar(hoja, "46-888003")["id"]
+        self.api.patch(f"/api/acciones/{a}/", {"observaciones": "algo"}, format="json")
+        self.assertEqual(self.api.post(f"/api/acciones/{a}/ok/", {"cliente_contactado": "C"}, format="json").status_code, 400)
+
     def test_la_hoja_necesita_operarios(self):
         r = self.api.post("/api/hojas/", {"fecha": "2026-10-01", "brigada": self.rep.pk, "centros": [self.ng.pk],
                                           "operarios": []}, format="json")

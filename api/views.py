@@ -337,8 +337,11 @@ class AccionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 
     @action(detail=True, methods=["post"], url_path="cerrar-sin-ok")
     def cerrar_sin_ok(self, request, pk=None):
-        """Cierra la acción sin OK ni pase a otra brigada (p. ej. casa cerrada). No cuenta como efectiva."""
-        cerrar_sin_ok(self.get_object(), request.user)
+        """Cierra la acción sin OK ni pase a otra brigada (p. ej. casa cerrada). No cuenta como efectiva.
+        Exige una observación (o claves) para que quede traza de la visita: {"observaciones": "..."}."""
+        datos = s.CerrarSinOkSerializer(data=request.data)
+        datos.is_valid(raise_exception=True)
+        cerrar_sin_ok(self.get_object(), request.user, observaciones=datos.validated_data["observaciones"])
         return self._respuesta(self.get_object())
 
 

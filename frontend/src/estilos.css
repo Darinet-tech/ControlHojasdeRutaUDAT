@@ -51,9 +51,9 @@ h1 { font-size: 1.4rem; margin: 0; color: var(--titulo); } h2 { font-size: 1.1re
 
 label { display: flex; flex-direction: column; gap: .25rem; font-weight: 600; font-size: .9rem; }
 .en-linea, .casilla { font-weight: 400; }
-input, select, button { font: inherit; }
-input, select { padding: .5rem .6rem; border: 1px solid var(--borde); border-radius: 8px; background: var(--campo); color: var(--texto); min-width: 0; }
-input:focus, select:focus, button:focus-visible { outline: 2px solid var(--primario); outline-offset: 1px; }
+input, select, button, textarea { font: inherit; }
+input, select, textarea { padding: .5rem .6rem; border: 1px solid var(--borde); border-radius: 8px; background: var(--campo); color: var(--texto); min-width: 0; }
+input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--primario); outline-offset: 1px; }
 fieldset { border: 1px solid var(--borde); border-radius: 8px; margin: .9rem 0; padding: .7rem; }
 
 .boton { padding: .5rem .9rem; border: 1px solid var(--borde); border-radius: 8px; background: var(--campo); color: var(--texto); cursor: pointer; }
@@ -181,3 +181,4 @@ a.boton { text-decoration: none; color: var(--texto); display: inline-block; }
 /* Botón de cambio de tema (cabecera y pantalla de inicio de sesión) */
 .boton-tema { white-space: nowrap; }
 .login-tema { position: fixed; top: .8rem; right: .8rem; z-index: 6; }
+.observaciones { margin: .5rem 0; font-weight: 600; } .observaciones textarea { width: 100%; resize: vertical; font-weight: 400; }

@@ -196,6 +196,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
   const [modo, setModo] = useState(null); // 'ok' | 'pasar' | 'sinok'
   const [cliente, setCliente] = useState('');
   const [brigada, setBrigada] = useState('');
+  const [observaciones, setObservaciones] = useState(accion.observaciones || '');
   const abierta = accion.estado === 'EN_CURSO';
   const esOT = accion.categoria === 'ORDEN_TRABAJO';
   const sinClaves = esOT ? accion.trabajos.length === 0 : accion.claves.length === 0; // nada registrado todavía
@@ -203,6 +204,14 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
   const [tipo, texto] = accion.estado === 'PASADA_A_BRIGADA'
     ? ['aviso', `Pasada a ${accion.pasada_a_nombre}`]
     : ETIQUETA_ESTADO[accion.estado];
+
+  // La observación se guarda al salir del campo; así queda aunque luego se cierre la acción de otra forma.
+  const guardarObservaciones = () => {
+    if (observaciones.trim() !== (accion.observaciones || '').trim()) {
+      ejecutar(() => api.patch(`/acciones/${accion.id}/`, { observaciones: observaciones.trim() }));
+    }
+  };
+  const hayObservacion = observaciones.trim().length > 0;
 
   const confirmar = async (fn) => {
     const r = await ejecutar(fn);
@@ -227,6 +236,15 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
         <SelectorDeClaves catalogo={catalogos.claves} seleccionadas={accion.claves}
           deshabilitado={!editable || !abierta}
           alCambiar={(ids) => ejecutar(() => api.patch(`/acciones/${accion.id}/`, { claves: ids }))} />
+      )}
+
+      {editable && abierta ? (
+        <label className="observaciones">Observaciones (opcional; obligatoria para cerrar sin OK si no hay claves)
+          <textarea rows={2} value={observaciones} maxLength={500} onChange={(e) => setObservaciones(e.target.value)} onBlur={guardarObservaciones}
+            placeholder="Ej.: Cliente ausente, no se pudo acceder al domicilio; queda pendiente de reprogramar." />
+        </label>
+      ) : (
+        accion.observaciones && <p className="suave"><strong>Observaciones:</strong> {accion.observaciones}</p>
       )}
 
       {abierta && accion.norma_min !== null && (
@@ -255,8 +273,8 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
           <button className="boton" disabled={sinClaves || otrasBrigadas.length === 0} onClick={() => { setBrigada(otrasBrigadas[0]?.id ?? ''); setModo('pasar'); }}>
             ➜ Pasar a otra brigada
           </button>
-          <button className="boton" disabled={sinClaves} onClick={() => setModo('sinok')}>Cerrar sin OK</button>
-          {sinClaves && <span className="suave">{esOT ? 'Seleccione al menos un trabajo para cerrar la acción.' : 'Registre al menos una clave para cerrar la acción.'}</span>}
+          <button className="boton" disabled={sinClaves && !hayObservacion} onClick={() => setModo('sinok')}>Cerrar sin OK</button>
+          {sinClaves && <span className="suave">{esOT ? 'Seleccione al menos un trabajo para dar OK o pasar a otra brigada.' : 'Registre al menos una clave para dar OK o pasar a otra brigada.'} Para cerrar sin OK basta con una observación.</span>}
         </div>
       )}
 
@@ -283,8 +301,8 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
       )}
       {modo === 'sinok' && (
         <div className="confirmacion">
-          <span>¿Cerrar sin OK? No contará como acción efectiva.</span>
-          <button className="boton boton-peligro" onClick={() => confirmar(() => api.post(`/acciones/${accion.id}/cerrar-sin-ok/`))}>Sí, cerrar sin OK</button>
+          <span>¿Cerrar sin OK? No contará como acción efectiva y quedará la traza de la visita{hayObservacion ? ' con su observación' : ''}.</span>
+          <button className="boton boton-peligro" onClick={() => confirmar(() => api.post(`/acciones/${accion.id}/cerrar-sin-ok/`, { observaciones: observaciones.trim() }))}>Sí, cerrar sin OK</button>
           <button className="boton" onClick={() => setModo(null)}>Cancelar</button>
         </div>
       )}
