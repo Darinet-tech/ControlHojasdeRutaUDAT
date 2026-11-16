@@ -74,124 +74,123 @@
 <circle cx="1650" cy="900" r="5.5" fill="#bffcff" filter="url(#brilla)"/><circle cx="1650" cy="900" r="2.2" fill="#fff"/>
 <circle cx="1340" cy="880" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso pulso2"/>
 <circle cx="1340" cy="880" r="5.5" fill="#bffcff" filter="url(#brilla)"/><circle cx="1340" cy="880" r="2.2" fill="#fff"/>
-<circle cx="180" cy="722" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso pulso3"/>
-<circle cx="180" cy="722" r="5.5" fill="#bffcff" filter="url(#brilla)"/><circle cx="180" cy="722" r="2.2" fill="#fff"/>
-<g transform="translate(248,191) scale(0.444)" opacity=".92"><g class="flota" style="animation-delay:4.9s">
+<g transform="translate(284,255) scale(0.413)" opacity=".92"><g class="flota" style="animation-delay:0.0s">
 <rect x="0" y="0" width="340" height="450" rx="20" fill="#5878ff" fill-opacity=".09" stroke="url(#holo)" stroke-width="3.4" filter="url(#brilla)"/>
 <rect x="0" y="0" width="340" height="62" rx="20" fill="url(#holo)" fill-opacity=".28"/>
 <text x="26" y="40" font-family="Segoe UI, system-ui, sans-serif" font-size="23" font-weight="700" letter-spacing="2" fill="#e9fbff">RED DE ABONADOS</text>
 <circle cx="306" cy="31" r="10" fill="#5dffa0" filter="url(#brilla)"/>
-<circle cx="40" cy="106" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
-<path d="M31 106 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
-<text x="72" y="104" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-561221</text>
-<rect x="72" y="116" width="163" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
-<circle cx="40" cy="172" r="16" fill="none" stroke="#ffd166" stroke-width="2.6" stroke-dasharray="5 5"/><circle cx="40" cy="172" r="5.5" fill="#ffd166" class="titila"/>
-<text x="72" y="170" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-310265</text>
-<rect x="72" y="182" width="175" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="106" r="16" fill="none" stroke="#ffd166" stroke-width="2.6" stroke-dasharray="5 5"/><circle cx="40" cy="106" r="5.5" fill="#ffd166" class="titila"/>
+<text x="72" y="104" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-519994</text>
+<rect x="72" y="116" width="154" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="172" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
+<text x="72" y="170" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-488818</text>
+<rect x="72" y="182" width="157" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
 <circle cx="40" cy="238" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
 <path d="M31 238 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
-<text x="72" y="236" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-526122</text>
-<rect x="72" y="248" width="155" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<text x="72" y="236" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-506409</text>
+<rect x="72" y="248" width="163" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
 <circle cx="40" cy="304" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
 <path d="M31 304 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
-<text x="72" y="302" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-330175</text>
-<rect x="72" y="314" width="136" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
-<circle cx="40" cy="370" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
-<text x="72" y="368" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-318512</text>
-<rect x="72" y="380" width="185" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<text x="72" y="302" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-444456</text>
+<rect x="72" y="314" width="118" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="370" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 370 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="368" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-586397</text>
+<rect x="72" y="380" width="144" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
 </g></g>
-<g transform="translate(46,219) scale(0.407)" opacity=".92"><g class="flota" style="animation-delay:0.3s">
+<g transform="translate(165,630) scale(0.396)" opacity=".92"><g class="flota" style="animation-delay:1.7s">
 <rect x="0" y="0" width="340" height="450" rx="20" fill="#5878ff" fill-opacity=".09" stroke="url(#holo)" stroke-width="3.4" filter="url(#brilla)"/>
 <rect x="0" y="0" width="340" height="62" rx="20" fill="url(#holo)" fill-opacity=".28"/>
 <text x="26" y="40" font-family="Segoe UI, system-ui, sans-serif" font-size="23" font-weight="700" letter-spacing="2" fill="#e9fbff">RECONSTRUCCIÓN</text>
 <circle cx="306" cy="31" r="10" fill="#5dffa0" filter="url(#brilla)"/>
 <circle cx="40" cy="106" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
 <path d="M31 106 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
-<text x="72" y="104" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-533349</text>
-<rect x="72" y="116" width="205" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<text x="72" y="104" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-466712</text>
+<rect x="72" y="116" width="221" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
 <circle cx="40" cy="172" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
 <path d="M31 172 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
-<text x="72" y="170" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-348661</text>
-<rect x="72" y="182" width="154" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
-<circle cx="40" cy="238" r="16" fill="none" stroke="#ffd166" stroke-width="2.6" stroke-dasharray="5 5"/><circle cx="40" cy="238" r="5.5" fill="#ffd166" class="titila"/>
-<text x="72" y="236" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-308372</text>
-<rect x="72" y="248" width="210" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
-<circle cx="40" cy="304" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
-<text x="72" y="302" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-497656</text>
-<rect x="72" y="314" width="172" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
-<circle cx="40" cy="370" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
-<text x="72" y="368" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-401352</text>
-<rect x="72" y="380" width="114" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<text x="72" y="170" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-542355</text>
+<rect x="72" y="182" width="210" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="238" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
+<text x="72" y="236" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-500065</text>
+<rect x="72" y="248" width="205" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="304" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 304 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="302" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-475171</text>
+<rect x="72" y="314" width="170" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="370" r="16" fill="none" stroke="#ffd166" stroke-width="2.6" stroke-dasharray="5 5"/><circle cx="40" cy="370" r="5.5" fill="#ffd166" class="titila"/>
+<text x="72" y="368" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-571123</text>
+<rect x="72" y="380" width="136" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
 </g></g>
-<g transform="translate(159,788) scale(0.415)" opacity=".92"><g class="flota" style="animation-delay:0.8s">
+<g transform="translate(76,367) scale(0.432)" opacity=".92"><g class="flota" style="animation-delay:4.3s">
 <rect x="0" y="0" width="340" height="450" rx="20" fill="#5878ff" fill-opacity=".09" stroke="url(#holo)" stroke-width="3.4" filter="url(#brilla)"/>
 <rect x="0" y="0" width="340" height="62" rx="20" fill="url(#holo)" fill-opacity=".28"/>
 <text x="26" y="40" font-family="Segoe UI, system-ui, sans-serif" font-size="23" font-weight="700" letter-spacing="2" fill="#e9fbff">CABLE</text>
 <circle cx="306" cy="31" r="10" fill="#5dffa0" filter="url(#brilla)"/>
 <circle cx="40" cy="106" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
 <path d="M31 106 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
-<text x="72" y="104" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-363054</text>
-<rect x="72" y="116" width="226" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
-<circle cx="40" cy="172" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
-<path d="M31 172 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
-<text x="72" y="170" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-395736</text>
-<rect x="72" y="182" width="112" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
-<circle cx="40" cy="238" r="16" fill="none" stroke="#ffd166" stroke-width="2.6" stroke-dasharray="5 5"/><circle cx="40" cy="238" r="5.5" fill="#ffd166" class="titila"/>
-<text x="72" y="236" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-371347</text>
-<rect x="72" y="248" width="188" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
-<circle cx="40" cy="304" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
-<text x="72" y="302" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-372955</text>
-<rect x="72" y="314" width="229" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<text x="72" y="104" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-541454</text>
+<rect x="72" y="116" width="183" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="172" r="16" fill="none" stroke="#ffd166" stroke-width="2.6" stroke-dasharray="5 5"/><circle cx="40" cy="172" r="5.5" fill="#ffd166" class="titila"/>
+<text x="72" y="170" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-515898</text>
+<rect x="72" y="182" width="134" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="238" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 238 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="236" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-474800</text>
+<rect x="72" y="248" width="190" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="304" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 304 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="302" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-418950</text>
+<rect x="72" y="314" width="221" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
 <circle cx="40" cy="370" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
-<text x="72" y="368" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-454418</text>
-<rect x="72" y="380" width="170" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<text x="72" y="368" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-331186</text>
+<rect x="72" y="380" width="138" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
 </g></g>
-<g transform="translate(1600,39) scale(0.387)" opacity=".92"><g class="flota" style="animation-delay:3.5s">
+<g transform="translate(1692,617) scale(0.419)" opacity=".92"><g class="flota" style="animation-delay:0.1s">
 <rect x="0" y="0" width="340" height="450" rx="20" fill="#5878ff" fill-opacity=".09" stroke="url(#holo)" stroke-width="3.4" filter="url(#brilla)"/>
 <rect x="0" y="0" width="340" height="62" rx="20" fill="url(#holo)" fill-opacity=".28"/>
 <text x="26" y="40" font-family="Segoe UI, system-ui, sans-serif" font-size="23" font-weight="700" letter-spacing="2" fill="#e9fbff">LÍNEA</text>
 <circle cx="306" cy="31" r="10" fill="#5dffa0" filter="url(#brilla)"/>
 <circle cx="40" cy="106" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
 <path d="M31 106 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
-<text x="72" y="104" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-530816</text>
-<rect x="72" y="116" width="177" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
-<circle cx="40" cy="172" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
-<text x="72" y="170" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-439849</text>
-<rect x="72" y="182" width="173" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<text x="72" y="104" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-588712</text>
+<rect x="72" y="116" width="170" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="172" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 172 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="170" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-416682</text>
+<rect x="72" y="182" width="129" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
 <circle cx="40" cy="238" r="16" fill="none" stroke="#ffd166" stroke-width="2.6" stroke-dasharray="5 5"/><circle cx="40" cy="238" r="5.5" fill="#ffd166" class="titila"/>
-<text x="72" y="236" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-555943</text>
-<rect x="72" y="248" width="175" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
-<circle cx="40" cy="304" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
-<path d="M31 304 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
-<text x="72" y="302" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-324069</text>
-<rect x="72" y="314" width="221" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
-<circle cx="40" cy="370" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
-<path d="M31 370 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
-<text x="72" y="368" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-323777</text>
-<rect x="72" y="380" width="180" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<text x="72" y="236" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-507337</text>
+<rect x="72" y="248" width="128" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="304" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
+<text x="72" y="302" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-574879</text>
+<rect x="72" y="314" width="164" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="370" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
+<text x="72" y="368" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-493691</text>
+<rect x="72" y="380" width="151" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
 </g></g>
-<g transform="translate(1738,729) scale(0.418)" opacity=".92"><g class="flota" style="animation-delay:2.5s">
+<g transform="translate(1692,248) scale(0.401)" opacity=".92"><g class="flota" style="animation-delay:1.3s">
 <rect x="0" y="0" width="340" height="450" rx="20" fill="#5878ff" fill-opacity=".09" stroke="url(#holo)" stroke-width="3.4" filter="url(#brilla)"/>
 <rect x="0" y="0" width="340" height="62" rx="20" fill="url(#holo)" fill-opacity=".28"/>
 <text x="26" y="40" font-family="Segoe UI, system-ui, sans-serif" font-size="23" font-weight="700" letter-spacing="2" fill="#e9fbff">FIBRA ÓPTICA</text>
 <circle cx="306" cy="31" r="10" fill="#5dffa0" filter="url(#brilla)"/>
 <circle cx="40" cy="106" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
 <path d="M31 106 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
-<text x="72" y="104" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-524238</text>
-<rect x="72" y="116" width="160" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<text x="72" y="104" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-530796</text>
+<rect x="72" y="116" width="208" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
 <circle cx="40" cy="172" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
 <path d="M31 172 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
-<text x="72" y="170" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-413517</text>
-<rect x="72" y="182" width="178" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<text x="72" y="170" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-389198</text>
+<rect x="72" y="182" width="177" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
 <circle cx="40" cy="238" r="16" fill="none" stroke="#ffd166" stroke-width="2.6" stroke-dasharray="5 5"/><circle cx="40" cy="238" r="5.5" fill="#ffd166" class="titila"/>
-<text x="72" y="236" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-487461</text>
-<rect x="72" y="248" width="219" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<text x="72" y="236" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-369242</text>
+<rect x="72" y="248" width="124" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
 <circle cx="40" cy="304" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
-<text x="72" y="302" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-587270</text>
-<rect x="72" y="314" width="174" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<text x="72" y="302" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-526764</text>
+<rect x="72" y="314" width="152" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
 <circle cx="40" cy="370" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
-<text x="72" y="368" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-395155</text>
-<rect x="72" y="380" width="115" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<text x="72" y="368" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-487777</text>
+<rect x="72" y="380" width="156" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
 </g></g>
 <g stroke="url(#holo2)" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".8" filter="url(#brilla)">
 <path d="M384 1010 L430 760 L476 1010 M396 940 L464 940 M406 870 L454 870 M392 940 L454 870 M468 940 L406 870"/>
@@ -200,22 +199,22 @@
 <path d="M356 702 A 92 92 0 0 1 504 702" class="titila" style="animation-delay:1.5s"/>
 </g>
 <circle cx="430" cy="755" r="7" fill="#fff" filter="url(#brilla)"/>
-<polygon points="1490,760 1630,760 1750,430 1370,430" fill="url(#haz)" opacity=".85"/>
-<ellipse cx="1560" cy="766" rx="130" ry="31" fill="none" stroke="#00e5ff" stroke-width="2.2" class="anillo" style="animation-delay:0s"/>
-<ellipse cx="1560" cy="766" rx="130" ry="31" fill="none" stroke="#00e5ff" stroke-width="2.2" class="anillo" style="animation-delay:1.5s"/>
-<ellipse cx="1560" cy="766" rx="130" ry="31" fill="none" stroke="#00e5ff" stroke-width="2.2" class="anillo" style="animation-delay:3s"/>
-<ellipse cx="1560" cy="766" rx="92" ry="22" fill="#0a0e55" stroke="url(#holo)" stroke-width="3" filter="url(#brilla)"/>
-<ellipse cx="1560" cy="758" rx="62" ry="14" fill="#00e5ff" opacity=".35" filter="url(#brilla-suave)"/>
+<polygon points="1430,760 1570,760 1690,430 1310,430" fill="url(#haz)" opacity=".85"/>
+<ellipse cx="1500" cy="766" rx="130" ry="31" fill="none" stroke="#00e5ff" stroke-width="2.2" class="anillo" style="animation-delay:0s"/>
+<ellipse cx="1500" cy="766" rx="130" ry="31" fill="none" stroke="#00e5ff" stroke-width="2.2" class="anillo" style="animation-delay:1.5s"/>
+<ellipse cx="1500" cy="766" rx="130" ry="31" fill="none" stroke="#00e5ff" stroke-width="2.2" class="anillo" style="animation-delay:3s"/>
+<ellipse cx="1500" cy="766" rx="92" ry="22" fill="#0a0e55" stroke="url(#holo)" stroke-width="3" filter="url(#brilla)"/>
+<ellipse cx="1500" cy="758" rx="62" ry="14" fill="#00e5ff" opacity=".35" filter="url(#brilla-suave)"/>
 <g class="flota">
-<polygon points="1560.0,280.0 1689.9,355.0 1689.9,505.0 1560.0,580.0 1430.1,505.0 1430.1,355.0" fill="#5878ff" fill-opacity=".1" stroke="url(#holo)" stroke-width="3" filter="url(#brilla)"/>
-<polygon points="1560.0,306.0 1667.4,368.0 1667.4,492.0 1560.0,554.0 1452.6,492.0 1452.6,368.0" fill="none" stroke="url(#holo2)" stroke-width="1.4" opacity=".7" stroke-dasharray="8 8" class="ruta"/>
-<circle cx="1560" cy="430" r="78" fill="url(#holo2)" opacity=".22" filter="url(#brilla-suave)"/>
-<circle cx="1560" cy="430" r="46" fill="none" stroke="url(#holo)" stroke-width="2.2" opacity=".85" filter="url(#brilla)"/>
-<circle cx="1560" cy="430" r="22" fill="#e9fbff" class="titila" filter="url(#brilla)"/>
-<circle cx="1753" cy="486" r="5" fill="#00e5ff" class="titila" filter="url(#brilla)" style="animation-delay:0.2s"/>
-<circle cx="1414" cy="528" r="5" fill="#00e5ff" class="titila" filter="url(#brilla)" style="animation-delay:1.4s"/>
-<circle cx="1486" cy="268" r="5" fill="#00e5ff" class="titila" filter="url(#brilla)" style="animation-delay:2.5s"/>
-<circle cx="1698" cy="337" r="5" fill="#00e5ff" class="titila" filter="url(#brilla)" style="animation-delay:3.2s"/>
+<polygon points="1500.0,280.0 1629.9,355.0 1629.9,505.0 1500.0,580.0 1370.1,505.0 1370.1,355.0" fill="#5878ff" fill-opacity=".1" stroke="url(#holo)" stroke-width="3" filter="url(#brilla)"/>
+<polygon points="1500.0,306.0 1607.4,368.0 1607.4,492.0 1500.0,554.0 1392.6,492.0 1392.6,368.0" fill="none" stroke="url(#holo2)" stroke-width="1.4" opacity=".7" stroke-dasharray="8 8" class="ruta"/>
+<circle cx="1500" cy="430" r="92" fill="url(#holo2)" opacity=".2" filter="url(#brilla-suave)"/>
+<text x="1503" y="448" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="58" font-weight="800" letter-spacing="6" fill="#f4fbff" filter="url(#brilla)">UDAT</text>
+<path d="M1434 476 H1566" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" filter="url(#brilla)"/>
+<circle cx="1693" cy="486" r="5" fill="#00e5ff" class="titila" filter="url(#brilla)" style="animation-delay:0.2s"/>
+<circle cx="1354" cy="528" r="5" fill="#00e5ff" class="titila" filter="url(#brilla)" style="animation-delay:1.4s"/>
+<circle cx="1426" cy="268" r="5" fill="#00e5ff" class="titila" filter="url(#brilla)" style="animation-delay:2.5s"/>
+<circle cx="1638" cy="337" r="5" fill="#00e5ff" class="titila" filter="url(#brilla)" style="animation-delay:3.2s"/>
 </g>
 <circle cx="1705" cy="432" r="2.6" fill="#c9b8ff" opacity=".6"/>
 <circle cx="292" cy="581" r="1" fill="#9fe8ff" class="titila" style="animation-delay:1.1s"/>
