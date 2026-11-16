@@ -31,7 +31,6 @@
   <pattern id="lineas" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="1" fill="#fff" opacity=".045"/></pattern>
   <filter id="brilla" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   <filter id="brilla-suave" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
-  <clipPath id="recorte-hoja"><rect x="150" y="230" width="340" height="450" rx="20"/></clipPath>
 </defs>
 <style>
   .ruta { stroke-dasharray: 12 14; animation: fluye 5s linear infinite; }
@@ -56,7 +55,6 @@
 <g mask="url(#mascara-suelo)" stroke="#2fe6ff" stroke-width="1.4" opacity=".42" filter="url(#brilla)"><line x1="768" y1="640" x2="-2080" y2="1080"/><line x1="780" y1="640" x2="-1890" y2="1080"/><line x1="792" y1="640" x2="-1700" y2="1080"/><line x1="804" y1="640" x2="-1510" y2="1080"/><line x1="816" y1="640" x2="-1320" y2="1080"/><line x1="828" y1="640" x2="-1130" y2="1080"/><line x1="840" y1="640" x2="-940" y2="1080"/><line x1="852" y1="640" x2="-750" y2="1080"/><line x1="864" y1="640" x2="-560" y2="1080"/><line x1="876" y1="640" x2="-370" y2="1080"/><line x1="888" y1="640" x2="-180" y2="1080"/><line x1="900" y1="640" x2="10" y2="1080"/><line x1="912" y1="640" x2="200" y2="1080"/><line x1="924" y1="640" x2="390" y2="1080"/><line x1="936" y1="640" x2="580" y2="1080"/><line x1="948" y1="640" x2="770" y2="1080"/><line x1="960" y1="640" x2="960" y2="1080"/><line x1="972" y1="640" x2="1150" y2="1080"/><line x1="984" y1="640" x2="1340" y2="1080"/><line x1="996" y1="640" x2="1530" y2="1080"/><line x1="1008" y1="640" x2="1720" y2="1080"/><line x1="1020" y1="640" x2="1910" y2="1080"/><line x1="1032" y1="640" x2="2100" y2="1080"/><line x1="1044" y1="640" x2="2290" y2="1080"/><line x1="1056" y1="640" x2="2480" y2="1080"/><line x1="1068" y1="640" x2="2670" y2="1080"/><line x1="1080" y1="640" x2="2860" y2="1080"/><line x1="1092" y1="640" x2="3050" y2="1080"/><line x1="1104" y1="640" x2="3240" y2="1080"/><line x1="1116" y1="640" x2="3430" y2="1080"/><line x1="1128" y1="640" x2="3620" y2="1080"/><line x1="1140" y1="640" x2="3810" y2="1080"/><line x1="1152" y1="640" x2="4000" y2="1080"/><line x1="0" y1="643.5" x2="1920" y2="643.5"/><line x1="0" y1="655.0" x2="1920" y2="655.0"/><line x1="0" y1="675.1" x2="1920" y2="675.1"/><line x1="0" y1="704.2" x2="1920" y2="704.2"/><line x1="0" y1="742.6" x2="1920" y2="742.6"/><line x1="0" y1="790.5" x2="1920" y2="790.5"/><line x1="0" y1="848.0" x2="1920" y2="848.0"/><line x1="0" y1="915.4" x2="1920" y2="915.4"/><line x1="0" y1="992.7" x2="1920" y2="992.7"/><line x1="0" y1="1080.0" x2="1920" y2="1080.0"/></g>
 <path d="M-20 860 C 120 800, 180 720, 320 740 S 520 860, 640 760" fill="none" stroke="url(#holo)" stroke-width="2.4" opacity=".75" class="ruta" filter="url(#brilla)"/>
 <path d="M1940 240 C 1800 280, 1720 190, 1600 230 S 1400 150, 1300 220" fill="none" stroke="url(#holo2)" stroke-width="2.4" opacity=".75" class="ruta" filter="url(#brilla)"/>
-<path d="M-20 330 C 30 350, 70 310, 100 316" fill="none" stroke="url(#holo2)" stroke-width="2.4" opacity=".75" class="ruta" filter="url(#brilla)"/>
 <path d="M1940 880 C 1830 860, 1760 930, 1650 900 S 1450 960, 1340 880" fill="none" stroke="url(#holo)" stroke-width="2.4" opacity=".75" class="ruta" filter="url(#brilla)"/>
 <path d="M640 760 C 700 700, 690 640, 650 590" fill="none" stroke="url(#holo2)" stroke-width="2.4" opacity=".75" class="ruta" filter="url(#brilla)"/>
 <path d="M1300 220 C 1250 280, 1280 330, 1320 380" fill="none" stroke="url(#holo)" stroke-width="2.4" opacity=".75" class="ruta" filter="url(#brilla)"/>
@@ -66,46 +64,134 @@
 <circle cx="640" cy="760" r="5.5" fill="#bffcff" filter="url(#brilla)"/><circle cx="640" cy="760" r="2.2" fill="#fff"/>
 <circle cx="650" cy="590" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso pulso3"/>
 <circle cx="650" cy="590" r="5.5" fill="#bffcff" filter="url(#brilla)"/><circle cx="650" cy="590" r="2.2" fill="#fff"/>
-<circle cx="100" cy="316" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso"/>
-<circle cx="100" cy="316" r="5.5" fill="#bffcff" filter="url(#brilla)"/><circle cx="100" cy="316" r="2.2" fill="#fff"/>
-<circle cx="1600" cy="230" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso pulso2"/>
+<circle cx="1600" cy="230" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso"/>
 <circle cx="1600" cy="230" r="5.5" fill="#bffcff" filter="url(#brilla)"/><circle cx="1600" cy="230" r="2.2" fill="#fff"/>
-<circle cx="1300" cy="220" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso pulso3"/>
+<circle cx="1300" cy="220" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso pulso2"/>
 <circle cx="1300" cy="220" r="5.5" fill="#bffcff" filter="url(#brilla)"/><circle cx="1300" cy="220" r="2.2" fill="#fff"/>
-<circle cx="1320" cy="380" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso"/>
+<circle cx="1320" cy="380" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso pulso3"/>
 <circle cx="1320" cy="380" r="5.5" fill="#bffcff" filter="url(#brilla)"/><circle cx="1320" cy="380" r="2.2" fill="#fff"/>
-<circle cx="1650" cy="900" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso pulso2"/>
+<circle cx="1650" cy="900" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso"/>
 <circle cx="1650" cy="900" r="5.5" fill="#bffcff" filter="url(#brilla)"/><circle cx="1650" cy="900" r="2.2" fill="#fff"/>
-<circle cx="1340" cy="880" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso pulso3"/>
+<circle cx="1340" cy="880" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso pulso2"/>
 <circle cx="1340" cy="880" r="5.5" fill="#bffcff" filter="url(#brilla)"/><circle cx="1340" cy="880" r="2.2" fill="#fff"/>
-<circle cx="180" cy="722" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso"/>
+<circle cx="180" cy="722" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso pulso3"/>
 <circle cx="180" cy="722" r="5.5" fill="#bffcff" filter="url(#brilla)"/><circle cx="180" cy="722" r="2.2" fill="#fff"/>
-<circle cx="1720" cy="192" r="9" fill="none" stroke="#00e5ff" stroke-width="2" class="pulso pulso2"/>
-<circle cx="1720" cy="192" r="5.5" fill="#bffcff" filter="url(#brilla)"/><circle cx="1720" cy="192" r="2.2" fill="#fff"/>
-<g transform="translate(0,-34)"><g class="flota">
-<rect x="150" y="230" width="340" height="450" rx="20" fill="#5878ff" fill-opacity=".09" stroke="url(#holo)" stroke-width="2.4" filter="url(#brilla)"/>
-<rect x="150" y="230" width="340" height="62" rx="20" fill="url(#holo)" fill-opacity=".28"/>
-<text x="176" y="268" font-family="Segoe UI, system-ui, sans-serif" font-size="22" font-weight="700" letter-spacing="3" fill="#e9fbff">HOJA DE RUTA</text>
-<circle cx="456" cy="261" r="9" fill="#5dffa0" filter="url(#brilla)"/>
-<circle cx="190" cy="336" r="15" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2"/>
-<path d="M182 336 l6 7 l12 -14" fill="none" stroke="#5dffa0" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
-<text x="222" y="333" font-family="Consolas, monospace" font-size="16" fill="#d7e6ff" opacity=".92">46-326407</text>
-<rect x="222" y="344" width="220" height="6" rx="3" fill="#9bb3ff" opacity=".28"/>
-<circle cx="190" cy="402" r="15" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2"/>
-<path d="M182 402 l6 7 l12 -14" fill="none" stroke="#5dffa0" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
-<text x="222" y="399" font-family="Consolas, monospace" font-size="16" fill="#d7e6ff" opacity=".92">46-318102</text>
-<rect x="222" y="410" width="150" height="6" rx="3" fill="#9bb3ff" opacity=".28"/>
-<circle cx="190" cy="468" r="15" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2"/>
-<path d="M182 468 l6 7 l12 -14" fill="none" stroke="#5dffa0" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
-<text x="222" y="465" font-family="Consolas, monospace" font-size="16" fill="#d7e6ff" opacity=".92">MPPE 46-455012</text>
-<rect x="222" y="476" width="190" height="6" rx="3" fill="#9bb3ff" opacity=".28"/>
-<circle cx="190" cy="534" r="15" fill="none" stroke="#ffd166" stroke-width="2" stroke-dasharray="5 5"/><circle cx="190" cy="534" r="5" fill="#ffd166" class="titila"/>
-<text x="222" y="531" font-family="Consolas, monospace" font-size="16" fill="#d7e6ff" opacity=".92">TA 1234 46-300981</text>
-<rect x="222" y="542" width="170" height="6" rx="3" fill="#9bb3ff" opacity=".28"/>
-<circle cx="190" cy="600" r="15" fill="none" stroke="#9bb3ff" stroke-width="2" opacity=".6"/>
-<text x="222" y="597" font-family="Consolas, monospace" font-size="16" fill="#d7e6ff" opacity=".92">46-512230</text>
-<rect x="222" y="608" width="120" height="6" rx="3" fill="#9bb3ff" opacity=".28"/>
-<g clip-path="url(#recorte-hoja)"><rect x="150" y="236" width="340" height="14" fill="#00e5ff" opacity="0" class="barrido" filter="url(#brilla)"/></g>
+<g transform="translate(248,191) scale(0.444)" opacity=".92"><g class="flota" style="animation-delay:4.9s">
+<rect x="0" y="0" width="340" height="450" rx="20" fill="#5878ff" fill-opacity=".09" stroke="url(#holo)" stroke-width="3.4" filter="url(#brilla)"/>
+<rect x="0" y="0" width="340" height="62" rx="20" fill="url(#holo)" fill-opacity=".28"/>
+<text x="26" y="40" font-family="Segoe UI, system-ui, sans-serif" font-size="23" font-weight="700" letter-spacing="2" fill="#e9fbff">RED DE ABONADOS</text>
+<circle cx="306" cy="31" r="10" fill="#5dffa0" filter="url(#brilla)"/>
+<circle cx="40" cy="106" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 106 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="104" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-561221</text>
+<rect x="72" y="116" width="163" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="172" r="16" fill="none" stroke="#ffd166" stroke-width="2.6" stroke-dasharray="5 5"/><circle cx="40" cy="172" r="5.5" fill="#ffd166" class="titila"/>
+<text x="72" y="170" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-310265</text>
+<rect x="72" y="182" width="175" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="238" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 238 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="236" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-526122</text>
+<rect x="72" y="248" width="155" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="304" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 304 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="302" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-330175</text>
+<rect x="72" y="314" width="136" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="370" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
+<text x="72" y="368" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-318512</text>
+<rect x="72" y="380" width="185" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+</g></g>
+<g transform="translate(46,219) scale(0.407)" opacity=".92"><g class="flota" style="animation-delay:0.3s">
+<rect x="0" y="0" width="340" height="450" rx="20" fill="#5878ff" fill-opacity=".09" stroke="url(#holo)" stroke-width="3.4" filter="url(#brilla)"/>
+<rect x="0" y="0" width="340" height="62" rx="20" fill="url(#holo)" fill-opacity=".28"/>
+<text x="26" y="40" font-family="Segoe UI, system-ui, sans-serif" font-size="23" font-weight="700" letter-spacing="2" fill="#e9fbff">RECONSTRUCCIÓN</text>
+<circle cx="306" cy="31" r="10" fill="#5dffa0" filter="url(#brilla)"/>
+<circle cx="40" cy="106" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 106 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="104" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-533349</text>
+<rect x="72" y="116" width="205" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="172" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 172 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="170" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-348661</text>
+<rect x="72" y="182" width="154" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="238" r="16" fill="none" stroke="#ffd166" stroke-width="2.6" stroke-dasharray="5 5"/><circle cx="40" cy="238" r="5.5" fill="#ffd166" class="titila"/>
+<text x="72" y="236" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-308372</text>
+<rect x="72" y="248" width="210" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="304" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
+<text x="72" y="302" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-497656</text>
+<rect x="72" y="314" width="172" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="370" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
+<text x="72" y="368" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-401352</text>
+<rect x="72" y="380" width="114" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+</g></g>
+<g transform="translate(159,788) scale(0.415)" opacity=".92"><g class="flota" style="animation-delay:0.8s">
+<rect x="0" y="0" width="340" height="450" rx="20" fill="#5878ff" fill-opacity=".09" stroke="url(#holo)" stroke-width="3.4" filter="url(#brilla)"/>
+<rect x="0" y="0" width="340" height="62" rx="20" fill="url(#holo)" fill-opacity=".28"/>
+<text x="26" y="40" font-family="Segoe UI, system-ui, sans-serif" font-size="23" font-weight="700" letter-spacing="2" fill="#e9fbff">CABLE</text>
+<circle cx="306" cy="31" r="10" fill="#5dffa0" filter="url(#brilla)"/>
+<circle cx="40" cy="106" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 106 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="104" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-363054</text>
+<rect x="72" y="116" width="226" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="172" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 172 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="170" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-395736</text>
+<rect x="72" y="182" width="112" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="238" r="16" fill="none" stroke="#ffd166" stroke-width="2.6" stroke-dasharray="5 5"/><circle cx="40" cy="238" r="5.5" fill="#ffd166" class="titila"/>
+<text x="72" y="236" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-371347</text>
+<rect x="72" y="248" width="188" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="304" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
+<text x="72" y="302" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-372955</text>
+<rect x="72" y="314" width="229" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="370" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
+<text x="72" y="368" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-454418</text>
+<rect x="72" y="380" width="170" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+</g></g>
+<g transform="translate(1600,39) scale(0.387)" opacity=".92"><g class="flota" style="animation-delay:3.5s">
+<rect x="0" y="0" width="340" height="450" rx="20" fill="#5878ff" fill-opacity=".09" stroke="url(#holo)" stroke-width="3.4" filter="url(#brilla)"/>
+<rect x="0" y="0" width="340" height="62" rx="20" fill="url(#holo)" fill-opacity=".28"/>
+<text x="26" y="40" font-family="Segoe UI, system-ui, sans-serif" font-size="23" font-weight="700" letter-spacing="2" fill="#e9fbff">LÍNEA</text>
+<circle cx="306" cy="31" r="10" fill="#5dffa0" filter="url(#brilla)"/>
+<circle cx="40" cy="106" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 106 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="104" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-530816</text>
+<rect x="72" y="116" width="177" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="172" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
+<text x="72" y="170" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-439849</text>
+<rect x="72" y="182" width="173" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="238" r="16" fill="none" stroke="#ffd166" stroke-width="2.6" stroke-dasharray="5 5"/><circle cx="40" cy="238" r="5.5" fill="#ffd166" class="titila"/>
+<text x="72" y="236" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-555943</text>
+<rect x="72" y="248" width="175" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="304" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 304 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="302" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-324069</text>
+<rect x="72" y="314" width="221" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="370" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 370 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="368" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-323777</text>
+<rect x="72" y="380" width="180" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+</g></g>
+<g transform="translate(1738,729) scale(0.418)" opacity=".92"><g class="flota" style="animation-delay:2.5s">
+<rect x="0" y="0" width="340" height="450" rx="20" fill="#5878ff" fill-opacity=".09" stroke="url(#holo)" stroke-width="3.4" filter="url(#brilla)"/>
+<rect x="0" y="0" width="340" height="62" rx="20" fill="url(#holo)" fill-opacity=".28"/>
+<text x="26" y="40" font-family="Segoe UI, system-ui, sans-serif" font-size="23" font-weight="700" letter-spacing="2" fill="#e9fbff">FIBRA ÓPTICA</text>
+<circle cx="306" cy="31" r="10" fill="#5dffa0" filter="url(#brilla)"/>
+<circle cx="40" cy="106" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 106 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="104" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-524238</text>
+<rect x="72" y="116" width="160" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="172" r="16" fill="#5dffa0" fill-opacity=".18" stroke="#5dffa0" stroke-width="2.6"/>
+<path d="M31 172 l7 8 l14 -16" fill="none" stroke="#5dffa0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
+<text x="72" y="170" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-413517</text>
+<rect x="72" y="182" width="178" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="238" r="16" fill="none" stroke="#ffd166" stroke-width="2.6" stroke-dasharray="5 5"/><circle cx="40" cy="238" r="5.5" fill="#ffd166" class="titila"/>
+<text x="72" y="236" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-487461</text>
+<rect x="72" y="248" width="219" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="304" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
+<text x="72" y="302" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-587270</text>
+<rect x="72" y="314" width="174" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
+<circle cx="40" cy="370" r="16" fill="none" stroke="#9bb3ff" stroke-width="2.6" opacity=".6"/>
+<text x="72" y="368" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-395155</text>
+<rect x="72" y="380" width="115" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
 </g></g>
 <g stroke="url(#holo2)" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".8" filter="url(#brilla)">
 <path d="M384 1010 L430 760 L476 1010 M396 940 L464 940 M406 870 L454 870 M392 940 L454 870 M468 940 L406 870"/>
@@ -123,9 +209,9 @@
 <g class="flota">
 <polygon points="1560.0,280.0 1689.9,355.0 1689.9,505.0 1560.0,580.0 1430.1,505.0 1430.1,355.0" fill="#5878ff" fill-opacity=".1" stroke="url(#holo)" stroke-width="3" filter="url(#brilla)"/>
 <polygon points="1560.0,306.0 1667.4,368.0 1667.4,492.0 1560.0,554.0 1452.6,492.0 1452.6,368.0" fill="none" stroke="url(#holo2)" stroke-width="1.4" opacity=".7" stroke-dasharray="8 8" class="ruta"/>
-<path d="M1508 368 V452 A52 52 0 0 0 1612 452 V368" fill="none" stroke="#f4fbff" stroke-width="20" stroke-linecap="round" filter="url(#brilla)"/>
-<path d="M1526 434 l24 28 l50 -62" fill="none" stroke="#5dffa0" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)"/>
-<path d="M1490 526 H1630" stroke="#5dffa0" stroke-width="7" stroke-linecap="round" filter="url(#brilla)"/>
+<circle cx="1560" cy="430" r="78" fill="url(#holo2)" opacity=".22" filter="url(#brilla-suave)"/>
+<circle cx="1560" cy="430" r="46" fill="none" stroke="url(#holo)" stroke-width="2.2" opacity=".85" filter="url(#brilla)"/>
+<circle cx="1560" cy="430" r="22" fill="#e9fbff" class="titila" filter="url(#brilla)"/>
 <circle cx="1753" cy="486" r="5" fill="#00e5ff" class="titila" filter="url(#brilla)" style="animation-delay:0.2s"/>
 <circle cx="1414" cy="528" r="5" fill="#00e5ff" class="titila" filter="url(#brilla)" style="animation-delay:1.4s"/>
 <circle cx="1486" cy="268" r="5" fill="#00e5ff" class="titila" filter="url(#brilla)" style="animation-delay:2.5s"/>
