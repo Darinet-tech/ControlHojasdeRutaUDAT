@@ -19,7 +19,7 @@
     <stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/>
   </radialGradient>
   <radialGradient id="centro" cx="50%" cy="50%" r="50%">
-    <stop offset="0" stop-color="#02031c" stop-opacity=".55"/><stop offset="1" stop-color="#02031c" stop-opacity="0"/>
+    <stop offset="0" stop-color="#02031c" stop-opacity=".18"/><stop offset="1" stop-color="#02031c" stop-opacity="0"/>
   </radialGradient>
   <linearGradient id="desvanece" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".35" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity=".35"/>
@@ -242,13 +242,18 @@
 <text x="72" y="368" font-family="Consolas, monospace" font-size="19" fill="#d7e6ff" opacity=".92">46-487777</text>
 <rect x="72" y="380" width="156" height="7" rx="3.5" fill="#9bb3ff" opacity=".3"/>
 </g></g>
-<g stroke="url(#holo2)" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".8" filter="url(#brilla)">
-<path d="M384 1010 L430 760 L476 1010 M396 940 L464 940 M406 870 L454 870 M392 940 L454 870 M468 940 L406 870"/>
-<path d="M403 731 A 34 34 0 0 1 457 731" class="titila" style="animation-delay:0.6s"/>
-<path d="M380 717 A 62 62 0 0 1 480 717" class="titila" style="animation-delay:1.0s"/>
-<path d="M356 702 A 92 92 0 0 1 504 702" class="titila" style="animation-delay:1.5s"/>
+<ellipse cx="960" cy="1018" rx="300" ry="44" fill="#00e5ff" opacity=".22" filter="url(#brilla-suave)"/>
+<g fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilla)">
+<polyline points="806,1010 828,926 850,841 871,756 892,672 910,594 926,522 939,458 949,406 956,360" stroke="#46ecff" stroke-width="3.2" opacity=".95"/>
+<polyline points="1114,1010 1092,926 1070,841 1049,756 1028,672 1010,594 994,522 981,458 971,406 964,360" stroke="#46ecff" stroke-width="3.2" opacity=".95"/>
+<path d="M806 1010 L1092 926 M1114 1010 L828 926 M806 1010 L1114 1010 M828 926 L1070 841 M1092 926 L850 841 M828 926 L1092 926 M850 841 L1049 756 M1070 841 L871 756 M850 841 L1070 841 M871 756 L1028 672 M1049 756 L892 672 M871 756 L1049 756 M892 672 L1010 594 M1028 672 L910 594 M892 672 L1028 672 M910 594 L994 522 M1010 594 L926 522 M910 594 L1010 594 M926 522 L981 458 M994 522 L939 458 M926 522 L994 522 M939 458 L971 406 M981 458 L949 406 M939 458 L981 458 M949 406 L964 360 M971 406 L956 360 M949 406 L971 406" stroke="#8fa6ff" stroke-width="1.8" opacity=".75"/>
 </g>
-<circle cx="430" cy="755" r="7" fill="#fff" filter="url(#brilla)"/>
+<path d="M960 360 V298" stroke="#46ecff" stroke-width="3.2" stroke-linecap="round" filter="url(#brilla)"/>
+<circle cx="960" cy="294" r="10" fill="none" stroke="#ff8ae8" stroke-width="2" class="pulso"/>
+<circle cx="960" cy="294" r="7.5" fill="#fff" filter="url(#brilla)"/>
+<path d="M930 267 A40 40 0 0 1 990 267" fill="none" stroke="url(#holo2)" stroke-width="3.2" stroke-linecap="round" class="titila" style="animation-delay:0.00s" filter="url(#brilla)"/>
+<path d="M904 243 A76 76 0 0 1 1016 243" fill="none" stroke="url(#holo2)" stroke-width="3.2" stroke-linecap="round" class="titila" style="animation-delay:0.45s" filter="url(#brilla)"/>
+<path d="M877 219 A112 112 0 0 1 1043 219" fill="none" stroke="url(#holo2)" stroke-width="3.2" stroke-linecap="round" class="titila" style="animation-delay:0.90s" filter="url(#brilla)"/>
 <polygon points="1430,760 1570,760 1690,430 1310,430" fill="url(#haz)" opacity=".85"/>
 <ellipse cx="1500" cy="766" rx="130" ry="31" fill="none" stroke="#00e5ff" stroke-width="2.2" class="anillo" style="animation-delay:0s"/>
 <ellipse cx="1500" cy="766" rx="130" ry="31" fill="none" stroke="#00e5ff" stroke-width="2.2" class="anillo" style="animation-delay:1.5s"/>
