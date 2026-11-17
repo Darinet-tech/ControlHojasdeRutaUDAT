@@ -10,10 +10,20 @@ python manage.py migrate
 python manage.py cargar_inicial      # brigadas, causas, 180 claves con normas, roles
 python manage.py createsuperuser
 python manage.py crear_demo         # hoja de ejemplo completa (se puede repetir)
-python manage.py runserver           # http://localhost:8000/admin
+python manage.py runserver           # http://localhost:8001/admin  (puerto propio del proyecto)
 python manage.py test                # la suite de pruebas de las reglas de negocio
 ```
 Sin `POSTGRES_DB` en el entorno usa SQLite (solo para pruebas rápidas).
+
+## Varios proyectos Django en la misma máquina
+En Windows dos servidores pueden abrir **el mismo puerto sin error**: los dos dicen estar levantados, pero las peticiones las atiende solo uno
+(y se termina viendo el `/admin` de otro proyecto). Por eso esta app:
+- usa su **propio puerto de desarrollo** (`PUERTO_DESARROLLO`, 8001 por defecto, en el `.env`): `python manage.py runserver` ya arranca ahí;
+- **se niega a arrancar** si el puerto ya está ocupado, con un aviso (`runserver` y `servir.py`);
+- usa **cookies con nombre propio** (`mesa_sessionid`, `mesa_csrftoken`): las cookies no se separan por puerto, y con varios proyectos en `localhost`
+  compartirían `sessionid` y se cerrarían las sesiones unas a otras;
+- el frontend en desarrollo (`npm run dev`) reenvía la API al puerto de este proyecto (variable `PUERTO_DESARROLLO`).
+Reparto sugerido: un puerto distinto por proyecto (p. ej. 8000, 8001, 8002). Para ver qué ocupa un puerto: `Get-NetTCPConnection -State Listen -LocalPort 8000`.
 
 ## Uso como web normal y despliegue en el servidor
 Sin entorno de desarrollo: `npm run build` (en `frontend/`) compila la pantalla y `python servir.py` (o `iniciar_servidor.bat`) entrega
@@ -43,7 +53,7 @@ recuerda la elección **en ese navegador**. Al imprimir o exportar siempre se us
 - **Jefe**: solo consulta.
 
 ## API REST (`/api/`) — fase 2
-Misma sesión que la administración: quien entró a `/admin` ya puede abrir `http://127.0.0.1:8000/api/` en el navegador.
+Misma sesión que la administración: quien entró a `/admin` ya puede abrir `http://127.0.0.1:8001/api/` en el navegador.
 Los permisos salen de los roles: **Probador** registra, **Jefe** y **Especialista** consultan. Escribir desde una
 pantalla web exige el token CSRF (cookie `csrftoken` -> cabecera `X-CSRFToken`).
 

@@ -8,6 +8,7 @@ from wsgiref.simple_server import WSGIRequestHandler, WSGIServer, make_server
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
+from config.puertos import puerto_ocupado  # noqa: E402
 from config.wsgi import application  # noqa: E402  (después de fijar el módulo de configuración)
 
 
@@ -22,6 +23,8 @@ class _Silencioso(WSGIRequestHandler):
 
 if __name__ == "__main__":
     puerto = int(os.environ.get("SERVIDOR_PUERTO", "8000"))
+    if puerto_ocupado(puerto):  # en Windows dos servidores pueden abrir el mismo puerto sin error: se avisa en vez de pisarse
+        raise SystemExit(f"El puerto {puerto} ya está en uso por otro servidor. Cambie SERVIDOR_PUERTO en el .env.")
     try:
         from waitress import serve
     except ImportError:

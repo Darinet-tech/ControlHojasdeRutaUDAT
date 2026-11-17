@@ -48,9 +48,18 @@ if not SECRET_KEY:
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
+# Puerto del servidor de desarrollo de ESTE proyecto: cada proyecto Django en la misma máquina debe usar uno distinto.
+PUERTO_DESARROLLO = int(os.environ.get('PUERTO_DESARROLLO', '8001'))
+
+# Las cookies no se separan por puerto (solo por equipo): con varios proyectos en localhost compartirían el nombre 'sessionid'
+# y se pisarían las sesiones. Cada proyecto usa nombres propios.
+SESSION_COOKIE_NAME = 'mesa_sessionid'
+CSRF_COOKIE_NAME = 'mesa_csrftoken'
+
 # Application definition
 
 INSTALLED_APPS = [
+    'config',  # va primero: aporta el comando runserver propio (puerto del proyecto + aviso si está ocupado)
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

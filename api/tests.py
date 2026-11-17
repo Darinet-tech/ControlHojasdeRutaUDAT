@@ -73,7 +73,7 @@ class SesionYPermisosTests(BaseAPI):
     def test_la_pantalla_web_necesita_el_token_csrf_para_escribir(self):
         api = APIClient(enforce_csrf_checks=True)
         api.post("/api/auth/login/", {"username": "probador", "password": "clave123"})
-        token = api.get("/api/auth/me/").cookies["csrftoken"].value
+        token = api.get("/api/auth/me/").cookies["mesa_csrftoken"].value
         datos = {"fecha": "2026-10-01", "brigada": self.rep.pk, "centros": [self.ng.pk], "operarios": [self.op1.pk]}
         self.assertEqual(api.post("/api/hojas/", datos, format="json").status_code, 403)  # sin token
         self.assertEqual(api.post("/api/hojas/", datos, format="json", HTTP_X_CSRFTOKEN=token).status_code, 201)

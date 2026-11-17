@@ -31,7 +31,7 @@ function textoDeError(datos, estado) {
 async function pedir(metodo, ruta, cuerpo) {
   const cabeceras = { Accept: 'application/json' };
   if (cuerpo !== undefined) cabeceras['Content-Type'] = 'application/json';
-  if (metodo !== 'GET') cabeceras['X-CSRFToken'] = leerCookie('csrftoken');
+  if (metodo !== 'GET') cabeceras['X-CSRFToken'] = leerCookie('mesa_csrftoken');
   const r = await fetch('/api' + ruta, {
     method: metodo,
     headers: cabeceras,
