@@ -233,7 +233,7 @@ function FormularioAsignar({ catalogos, hoja, centrosDeLaHoja, ejecutar, verHist
 
 const ETIQUETA_ESTADO = { EN_CURSO: ['info', 'En curso'], OK: ['ok', 'OK'], SIN_OK: ['mal', 'Cerrada sin OK'], NO_VISITADA: ['aviso', 'No visitada'], ANULADA: ['aviso', 'Anulada (NULA)'] };
 
-function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistorial }) {
+function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistorial, enModal = false }) {
   const [modo, setModo] = useState(null); // 'ok' | 'pasar' | 'sinok'
   const [cliente, setCliente] = useState('');
   const [brigada, setBrigada] = useState('');
@@ -261,7 +261,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
   };
 
   return (
-    <article className={`tarjeta accion accion-${accion.estado.toLowerCase()}`} aria-label={`Servicio ${accion.etiqueta}`}>
+    <article className={`tarjeta accion accion-${accion.estado.toLowerCase()}${enModal ? ' accion-en-modal' : ''}`} aria-label={`Servicio ${accion.etiqueta}`}>
       <div className="fila">
         <strong>#{accion.numero} · {accion.etiqueta}</strong>
         {accion.categoria !== 'CORRECTIVO' && <Chip tipo="info" titulo="Tipo de acción">{accion.categoria_texto}</Chip>}
@@ -479,6 +479,80 @@ function Historial({ numero, alCerrar }) {
         </>
       )}
     </Modal>
+  );
+}
+
+// ---------------------------------------------------------------- lista de las acciones de la hoja (se trabaja cada una en una ventana)
+
+const FILTROS = [['todas', 'Todas'], ['curso', 'En curso'], ['cerradas', 'Cerradas']];
+
+function ListaDeAcciones({ hoja, editable, catalogos, ejecutar, verHistorial }) {
+  const [abierta, setAbierta] = useState(null); // { id, estado } de la acción en la que se está trabajando
+  const [filtro, setFiltro] = useState('todas');
+  const [busqueda, setBusqueda] = useState('');
+  const acciones = hoja.acciones;
+  const seleccionada = abierta ? acciones.find((a) => a.id === abierta.id) : null;
+
+  // la ventana se cierra sola al terminar de trabajar la acción (deja de estar en curso) o si la acción ya no existe
+  useEffect(() => {
+    if (abierta && (!seleccionada || (abierta.estado === 'EN_CURSO' && seleccionada.estado !== 'EN_CURSO'))) setAbierta(null);
+  }, [abierta, seleccionada]);
+
+  const enCurso = acciones.filter((a) => a.estado === 'EN_CURSO');
+  const q = busqueda.trim().toLowerCase();
+  const visibles = acciones
+    .filter((a) => (filtro === 'curso' ? a.estado === 'EN_CURSO' : filtro === 'cerradas' ? a.estado !== 'EN_CURSO' : true))
+    .filter((a) => !q || `${a.etiqueta} ${a.numero_servicio} ${a.numero_orden}`.toLowerCase().includes(q));
+  const cuenta = { todas: acciones.length, curso: enCurso.length, cerradas: acciones.length - enCurso.length };
+
+  return (
+    <>
+      <div className="fila filtro-acciones">
+        <div className="segmentos" role="group" aria-label="Filtrar servicios">
+          {FILTROS.map(([valor, texto]) => (
+            <button key={valor} className={`segmento ${filtro === valor ? 'segmento-activo' : ''}`} aria-pressed={filtro === valor} onClick={() => setFiltro(valor)}>
+              {texto} ({cuenta[valor]})
+            </button>
+          ))}
+        </div>
+        {acciones.length > 8 && <input type="search" placeholder="Buscar servicio…" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} aria-label="Buscar servicio" />}
+      </div>
+      <div className="tabla-envoltura">
+        <table className="lista-acciones">
+          <thead><tr><th>N.º</th><th>Servicio</th><th>Estado</th><th>Claves</th><th>Cierre</th><th /></tr></thead>
+          <tbody>
+            {visibles.map((a) => {
+              const [tipo, texto] = a.estado === 'PASADA_A_BRIGADA' ? ['aviso', `Pasada a ${a.pasada_a_nombre}`] : ETIQUETA_ESTADO[a.estado];
+              const trabajable = editable && a.estado === 'EN_CURSO';
+              return (
+                <tr key={a.id} className={`fila-accion fila-accion-${a.estado.toLowerCase()}`} onClick={() => setAbierta({ id: a.id, estado: a.estado })}>
+                  <td>{a.numero}</td>
+                  <td>
+                    <strong>{a.etiqueta}</strong>{' '}
+                    {a.categoria !== 'CORRECTIVO' && <Chip tipo="info">{a.categoria_texto}</Chip>}{' '}
+                    {a.variante && <Chip tipo="info">{a.variante_texto}</Chip>}{' '}
+                    {hoja.centros.length > 1 && a.centro_codigo && <Chip tipo="info">📍 {a.centro_codigo}</Chip>}{' '}
+                    {a.agregada_despues && <Chip tipo="info" titulo="Se agregó después de generar la hoja de ruta">+ en la jornada</Chip>}
+                  </td>
+                  <td><Chip tipo={tipo}>{texto}</Chip></td>
+                  <td className="suave">{a.trabajos.length > 0 ? `${a.trabajos.length} trabajo(s)` : a.claves.map((c) => c.codigo).join(' · ') || '—'}</td>
+                  <td className="suave">{a.hora_fin && a.estado !== 'NO_VISITADA' ? formatearHora(a.hora_fin) : '—'}</td>
+                  <td><button className={`boton ${trabajable ? 'boton-principal' : ''}`} onClick={(e) => { e.stopPropagation(); setAbierta({ id: a.id, estado: a.estado }); }}>
+                    {trabajable ? 'Trabajar' : 'Ver'}
+                  </button></td>
+                </tr>
+              );
+            })}
+            {visibles.length === 0 && <tr><td colSpan={6} className="suave">Ningún servicio coincide con el filtro.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+      {seleccionada && (
+        <Modal titulo={`Servicio #${seleccionada.numero}`} alCerrar={() => setAbierta(null)}>
+          <TarjetaAccion accion={seleccionada} hoja={hoja} editable={editable} catalogos={catalogos} ejecutar={ejecutar} verHistorial={verHistorial} enModal />
+        </Modal>
+      )}
+    </>
   );
 }
 
@@ -779,9 +853,7 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
       )}
 
       {hoja.acciones.length === 0 && <div className="tarjeta vacio"><p>Esta hoja todavía no tiene servicios asignados.</p></div>}
-      {hoja.acciones.map((a) => (
-        <TarjetaAccion key={a.id} accion={a} hoja={hoja} editable={editable} catalogos={catalogos} ejecutar={ejecutar} verHistorial={setHistorial} />
-      ))}
+      {hoja.acciones.length > 0 && <ListaDeAcciones hoja={hoja} editable={editable} catalogos={catalogos} ejecutar={ejecutar} verHistorial={setHistorial} />}
 
       {historial && <Historial numero={historial} alCerrar={() => setHistorial(null)} />}
     </section>

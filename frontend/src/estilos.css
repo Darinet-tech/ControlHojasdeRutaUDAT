@@ -215,3 +215,15 @@ a.boton { text-decoration: none; color: var(--texto); display: inline-block; }
 @media (prefers-color-scheme: dark) { :root[data-tema="oscuro"] .nota-parte { color: #ff8b80; } }
 :root[data-tema="oscuro"] .nota-parte { color: #ff8b80; }
 
+/* Lista de las acciones de la hoja: una fila por servicio; el trabajo se hace en una ventana */
+.filtro-acciones { margin: .4rem 0; justify-content: space-between; }
+.lista-acciones { width: 100%; border-collapse: collapse; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: var(--radio); }
+.lista-acciones th, .lista-acciones td { padding: .35rem .6rem; border-bottom: 1px solid var(--borde); text-align: left; font-size: .9rem; vertical-align: middle; }
+.lista-acciones thead th { position: sticky; top: 0; background: var(--chip); font-size: .8rem; }
+.fila-accion { cursor: pointer; }
+.fila-accion:hover { background: var(--info-fondo); }
+.fila-accion-en_curso td:first-child { border-left: 4px solid var(--primario); }
+.fila-accion-ok td:first-child { border-left: 4px solid var(--verde); }
+.fila-accion-sin_ok td:first-child, .fila-accion-pasada_a_brigada td:first-child, .fila-accion-anulada td:first-child { border-left: 4px solid var(--aviso); }
+.accion-en-modal { border: 0; border-left: 0; padding: 0; margin: 0; background: transparent; }
+
