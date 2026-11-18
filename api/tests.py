@@ -571,7 +571,7 @@ class InicioAPITests(BaseOperacion):
         admin = get_user_model().objects.create_superuser("adm_inicio", "a@a.cu", "x")
         self.api.force_authenticate(admin)
         self.assertEqual(self.api.get("/api/inicio/").data["catalogos"], {
-            "claves_por_revisar": 5, "claves_sin_norma": 0, "trabajos_sin_norma": 2,  # los trabajos de las órdenes de trabajo aún no tienen norma
+            "claves_por_revisar": 5, "claves_sin_norma": 0, "trabajos_sin_norma": 2, "tipos_sin_norma": ["CMONT", "GAB"],  # los trabajos de las órdenes de trabajo aún no tienen norma
             "informe_diario": {"destinatarios": 0, "ultimo": None}})
         Clave.objects.create(codigo="99-Z", grupo=GrupoClave.objects.first(), clasificacion="EFECTIVA")  # una clave nueva sin norma
         self.assertEqual(self.api.get("/api/inicio/").data["catalogos"]["claves_sin_norma"], 1)

@@ -110,7 +110,8 @@ def reunir_datos(fecha, brigada=None, centro=None, solo_hoja=None, usuario=None,
             minutos = [normas.minutos_trabajo(t.pk, a.hoja.fecha) for t in a.trabajos.all()]
             descripcion = f"{orden.etiqueta} · " + ", ".join(trabajos) if trabajos else orden.etiqueta
         else:
-            minutos = [normas.minutos(c.pk, orden.tipo_orden_id, a.hoja.fecha) for c in claves]
+            por_tipo = normas.minutos_de_tipo(orden.categoria, orden.tipo_orden_id, orden.tipo_mantenimiento_id, a.hoja.fecha)
+            minutos = [por_tipo] if por_tipo is not None else [normas.minutos(c.pk, orden.tipo_orden_id, a.hoja.fecha) for c in claves]
             descripcion = " ".join([orden.etiqueta] + [c.codigo for c in claves])
         estado = a.estado
         por_hoja[a.hoja_id].append({

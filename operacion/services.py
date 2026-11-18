@@ -7,15 +7,29 @@ from django.db import transaction
 from django.db.models import Exists, Max, OuterRef
 from django.utils import timezone
 
-from catalogos.models import NormaTiempo, NormaTrabajo
+from catalogos.models import NormaMantenimiento, NormaTiempo, NormaTipoOrden, NormaTrabajo
 
 from .models import Accion, HojaDeRuta, Incidencia, OrdenServicio
+
+
+def norma_de_tipo(orden, fecha):
+    """Norma (minutos) del tipo de orden de servicio o del tipo de mantenimiento preventivo; None si no tiene."""
+    if orden.categoria == OrdenServicio.Categoria.ORDEN_SERVICIO and orden.tipo_orden_id:
+        norma = NormaTipoOrden.vigente(orden.tipo_orden, fecha)
+    elif orden.categoria == OrdenServicio.Categoria.PREVENTIVO and orden.tipo_mantenimiento_id:
+        norma = NormaMantenimiento.vigente(orden.tipo_mantenimiento, fecha)
+    else:
+        return None
+    return norma.minutos if norma else None
 
 
 def norma_accion(accion):
     """Minutos normados de una acción. Si es una orden de trabajo, el de su trabajo de mayor norma; en las demás,
     el de su clave MAYOR (regla del negocio). None si ninguno tiene norma."""
     fecha = accion.hoja.fecha
+    por_tipo = norma_de_tipo(accion.orden, fecha)  # órdenes de servicio y preventivos: la norma es la de su tipo (A 50, MPPE 30...)
+    if por_tipo is not None:
+        return por_tipo
     minutos = []
     if accion.orden.categoria == OrdenServicio.Categoria.ORDEN_TRABAJO:
         for trabajo in accion.trabajos.all():

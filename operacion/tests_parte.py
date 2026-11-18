@@ -228,3 +228,40 @@ class ParteEnInformesYApiTests(ParteBase):
         self.assertEqual([c["etiqueta"] for c in r.data["columnas"]], ["A1-A2"])
         self.assertEqual(r.data["visitadas"]["total"], 3)
         self.assertEqual(api.get("/api/parte-diario/?fecha=2026-13-45").status_code, 400)
+
+
+class NormasPorTipoTests(ParteBase):
+    def test_normas_del_documento_de_normas_de_tiempo(self):
+        from catalogos.models import NormaMantenimiento, NormaTipoOrden
+        ordenes = {n.tipo_orden.codigo: n.minutos for n in NormaTipoOrden.objects.all()}
+        self.assertEqual(ordenes, {"A": 50, "AS": 25, "CL": 25, "B": 35, "TA": 50, "TE": 50, "TI": 50, "REC": 25, "CMIS": 25, "AE": 50,
+                                   "CA": 30, "CVIV": 30, "CTS": 30, "CD": 30})
+        self.assertEqual({n.tipo_mantenimiento.codigo: n.minutos for n in NormaMantenimiento.objects.all()},
+                         {"MPI": 55, "MPPI": 25, "MPPE": 30, "MTP": 25})
+
+    def test_la_norma_de_una_orden_o_un_preventivo_es_la_de_su_tipo_y_no_la_de_sus_claves(self):
+        from .services import norma_accion
+        self.assertEqual(norma_accion(self.nuevo("ORDEN_SERVICIO", 9501, tipo_orden="B")), 35)
+        self.assertEqual(norma_accion(self.nuevo("ORDEN_SERVICIO", 9502, tipo_orden="A", claves=())), 50)  # sin claves también
+        self.assertEqual(norma_accion(self.nuevo("PREVENTIVO", 9503, tipo_mant="MPI")), 55)
+        self.assertEqual(norma_accion(self.nuevo("PREVENTIVO", 9504, tipo_mant="MTP")), 25)
+        self.assertEqual(norma_accion(self.nuevo("CORRECTIVO", 9505)), 45)  # el correctivo sigue normándose por su clave (25-R)
+
+    def test_sin_norma_de_tipo_se_conserva_el_calculo_anterior(self):
+        from .services import norma_accion
+        cmont = self.nuevo("ORDEN_SERVICIO", 9512, tipo_orden="CMONT", claves=())  # CMONT no viene en el documento
+        self.assertIsNone(norma_accion(cmont))
+        self.assertIsNone(norma_accion(self.nuevo("PREVENTIVO", 9513, tipo_mant="GAB", claves=())))
+
+    def test_la_productividad_cuenta_el_tiempo_normado_de_las_ordenes_ejecutadas(self):
+        from .services import resumen_hoja
+        self.ok(self.nuevo("ORDEN_SERVICIO", 9521, tipo_orden="A", claves=()))
+        self.assertEqual(resumen_hoja(self.hoja_x)["tiempo_normado_efectivo_min"], 50)
+
+    def test_inicio_avisa_de_los_tipos_sin_norma(self):
+        from django.contrib.auth import get_user_model
+        from rest_framework.test import APIClient
+        api = APIClient()
+        api.force_authenticate(get_user_model().objects.create_superuser("adm2", "a@a.cu", "x"))
+        self.assertEqual(api.get("/api/inicio/").data["catalogos"]["tipos_sin_norma"], ["CMONT", "GAB"])
+

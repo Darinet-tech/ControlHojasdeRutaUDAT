@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from .models import (Brigada, CausaIncidencia, Centro, Clave, ClaveOrdenServicio, GrupoClave, NormaTiempo, NormaTrabajo, Operario,
+from .models import (Brigada, CausaIncidencia, Centro, Clave, ClaveOrdenServicio, GrupoClave, NormaMantenimiento, NormaTiempo,
+                     NormaTipoOrden, NormaTrabajo, Operario,
                      TipoMantenimiento, TipoOrden, TipoTrabajo, Vehiculo)
 
 
@@ -104,10 +105,25 @@ class CausaIncidenciaAdmin(admin.ModelAdmin):
     list_editable = ("descuenta_tiempo",)
 
 
+class NormaTipoOrdenInline(admin.TabularInline):
+    model = NormaTipoOrden
+    extra = 0
+
+
 @admin.register(TipoOrden)
 class TipoOrdenAdmin(admin.ModelAdmin):
-    list_display = ("codigo", "nombre", "descripcion")
+    """Para cambiar una norma sin alterar el pasado, ponga fecha fin a la vigente y cree otra con su fecha de inicio."""
+
+    list_display = ("codigo", "nombre", "fila_parte", "norma_actual")
+    list_editable = ("fila_parte",)
     search_fields = ("codigo", "nombre")
+    inlines = [NormaTipoOrdenInline]
+
+    @admin.display(description="Norma vigente (min)")
+    def norma_actual(self, tipo):
+        from django.utils import timezone
+        norma = NormaTipoOrden.vigente(tipo, timezone.localdate())
+        return norma.minutos if norma else "— sin norma —"
 
 
 class NormaTrabajoInline(admin.TabularInline):
@@ -131,9 +147,22 @@ class TipoTrabajoAdmin(admin.ModelAdmin):
         return norma.minutos if norma else "— sin norma —"
 
 
+class NormaMantenimientoInline(admin.TabularInline):
+    model = NormaMantenimiento
+    extra = 0
+
+
 @admin.register(TipoMantenimiento)
 class TipoMantenimientoAdmin(admin.ModelAdmin):
-    list_display = ("codigo", "nombre", "activo")
+    list_display = ("codigo", "nombre", "fila_parte", "norma_actual", "activo")
+    list_editable = ("fila_parte", "activo")
+    inlines = [NormaMantenimientoInline]
+
+    @admin.display(description="Norma vigente (min)")
+    def norma_actual(self, tipo):
+        from django.utils import timezone
+        norma = NormaMantenimiento.vigente(tipo, timezone.localdate())
+        return norma.minutos if norma else "— sin norma —"
 
 
 for modelo in (Brigada, GrupoClave):

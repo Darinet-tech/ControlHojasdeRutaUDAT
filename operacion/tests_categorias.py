@@ -152,15 +152,15 @@ class ResumenesPorTipoTests(BaseCategorias):
         self.escenario()
         r = resumen_periodo("dia", DIA, ahora=hora(16))
         self.assertEqual({c["codigo"]: c["acciones"] for c in r["por_categoria"]}, {"CORRECTIVO": 1, "PREVENTIVO": 1, "ORDEN_SERVICIO": 1, "ORDEN_TRABAJO": 1})
-        # normado: 45 (25-R) + 35 (21-R) + 20 (07-IC) + 120 (poste) = 220 sobre 240 min reales
-        self.assertEqual((r["totales"]["tiempo_normado_min"], r["totales"]["tiempo_real_min"], r["totales"]["productividad_pct"]), (220, 240, 91.7))
+        # normado: 45 (25-R) + 30 (preventivo MPPE) + 50 (orden TA) + 120 (poste) = 245 sobre 240 min reales
+        self.assertEqual((r["totales"]["tiempo_normado_min"], r["totales"]["tiempo_real_min"], r["totales"]["productividad_pct"]), (245, 240, 102.1))
         ot = next(c for c in r["por_categoria"] if c["codigo"] == "ORDEN_TRABAJO")
         self.assertEqual((ot["ok"], ot["tiempo_normado_min"]), (1, 120))
 
     def test_por_vehiculo(self):
         self.escenario()
         r = resumen_periodo("dia", DIA, ahora=hora(16))
-        self.assertEqual([(v["nombre"], v["hojas"], v["acciones"], v["productividad_pct"]) for v in r["por_vehiculo"]], [("B079342", 1, 4, 91.7)])
+        self.assertEqual([(v["nombre"], v["hojas"], v["acciones"], v["productividad_pct"]) for v in r["por_vehiculo"]], [("B079342", 1, 4, 102.1)])
 
     def test_la_reincidencia_es_solo_de_correctivos(self):
         h2 = crear_hoja(fecha=date(2026, 10, 2), brigada=self.rep, centro=self.centro); h2.operarios.set([self.op2])

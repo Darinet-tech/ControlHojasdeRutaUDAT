@@ -13,8 +13,10 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from catalogos.claves_orden import crear as crear_claves_de_orden
+from catalogos.normas_tipo import crear as crear_normas_por_tipo
 from catalogos.parte_datos import completar as completar_filas_parte
-from catalogos.models import (Brigada, CausaIncidencia, Centro, Clave, GrupoClave, NormaTiempo, TipoMantenimiento, TipoOrden,
+from catalogos.models import (Brigada, CausaIncidencia, Centro, Clave, GrupoClave, NormaMantenimiento, NormaTiempo, NormaTipoOrden,
+                              TipoMantenimiento, TipoOrden,
                               TipoTrabajo)
 
 BRIGADAS = ["Red de Abonados", "Reconstrucción", "Cable", "Línea", "Fibra Óptica"]
@@ -138,6 +140,7 @@ class Command(BaseCommand):
 
         crear_claves_de_orden(Clave, GrupoClave)  # claves de cierre de las órdenes de servicio (1 a 19)
         completar_filas_parte(Clave, TipoOrden, TipoMantenimiento)  # tipos del parte (MTP, GAB, CMIS) y fila de cada clave/tipo
+        crear_normas_por_tipo(TipoOrden, TipoMantenimiento, NormaTipoOrden, NormaMantenimiento)  # normas de las órdenes y de los preventivos
         self._roles()
         self.stdout.write(self.style.SUCCESS(
             f"Claves creadas: {creadas}; total en catálogo: {Clave.objects.count()}; "

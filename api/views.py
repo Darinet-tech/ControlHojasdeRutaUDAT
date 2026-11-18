@@ -22,7 +22,7 @@ from catalogos.models import (Brigada, CausaIncidencia, Centro, Clave, Operario,
 from operacion.models import Accion, DestinatarioInforme, HojaDeRuta, Incidencia, InformeEnviado, OrdenServicio
 from operacion.informes import generar_informe
 from operacion.reportes import analisis_de_jefatura, resumen_periodo
-from catalogos.models import NormaTiempo, NormaTrabajo
+from catalogos.models import NormaMantenimiento, NormaTiempo, NormaTipoOrden, NormaTrabajo
 from operacion.parte import parte_diario
 from operacion.services import (anular_orden, asignar_no_visitadas, asignar_orden, asignar_pendientes, asignar_sin_solucion, generar_hoja, obtener_orden,
                                 cerrar_hoja, cerrar_sin_ok, certificar_ok, finalizar_incidencia, historial_servicio, iniciar_incidencia,
@@ -559,6 +559,9 @@ class InicioView(APIView):
                     pk__in=NormaTiempo.objects.values("clave_id")).count(),
                 "trabajos_sin_norma": TipoTrabajo.objects.filter(activo=True).exclude(
                     pk__in=NormaTrabajo.objects.values("tipo_trabajo_id")).count(),
+                "tipos_sin_norma": sorted([t.codigo for t in TipoOrden.objects.all() if not NormaTipoOrden.vigente(t, hoy)]
+                                          + [t.codigo for t in TipoMantenimiento.objects.filter(activo=True)
+                                             if not NormaMantenimiento.vigente(t, hoy)]),
                 "informe_diario": None,
             }
             if request.user.is_superuser:  # la lista de destinatarios y el envío son cosa del administrador

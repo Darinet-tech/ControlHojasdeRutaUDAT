@@ -255,6 +255,54 @@ class TipoTrabajo(models.Model):
         return self.nombre
 
 
+class NormaTipoOrden(models.Model):
+    """Norma de tiempo (minutos) de un tipo de orden de servicio (A 50, B 35...), con vigencia.
+
+    Es el tiempo que se norma a una orden ejecutada (con OK): las órdenes de servicio no se normas por claves de reparación."""
+
+    tipo_orden = models.ForeignKey(TipoOrden, on_delete=models.CASCADE, related_name="normas_del_tipo")
+    minutos = models.PositiveSmallIntegerField()
+    vigente_desde = models.DateField()
+    vigente_hasta = models.DateField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "norma de tiempo de un tipo de orden"
+        verbose_name_plural = "normas de tiempo de los tipos de orden"
+        ordering = ["tipo_orden__codigo", "-vigente_desde"]
+        constraints = [models.UniqueConstraint(fields=["tipo_orden", "vigente_desde"], name="norma_tipo_orden_unica_por_inicio")]
+
+    def __str__(self):
+        return f"{self.tipo_orden} = {self.minutos} min"
+
+    @classmethod
+    def vigente(cls, tipo_orden, fecha):
+        return (cls.objects.filter(tipo_orden=tipo_orden, vigente_desde__lte=fecha)
+                .filter(Q(vigente_hasta__isnull=True) | Q(vigente_hasta__gte=fecha)).order_by("-vigente_desde").first())
+
+
+class NormaMantenimiento(models.Model):
+    """Norma de tiempo (minutos) de un tipo de mantenimiento preventivo (MPI 55, MPPE 30...), con vigencia."""
+
+    tipo_mantenimiento = models.ForeignKey(TipoMantenimiento, on_delete=models.CASCADE, related_name="normas")
+    minutos = models.PositiveSmallIntegerField()
+    vigente_desde = models.DateField()
+    vigente_hasta = models.DateField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "norma de tiempo de un mantenimiento"
+        verbose_name_plural = "normas de tiempo de los mantenimientos"
+        ordering = ["tipo_mantenimiento__codigo", "-vigente_desde"]
+        constraints = [models.UniqueConstraint(fields=["tipo_mantenimiento", "vigente_desde"], name="norma_mantenimiento_unica_por_inicio")]
+
+    def __str__(self):
+        return f"{self.tipo_mantenimiento} = {self.minutos} min"
+
+    @classmethod
+    def vigente(cls, tipo_mantenimiento, fecha):
+        return (cls.objects.filter(tipo_mantenimiento=tipo_mantenimiento, vigente_desde__lte=fecha)
+                .filter(Q(vigente_hasta__isnull=True) | Q(vigente_hasta__gte=fecha)).order_by("-vigente_desde").first())
+
+
 class NormaTrabajo(models.Model):
     """Norma de tiempo (minutos) de un tipo de trabajo, con vigencia: igual que las normas de las claves."""
 

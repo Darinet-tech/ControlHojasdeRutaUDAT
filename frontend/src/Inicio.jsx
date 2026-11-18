@@ -131,6 +131,10 @@ export default function Inicio({ usuario, irA, abrirHoja }) {
     clave: 'tn', tipo: 'aviso', texto: `${datos.catalogos.trabajos_sin_norma} trabajo(s) de órdenes de trabajo sin norma de tiempo: se calculará sin tiempo normado hasta que se defina.`,
     boton: ['Abrir catálogo', () => window.open('/admin/catalogos/tipotrabajo/', '_blank')],
   });
+  if (datos?.catalogos?.tipos_sin_norma?.length > 0) atencion.push({
+    clave: 'tsn', tipo: 'aviso', texto: `Sin norma de tiempo: ${datos.catalogos.tipos_sin_norma.join(', ')}. Esas órdenes o mantenimientos se calculan sin tiempo normado hasta que se defina.`,
+    boton: ['Abrir tipos de orden', () => window.open('/admin/catalogos/tipoorden/', '_blank')],
+  });
   const envio = datos?.catalogos?.informe_diario;
   if (envio && envio.destinatarios === 0) atencion.push({
     clave: 'ed', tipo: 'mal', texto: 'No hay destinatarios activos para el informe diario de las 16:00: no se enviará a nadie.',

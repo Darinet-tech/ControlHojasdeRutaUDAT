@@ -18,7 +18,7 @@ from datetime import date
 from django.conf import settings
 from django.utils import timezone
 
-from catalogos.models import NormaTiempo, NormaTrabajo
+from catalogos.models import NormaMantenimiento, NormaTiempo, NormaTipoOrden, NormaTrabajo
 
 from .models import Accion, HojaDeRuta, Incidencia, OrdenServicio, estado_de_accion, etiqueta_orden
 
@@ -39,6 +39,21 @@ class Normas:
             for n in NormaTrabajo.objects.values("tipo_trabajo_id", "minutos", "vigente_desde", "vigente_hasta"):
                 self._trabajos[n["tipo_trabajo_id"]].append(n)
         vigentes = [n for n in self._trabajos.get(trabajo_id, [])
+                    if n["vigente_desde"] <= fecha and (n["vigente_hasta"] is None or n["vigente_hasta"] >= fecha)]
+        return max(vigentes, key=lambda n: n["vigente_desde"])["minutos"] if vigentes else None
+
+    def minutos_de_tipo(self, categoria, tipo_orden_id, tipo_mantenimiento_id, fecha):
+        """Norma del tipo de orden de servicio o de mantenimiento preventivo (None si no tiene)."""
+        if not hasattr(self, "_tipos"):
+            self._tipos = {"ORDEN_SERVICIO": defaultdict(list), "PREVENTIVO": defaultdict(list)}
+            for n in NormaTipoOrden.objects.values("tipo_orden_id", "minutos", "vigente_desde", "vigente_hasta"):
+                self._tipos["ORDEN_SERVICIO"][n["tipo_orden_id"]].append(n)
+            for n in NormaMantenimiento.objects.values("tipo_mantenimiento_id", "minutos", "vigente_desde", "vigente_hasta"):
+                self._tipos["PREVENTIVO"][n["tipo_mantenimiento_id"]].append(n)
+        if categoria not in self._tipos:
+            return None
+        tipo_id = tipo_orden_id if categoria == "ORDEN_SERVICIO" else tipo_mantenimiento_id
+        vigentes = [n for n in self._tipos[categoria].get(tipo_id, [])
                     if n["vigente_desde"] <= fecha and (n["vigente_hasta"] is None or n["vigente_hasta"] >= fecha)]
         return max(vigentes, key=lambda n: n["vigente_desde"])["minutos"] if vigentes else None
 
@@ -119,7 +134,7 @@ def _estadisticas_por_hoja(base, ahora):
 
     filas = list(Accion.objects.filter(hoja__in=base).values(
         "id", "hoja_id", "orden_id", "orden__numero_servicio", "orden__categoria", "orden__numero_orden", "orden__tipo_orden__codigo",
-        "orden__tipo_mantenimiento__codigo", "orden__tipo_orden_id", "orden__estado", "centro__codigo", "ok", "anulada",
+        "orden__tipo_mantenimiento__codigo", "orden__tipo_orden_id", "orden__tipo_mantenimiento_id", "orden__estado", "centro__codigo", "ok", "anulada",
         "no_visitada", "pasada_a_id", "pasada_a__nombre", "hora_fin", "tiempo_real_min"))
     contador = {"OK": "ok", "SIN_OK": "sin_ok", "PASADA_A_BRIGADA": "pasadas", "NO_VISITADA": "no_visitadas", "EN_CURSO": "en_curso", "ANULADA": "anuladas"}
     for f in filas:
@@ -137,7 +152,8 @@ def _estadisticas_por_hoja(base, ahora):
             if f["orden__categoria"] == "ORDEN_TRABAJO":  # una orden de trabajo se norma por sus trabajos
                 minutos = [normas.minutos_trabajo(t, e["fecha"]) for t in trabajos_de[f["id"]]]
             else:
-                minutos = [normas.minutos(c, f["orden__tipo_orden_id"], e["fecha"]) for c in claves_de[f["id"]]]
+                por_tipo = normas.minutos_de_tipo(f["orden__categoria"], f["orden__tipo_orden_id"], f["orden__tipo_mantenimiento_id"], e["fecha"])
+                minutos = [por_tipo] if por_tipo is not None else [normas.minutos(c, f["orden__tipo_orden_id"], e["fecha"]) for c in claves_de[f["id"]]]
             f["normado"] = max([m for m in minutos if m is not None], default=0)
             e["normado"] += f["normado"]
 
