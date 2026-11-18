@@ -207,5 +207,7 @@ INFORME_REMITENTE = os.environ.get('INFORME_REMITENTE', 'Unidad de Asistencia T�
 INFORME_HORA_CORTE = datetime.time(16, 0)
 # Las hojas que sigan abiertas se cierran solas a esta hora (después no se trabaja por la oscuridad). Formato HH:MM en el .env.
 HORA_CIERRE_AUTOMATICO = datetime.time.fromisoformat(os.environ.get('HORA_CIERRE_AUTOMATICO', '21:00'))
+# Importar las acciones de una hoja desde un archivo Excel/CSV (además de insertarlas a mano). IMPORTAR_ACCIONES=0 oculta la opción.
+IMPORTAR_ACCIONES = os.environ.get('IMPORTAR_ACCIONES', '1') == '1'
 # Una hoja reabierta por el jefe no se vuelve a cerrar sola durante estas horas.
 HORAS_GRACIA_REAPERTURA = 12

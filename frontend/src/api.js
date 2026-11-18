@@ -44,7 +44,21 @@ async function pedir(metodo, ruta, cuerpo) {
   return datos;
 }
 
+// Envía un formulario con archivos (multipart): el navegador pone el tipo de contenido y el límite.
+async function subir(ruta, formulario) {
+  const r = await fetch('/api' + ruta, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'X-CSRFToken': leerCookie('mesa_csrftoken') },
+    credentials: 'same-origin',
+    body: formulario,
+  });
+  const datos = await r.json().catch(() => null);
+  if (!r.ok) throw new ErrorApi(textoDeError(datos, r.status), r.status);
+  return datos;
+}
+
 export const api = {
+  subir,
   get: (ruta) => pedir('GET', ruta),
   post: (ruta, cuerpo = {}) => pedir('POST', ruta, cuerpo),
   patch: (ruta, cuerpo) => pedir('PATCH', ruta, cuerpo),

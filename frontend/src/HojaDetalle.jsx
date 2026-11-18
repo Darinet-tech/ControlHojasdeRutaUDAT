@@ -556,6 +556,70 @@ function ListaDeAcciones({ hoja, editable, catalogos, ejecutar, verHistorial }) 
   );
 }
 
+// ---------------------------------------------------------------- importar las acciones desde un archivo Excel o CSV
+
+function ImportarAcciones({ hoja, alCerrar, alImportar }) {
+  const [archivo, setArchivo] = useState(null);
+  const [resultado, setResultado] = useState(null);
+  const [error, setError] = useState('');
+  const [trabajando, setTrabajando] = useState(false);
+
+  async function enviar(f, simular) {
+    setError(''); setTrabajando(true);
+    const datos = new FormData();
+    datos.append('archivo', f);
+    datos.append('simular', simular ? '1' : '0');
+    try {
+      const r = await api.subir(`/hojas/${hoja.id}/importar/`, datos);
+      setResultado(r);
+      if (!simular && r.importadas > 0) alImportar(r.importadas);
+    } catch (e) {
+      setError(e.message); setResultado(null);
+    } finally {
+      setTrabajando(false);
+    }
+  }
+
+  const elegir = (e) => {
+    const f = e.target.files[0];
+    setArchivo(f ?? null); setResultado(null);
+    if (f) enviar(f, true); // primero se comprueba el archivo sin guardar nada
+  };
+  const listo = resultado && resultado.errores.length === 0 && resultado.validas > 0;
+
+  return (
+    <Modal titulo="Importar acciones desde un archivo" alCerrar={alCerrar}>
+      <p className="suave">Archivo Excel (.xlsx) o CSV con una fila por servicio. Se comprueba antes de guardar: si alguna fila tiene un error no se importa ninguna.</p>
+      <div className="fila">
+        <input type="file" accept=".xlsx,.csv" onChange={elegir} aria-label="Archivo de acciones" />
+        <a className="boton" href="/api/hojas/plantilla-importacion/" title="Excel de ejemplo con las columnas y los códigos válidos">Descargar plantilla</a>
+      </div>
+      <Aviso>{error}</Aviso>
+      {trabajando && <p className="cargando">Comprobando el archivo…</p>}
+      {resultado && (
+        <>
+          <p>{resultado.validas} de {resultado.filas} fila(s) correcta(s){resultado.errores.length > 0 && <>, <strong>{resultado.errores.length} con error</strong></>}.</p>
+          {resultado.errores.length > 0 && (
+            <div className="tabla-envoltura">
+              <table>
+                <thead><tr><th>Fila</th><th>Error</th></tr></thead>
+                <tbody>{resultado.errores.map((x) => <tr key={x.fila}><td>{x.fila}</td><td>{x.mensaje}</td></tr>)}</tbody>
+              </table>
+            </div>
+          )}
+          {resultado.errores.length > 0 && <Aviso tipo="aviso">Corrija el archivo y vuelva a elegirlo: no se ha importado nada.</Aviso>}
+        </>
+      )}
+      <div className="acciones-formulario">
+        <button className="boton" onClick={alCerrar}>Cancelar</button>
+        <button className="boton boton-principal" disabled={!listo || trabajando} onClick={() => enviar(archivo, false)}>
+          {listo ? `Importar ${resultado.validas} acción(es)` : 'Importar'}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 // ---------------------------------------------------------------- editar la hoja (centros, vehículo, operarios, observaciones)
 
 function EditarHoja({ hoja, catalogos, ejecutar, alCerrar }) {
@@ -632,6 +696,7 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
   const [noVisitadas, setNoVisitadas] = useState([]);
   const [sinSolucion, setSinSolucion] = useState([]);
   const [editando, setEditando] = useState(false);
+  const [importando, setImportando] = useState(false);
   const [error, setError] = useState('');
   const [aviso, setAviso] = useState('');
   const [centroServicio, setCentroServicio] = useState('');
@@ -791,7 +856,11 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
 
       <PanelIncidencias hoja={hoja} causas={catalogos.causas} editable={editable} ejecutar={ejecutar} />
 
-      <h2>Servicios de la hoja</h2>
+      <div className="barra">
+        <h2>Servicios de la hoja</h2>
+        {editable && usuario.importar_acciones && <button className="boton empujar" onClick={() => setImportando(true)} title="Cargar los servicios desde un archivo Excel o CSV">Importar acciones desde archivo</button>}
+      </div>
+      {importando && <ImportarAcciones hoja={hoja} alCerrar={() => setImportando(false)} alImportar={(n) => { setImportando(false); ejecutar(async () => null, () => setAviso(`${n} acción(es) importada(s).`)); }} />}
       {editable && <FormularioAsignar catalogos={catalogos} hoja={hoja} centrosDeLaHoja={centrosDeLaHoja} ejecutar={ejecutar} verHistorial={setHistorial} />}
 
       {editable && noVisitadas.length > 0 && (

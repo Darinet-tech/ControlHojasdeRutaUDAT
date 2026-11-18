@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -23,6 +24,7 @@ from operacion.models import Accion, DestinatarioInforme, HojaDeRuta, Incidencia
 from operacion.informes import generar_informe
 from operacion.reportes import analisis_de_jefatura, resumen_periodo
 from catalogos.models import NormaMantenimiento, NormaTiempo, NormaTipoOrden, NormaTrabajo
+from operacion.importacion import importar_acciones, leer_filas, plantilla_xlsx
 from operacion.parte import parte_diario
 from operacion.services import (anular_orden, asignar_no_visitadas, asignar_orden, asignar_pendientes, asignar_sin_solucion, generar_hoja, obtener_orden,
                                 cerrar_hoja, cerrar_sin_ok, certificar_ok, finalizar_incidencia, historial_servicio, iniciar_incidencia,
@@ -41,6 +43,7 @@ def _datos_usuario(usuario):
         "nombre": usuario.get_full_name() or usuario.username,
         "grupos": list(usuario.groups.values_list("name", flat=True)),
         "hoy": timezone.localdate(),  # el día lo decide el servidor (hora de Cuba), no el reloj del equipo del usuario
+        "importar_acciones": settings.IMPORTAR_ACCIONES,  # la pantalla muestra «Importar acciones» solo si está habilitado
         "hora_cierre": f"{settings.HORA_CIERRE_AUTOMATICO:%H:%M}",  # a esa hora las hojas abiertas se cierran solas
         "es_superusuario": usuario.is_superuser,
         "es_staff": usuario.is_staff,
@@ -253,6 +256,28 @@ class HojaViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Creat
             raise PermissionDenied("Solo el jefe o el administrador pueden reabrir una hoja cerrada.")
         hoja = reabrir_hoja(self.get_object(), request.user)
         return Response(s.HojaDetalleSerializer(hoja).data)
+
+    @action(detail=True, methods=["post"], parser_classes=[MultiPartParser])
+    def importar(self, request, pk=None):
+        """Importa las acciones de la hoja desde un archivo Excel (.xlsx) o CSV: `archivo` (multipart) y `simular=1` para solo comprobar.
+        Todo o nada: si alguna fila tiene error no se importa ninguna y se devuelve cada error con su número de fila."""
+        if not settings.IMPORTAR_ACCIONES:
+            raise PermissionDenied("La importación de acciones no está habilitada.")
+        hoja = self.get_object()
+        archivo = request.FILES.get("archivo")
+        if archivo is None:
+            raise ErrorDjango("Adjunte el archivo en el campo «archivo».")
+        if archivo.size > 2 * 1024 * 1024:
+            raise ErrorDjango("El archivo es demasiado grande (máximo 2 MB).")
+        simular = str(request.data.get("simular", "")).strip().lower() in ("1", "true", "si", "sí")
+        filas = leer_filas(archivo.name, archivo.read())
+        return Response(importar_acciones(hoja, filas, request.user, simular=simular))
+
+    @action(detail=False, methods=["get"], url_path="plantilla-importacion")
+    def plantilla_importacion(self, request):
+        """Archivo Excel de ejemplo para importar acciones, con una hoja de instrucciones y los códigos válidos."""
+        return HttpResponse(plantilla_xlsx(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            headers={"Content-Disposition": 'attachment; filename="UDAT_plantilla_acciones.xlsx"'})
 
     @action(detail=True, methods=["post"], url_path="asignar-pendientes")
     def asignar_pendientes(self, request, pk=None):

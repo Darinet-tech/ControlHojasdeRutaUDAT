@@ -70,6 +70,24 @@ preventivo solo ofrece las de reparación; el sistema rechaza mezclarlas). Son l
 - Cuentan en «Otras causas» de las órdenes de servicio del parte diario.
 Se cargan con `migrate` / `cargar_inicial` (no se pisan los cambios del administrador). Las claves ya usadas no se eliminan: se desmarca «activa».
 
+## Normas de tiempo por tipo
+Una **orden de servicio** ejecutada y un **preventivo** se normas por su **tipo**, no por claves: A 50, AS 25, CL 25, B 35, TA 50, TE 50, TI 50, REC 25, CMIS 25, AE 50,
+CA 30, CVIV 30, CTS 30, CD 30 (órdenes) y MPI 55, MPPI 25, MPPE 30, MTP 25 (mantenimientos), según el documento «Normas de Tiempo». **CMONT** y **GAB** no vienen en el
+documento: quedan sin norma (Inicio avisa al administrador) hasta que la definan en `/admin` → Tipos de orden / Tipos de mantenimiento. Cada norma tiene vigencia: para cambiarla
+sin alterar el pasado se pone fecha fin a la vigente y se crea otra. Correctivos (por claves) y órdenes de trabajo (por trabajos) no cambian.
+
+## Lista de acciones y ventana de trabajo
+Las acciones de la hoja se muestran en una **tabla compacta** (N.º, servicio, estado, claves, hora de cierre) con filtro **Todas / En curso / Cerradas** y buscador. Con clic en una fila
+(o en *Trabajar* / *Ver*) se abre una **ventana** con todo el trabajo sobre esa acción: claves, observaciones, Dar OK, pasar a otra brigada, cerrar sin OK, anular (NULA) o quitar.
+Al terminar de trabajarla (deja de estar en curso) la ventana se cierra sola.
+
+## Importar acciones desde un archivo
+Además de insertarlas a mano, en la hoja (abierta) el botón **«Importar acciones desde archivo»** carga los servicios desde un **Excel (.xlsx) o CSV** con una fila por servicio.
+Primero se **comprueba** el archivo sin guardar nada (cuántas filas son correctas y el error de cada fila fallida); **todo o nada**: si alguna fila falla no se importa ninguna.
+Columnas (admiten tildes, mayúsculas y alias; las que sobren se ignoran): `tipo` (Correctivo, Preventivo, Orden de servicio, Orden de trabajo), `servicio`, `tipo de orden`, `orden`,
+`mantenimiento`, `variante` (TP, NH+, NH), `centro`, `trabajos` (separados por «;»). El botón **Descargar plantilla** baja un Excel de ejemplo con los códigos válidos.
+Cada fila pasa por las mismas reglas que insertarla a mano. Se puede ocultar la opción con `IMPORTAR_ACCIONES=0` en el `.env` (1 por defecto). API: `POST /api/hojas/{id}/importar/`.
+
 ## Tema claro / oscuro
 Cada usuario elige con el botón **☾ Oscuro / ☀ Claro** (cabecera y pantalla de inicio de sesión). La primera vez sigue la preferencia del sistema y después
 recuerda la elección **en ese navegador**. Al imprimir o exportar siempre se usa el tema claro. Los colores del tema están en las variables de `frontend/src/estilos.css`.
