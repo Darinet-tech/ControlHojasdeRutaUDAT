@@ -43,6 +43,24 @@ la pantalla, la API y `/admin` en un solo puerto (por defecto `http://<equipo>:8
 5. **Seguimiento al día siguiente:** lo cerrado sin OK no cuenta como efectivo, pero queda *sin solución* para la brigada: al crear la hoja siguiente
    se ofrece retomarlo, y en cada servicio se ve la **visita anterior** (claves y observación) para encaminar la solución.
 
+## Parte diario de la Mesa de Prueba
+Tabla como la del parte en PDF: **filas = tipo de acción**, **columnas = una por hoja de ruta del día** (cabecera con las claves de sus operarios), más
+**Total** del día, **Acum. mes** y **Acum. año**, y bajo la tabla las notas de cada brigada en rojo (observaciones de la hoja, descripción de las órdenes de trabajo
+y el motivo de lo cerrado sin OK). Se ve en **Resumen → Día**, en una **página apaisada del informe PDF** (tras el resumen), en la hoja **«Parte diario» del Excel**
+y en `GET /api/parte-diario/?fecha=`. Un día sin hojas no tiene parte.
+
+| Grupo | Filas y cómo cuentan |
+|---|---|
+| Correctivo | **Reparadas Red de Abonados / Telefonía Pública (TP) / Nauta Hogar Plus (NH+)** (con OK; TP y NH+ se marcan al insertar el servicio) · **Pendiente de Par** (sin OK o pasado a otra brigada con clave 23 o 24) · **Otras causas** (el resto: 36, 36-V, 36D-TXD, 37, 39, 38, 29, 27, 25, 22, 21, 14-P, 02, 01 o sin clave) |
+| Preventivo | **Mantenimiento Red de Abonados** (MPI, MPPI, MPPE) · **Mantenimiento Telefonía Pública** (MTP) · **Gabinetes** (GAB), con OK · **Otras causas** (sin OK) |
+| Órdenes de Servicio | **Altas (A), Traslados (TA), Bajas (B), Nauta Hogar (alta marcada NH), TE – TI, Misceláneas (AS, CL, CMONT, CMIS, REC), TxD (CTS, CVIV, CD, CA)** con OK · **NULA** (botón *Anular (NULA)*) · **Otras causas** (sin OK) |
+| Órdenes de Trabajo | **Ejecutadas (OK)** · **En ejecución** (abiertas) · **Pendientes de ejecución** (sin OK, pasadas a otra brigada o no visitadas) |
+
+**Visitadas en el día** = suma de las filas de lo visitado (no incluye las órdenes de trabajo en ejecución ni pendientes). Lo que sigue en curso o no se visitó
+no cuenta hasta que se informa. Una orden **anulada (NULA)** no cuenta a favor ni en contra de la efectividad.
+Dónde cuenta cada clave, tipo de orden y tipo de mantenimiento se cambia en `/admin` (campo «fila del parte diario»); los valores por defecto los pone `cargar_inicial`.
+Al actualizar una instalación: `python manage.py migrate` y `python manage.py cargar_inicial` (crea MTP, GAB, CMIS, CD y CA si faltan).
+
 ## Tema claro / oscuro
 Cada usuario elige con el botón **☾ Oscuro / ☀ Claro** (cabecera y pantalla de inicio de sesión). La primera vez sigue la preferencia del sistema y después
 recuerda la elección **en ese navegador**. Al imprimir o exportar siempre se usa el tema claro. Los colores del tema están en las variables de `frontend/src/estilos.css`.

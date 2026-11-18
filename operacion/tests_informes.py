@@ -42,7 +42,7 @@ class InformeExcelTests(EscenarioDosDias, BaseOperacion):
 
     def test_tiene_las_tres_hojas_y_el_nombre_del_archivo(self):
         wb, tipo, nombre = self.libro()
-        self.assertEqual(wb.sheetnames, ["Resumen", "Hojas de ruta", "Auditoría"])
+        self.assertEqual(wb.sheetnames, ["Resumen", "Parte diario", "Hojas de ruta", "Auditoría"])
         self.assertEqual((tipo, nombre), ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "UDAT_informe_diario_2026-10-05.xlsx"))
 
     def test_las_hojas_de_ruta_siguen_la_disposicion_del_original(self):
@@ -131,10 +131,10 @@ class InformePdfTests(EscenarioDosDias, BaseOperacion):
         self.assertTrue(contenido.startswith(b"%PDF"))
         self.assertEqual((tipo, nombre), ("application/pdf", "UDAT_informe_diario_2026-10-05.pdf"))
         paginas = paginas_del_pdf(contenido)
-        self.assertEqual(len(paginas), 3)  # resumen + 2 hojas
+        self.assertEqual(len(paginas), 4)  # resumen + parte diario (apaisada) + 2 hojas
         for n, texto in enumerate(paginas, start=1):
             self.assertIn("Unidad de Asistencia Técnica", texto)
-            self.assertIn(f"Página {n} de 3", texto)
+            self.assertIn(f"Página {n} de 4", texto)
 
     def test_la_primera_pagina_es_el_resumen_del_dia(self):
         if pdfplumber is None:
@@ -147,7 +147,8 @@ class InformePdfTests(EscenarioDosDias, BaseOperacion):
     def test_cada_hoja_sigue_el_formato_original(self):
         if pdfplumber is None:
             self.skipTest("pdfplumber no está instalado")
-        texto = paginas_del_pdf(generar_informe(DIA5, "pdf")[0])[1]
+        paginas = paginas_del_pdf(generar_informe(DIA5, "pdf")[0])
+        texto = next(p for p in paginas if "HOJA DE RUTA" in p)  # la página del parte diario va antes de las hojas
         for esperado in ("HOJA DE RUTA", "Centro: NG", "Operarios: A1-A2", "Fecha: 05/10/2026", "Trabajo", "Descripción del Trabajo", "Hora", "Cliente",
                          "46 100001 07-IC 25-R", "9:00a", "Pasada a Cable", "No visitada", "Elaborada por", "Cerrada el 05/10/2026 15:00"):
             self.assertIn(esperado, texto)

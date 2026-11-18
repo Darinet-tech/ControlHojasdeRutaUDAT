@@ -41,13 +41,13 @@ class OperarioSerializer(serializers.ModelSerializer):
 class TipoOrdenSerializer(serializers.ModelSerializer):
     class Meta:
         model = TipoOrden
-        fields = ["id", "codigo", "nombre"]
+        fields = ["id", "codigo", "nombre", "fila_parte"]
 
 
 class TipoMantenimientoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TipoMantenimiento
-        fields = ["id", "codigo", "nombre"]
+        fields = ["id", "codigo", "nombre", "fila_parte"]
 
 
 class TipoTrabajoSerializer(serializers.ModelSerializer):
@@ -110,6 +110,8 @@ class AccionSerializer(serializers.ModelSerializer):
     etiqueta = serializers.CharField(source="orden.etiqueta", read_only=True)
     categoria = serializers.CharField(source="orden.categoria", read_only=True)
     categoria_texto = serializers.CharField(source="orden.get_categoria_display", read_only=True)
+    variante = serializers.CharField(source="orden.variante", read_only=True)
+    variante_texto = serializers.CharField(source="orden.get_variante_display", read_only=True)
     tipo_mantenimiento = serializers.CharField(source="orden.tipo_mantenimiento.codigo", read_only=True, default=None)
     numero_orden = serializers.CharField(source="orden.numero_orden", read_only=True)
     trabajos = TipoTrabajoSerializer(many=True, read_only=True)
@@ -127,7 +129,8 @@ class AccionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Accion
-        fields = ["id", "hoja", "orden", "numero", "etiqueta", "categoria", "categoria_texto", "numero_servicio", "tipo_mantenimiento",
+        fields = ["id", "hoja", "orden", "numero", "etiqueta", "categoria", "categoria_texto", "variante", "variante_texto", "anulada",
+                  "numero_servicio", "tipo_mantenimiento",
                   "tipo_orden", "numero_orden", "trabajos", "centro", "centro_codigo", "estado_orden", "claves",
                   "descripcion_trabajo", "observaciones", "estado", "ok", "cliente_contactado", "pasada_a",
                   "pasada_a_nombre", "hora_fin", "tiempo_real_min", "norma_min", "sugerencia_ok", "posterior_al_corte", "agregada_despues",
@@ -194,6 +197,8 @@ class CrearAccionSerializer(serializers.Serializer):
     tipo_mantenimiento = serializers.PrimaryKeyRelatedField(queryset=TipoMantenimiento.objects.filter(activo=True), required=False, allow_null=True)
     tipo_orden = serializers.PrimaryKeyRelatedField(queryset=TipoOrden.objects.all(), required=False, allow_null=True)
     numero_orden = serializers.CharField(max_length=30, required=False, allow_blank=True, default="")
+    variante = serializers.ChoiceField(choices=OrdenServicio.Variante.choices, required=False, allow_blank=True, default="",
+                                       help_text="Correctivo: TP o NHP (Nauta Hogar Plus). Alta de orden de servicio: NH (Nauta Hogar).")
     trabajos = serializers.PrimaryKeyRelatedField(many=True, queryset=TipoTrabajo.objects.filter(activo=True), required=False)
     centro = serializers.PrimaryKeyRelatedField(queryset=Centro.objects.all(), required=False, allow_null=True,
                                                 help_text="Obligatorio si la hoja trabaja en varios centros.")
@@ -258,7 +263,7 @@ class HojaSerializer(serializers.ModelSerializer):
     def get_resultados(self, hoja):
         cuenta = Counter(a.estado for a in hoja.acciones.all())
         return {"ok": cuenta["OK"], "sin_ok": cuenta["SIN_OK"], "pasadas": cuenta["PASADA_A_BRIGADA"],
-                "no_visitadas": cuenta["NO_VISITADA"], "en_curso": cuenta["EN_CURSO"]}
+                "no_visitadas": cuenta["NO_VISITADA"], "en_curso": cuenta["EN_CURSO"], "anuladas": cuenta["ANULADA"]}
 
     def get_incidencia_activa(self, hoja):
         activa = next((i for i in hoja.incidencias.all() if i.fin is None), None)

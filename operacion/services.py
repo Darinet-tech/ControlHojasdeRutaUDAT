@@ -232,6 +232,21 @@ def certificar_ok(accion, usuario, cliente_contactado, ahora=None):
 
 
 @transaction.atomic
+def anular_orden(accion, usuario, ahora=None):
+    """Cierra una orden de servicio como anulada (NULA): no se ejecuta ni cuenta contra la efectividad. Solo órdenes de servicio."""
+    if accion.orden.categoria != OrdenServicio.Categoria.ORDEN_SERVICIO:
+        raise ValidationError("Solo se puede anular una orden de servicio.")
+    _cerrar(accion, usuario, ahora)
+    accion.anulada = True
+    accion.save()
+    orden = accion.orden
+    orden.estado = OrdenServicio.Estado.ANULADA
+    orden.brigada_pendiente = None
+    orden.save(update_fields=["estado", "brigada_pendiente", "modificado_en"])
+    return accion
+
+
+@transaction.atomic
 def pasar_a_brigada(accion, brigada, usuario, ahora=None):
     """El servicio no se pudo resolver y depende de otra brigada (cable, línea, reconstrucción, fibra óptica...).
 
@@ -313,7 +328,8 @@ NOMBRES_DE_CAMPOS = {"numero_servicio": "el número del servicio telefónico", "
                      "tipo_orden": "el tipo de orden", "numero_orden": "el número de orden", "trabajos": "los trabajos"}
 
 
-def obtener_orden(categoria, usuario, numero_servicio="", tipo_mantenimiento=None, tipo_orden=None, numero_orden="", trabajos=None):
+def obtener_orden(categoria, usuario, numero_servicio="", tipo_mantenimiento=None, tipo_orden=None, numero_orden="", trabajos=None,
+                  variante=""):
     """Busca la orden abierta que corresponde a los datos, o crea una nueva. Valida los campos según la categoría:
     solo se piden (y se aceptan) los que corresponden a ese tipo de acción, para evitar errores de captura.
 
@@ -331,6 +347,13 @@ def obtener_orden(categoria, usuario, numero_servicio="", tipo_mantenimiento=Non
     sobran = [NOMBRES_DE_CAMPOS[c] for c in datos if c not in requeridos and datos[c]]
     if sobran:
         raise ValidationError(f"En {etiquetas[categoria].lower()} no corresponde indicar: {', '.join(sobran)}.")
+    variante = (variante or "").strip()
+    permitidas = {"CORRECTIVO": {"", "TP", "NHP"}, "ORDEN_SERVICIO": {"", "NH"}}.get(categoria, {""})
+    if variante not in permitidas:
+        raise ValidationError("Esa variante no corresponde a este tipo de acción (correctivo: Telefonía Pública o Nauta Hogar Plus; "
+                              "alta de orden de servicio: Nauta Hogar).")
+    if variante == "NH" and not (tipo_orden and tipo_orden.fila_parte == "ALTAS"):
+        raise ValidationError("Nauta Hogar (NH) solo corresponde a una orden de servicio de tipo alta.")
 
     filtro = {"categoria": categoria}
     if categoria in ("ORDEN_SERVICIO", "ORDEN_TRABAJO"):
@@ -341,10 +364,15 @@ def obtener_orden(categoria, usuario, numero_servicio="", tipo_mantenimiento=Non
         filtro["numero_servicio"] = numero_servicio
         if categoria == "PREVENTIVO":
             filtro["tipo_mantenimiento"] = tipo_mantenimiento
-    orden = OrdenServicio.objects.filter(**filtro).exclude(estado=OrdenServicio.Estado.RESTABLECIDA).order_by("-creado_en").first()
+    orden = (OrdenServicio.objects.filter(**filtro)
+             .exclude(estado__in=[OrdenServicio.Estado.RESTABLECIDA, OrdenServicio.Estado.ANULADA]).order_by("-creado_en").first())
     if orden is None:
         orden = OrdenServicio.objects.create(categoria=categoria, numero_servicio=numero_servicio, tipo_mantenimiento=tipo_mantenimiento,
-                                             tipo_orden=tipo_orden, numero_orden=numero_orden, creado_por=usuario, modificado_por=usuario)
+                                             tipo_orden=tipo_orden, numero_orden=numero_orden, variante=variante,
+                                             creado_por=usuario, modificado_por=usuario)
+    elif orden.variante != variante:  # el probador corrigió la variante (TP, NH+, NH) al volver a introducir el servicio
+        orden.variante = variante
+        orden.save(update_fields=["variante", "modificado_en"])
     if categoria == "ORDEN_TRABAJO":
         orden.trabajos.set(datos["trabajos"])  # los trabajos de la orden (los últimos indicados)
     return orden
@@ -430,6 +458,8 @@ def _restaurar_estado_orden(orden):
     E = OrdenServicio.Estado
     if ultima.ok:
         estado, brigada = E.RESTABLECIDA, None
+    elif ultima.anulada:
+        estado, brigada = E.ANULADA, None
     elif ultima.pasada_a_id:
         estado, brigada = E.PENDIENTE, ultima.pasada_a
     elif ultima.no_visitada:
@@ -482,7 +512,7 @@ def resumen_hoja(hoja, ahora=None):
     ahora = ahora or timezone.now()
     acciones = list(hoja.acciones.select_related("orden__tipo_orden", "hoja", "pasada_a").prefetch_related("claves"))
     efectivas = [a for a in acciones if a.ok]
-    atendidas = [a for a in acciones if not a.no_visitada]
+    atendidas = [a for a in acciones if not a.no_visitada and not a.anulada]  # una orden anulada (NULA) no cuenta a favor ni en contra
     real = sum(a.tiempo_real_min or 0 for a in acciones)
     normas = {a.pk: norma_accion(a) for a in acciones}
     normado_efectivo = sum(normas[a.pk] or 0 for a in efectivas)
@@ -502,7 +532,7 @@ def resumen_hoja(hoja, ahora=None):
         "efectividad_pct": round(100 * len(efectivas) / len(atendidas), 1) if atendidas else None,
         "resultados": {"ok": estados.count("OK"), "sin_ok": estados.count("SIN_OK"),
                        "pasadas": estados.count("PASADA_A_BRIGADA"), "no_visitadas": estados.count("NO_VISITADA"),
-                       "en_curso": estados.count("EN_CURSO")},
+                       "en_curso": estados.count("EN_CURSO"), "anuladas": estados.count("ANULADA")},
         "pasadas_a_brigada": [{"servicio": a.orden.etiqueta, "brigada": a.pasada_a.nombre}
                               for a in acciones if a.estado == "PASADA_A_BRIGADA"],
         "no_visitadas": [a.orden.etiqueta for a in acciones if a.no_visitada],

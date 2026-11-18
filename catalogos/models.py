@@ -79,6 +79,19 @@ class TipoOrden(models.Model):
     nombre = models.CharField(max_length=80)
     descripcion = models.CharField(max_length=200, blank=True)
 
+    class FilaParte(models.TextChoices):
+        ALTAS = "ALTAS", "Altas ejecutadas (A)"
+        TRASLADOS = "TRASLADOS", "Traslados altas (TA)"
+        BAJAS = "BAJAS", "Bajas (B)"
+        TE_TI = "TE_TI", "TE – TI"
+        MISC = "MISC", "Misceláneas"
+        TXD = "TXD", "TxD"
+
+    fila_parte = models.CharField(
+        "fila del parte diario", max_length=10, choices=FilaParte.choices, blank=True, default="",
+        help_text="Fila del parte diario donde cuenta una orden ejecutada de este tipo (vacío = Misceláneas).",
+    )
+
     class Meta:
         verbose_name = "tipo de orden de servicio"
         verbose_name_plural = "tipos de orden de servicio"
@@ -123,6 +136,15 @@ class Clave(models.Model):
         default=False, help_text="Marcada por la importación: el administrador debe confirmar sus datos."
     )
     notas = models.CharField(max_length=300, blank=True)
+
+    class FilaParte(models.TextChoices):
+        PENDIENTE_PAR = "PENDIENTE_PAR", "Pendiente de Par"
+        OTRAS_CAUSAS = "OTRAS_CAUSAS", "Otras causas"
+
+    fila_parte = models.CharField(
+        "fila del parte diario", max_length=14, choices=FilaParte.choices, blank=True, default="",
+        help_text="Dónde cuenta en el parte diario un correctivo cerrado sin OK con esta clave (vacío = Otras causas).",
+    )
 
     class Meta:
         ordering = ["codigo"]
@@ -186,6 +208,16 @@ class TipoMantenimiento(models.Model):
     codigo = models.CharField(max_length=10, unique=True)
     nombre = models.CharField(max_length=80)
     activo = models.BooleanField(default=True)
+
+    class FilaParte(models.TextChoices):
+        MANT_RED = "MANT_RED", "Mantenimiento Red de Abonados"
+        MANT_TP = "MANT_TP", "Mantenimiento Telefonía Pública"
+        GABINETES = "GABINETES", "Gabinetes"
+
+    fila_parte = models.CharField(
+        "fila del parte diario", max_length=10, choices=FilaParte.choices, blank=True, default="",
+        help_text="Fila del parte diario donde cuenta un preventivo ejecutado de este tipo (vacío = Mantenimiento Red de Abonados).",
+    )
 
     class Meta:
         verbose_name = "tipo de mantenimiento"

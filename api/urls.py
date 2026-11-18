@@ -25,5 +25,6 @@ urlpatterns = [
     path("analisis/", views.AnalisisView.as_view()),
     path("resumen/", views.ResumenView.as_view()),
     path("informe-diario/", views.InformeDiarioView.as_view()),
+    path("parte-diario/", views.ParteDiarioView.as_view()),
     path("", include(router.urls)),
 ]

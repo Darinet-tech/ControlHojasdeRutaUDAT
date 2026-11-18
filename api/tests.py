@@ -107,7 +107,7 @@ class SesionYPermisosTests(BaseAPI):
         self.assertEqual(c25r["norma_min"], 45)
         Clave.objects.filter(codigo="25-R").update(activa=False)
         self.assertNotIn("25-R", [c["codigo"] for c in self.api.get("/api/claves/").data])
-        self.assertEqual(len(self.api.get("/api/tipos-orden/").data), 12)
+        self.assertEqual(len(self.api.get("/api/tipos-orden/").data), 15)  # incluye CMIS, CD y CA, del parte diario
         self.assertEqual(len(self.api.get("/api/causas-incidencia/").data), 8)
         self.assertEqual(len(self.api.get(f"/api/operarios/?brigada={self.cable.pk}").data), 1)
 
@@ -356,7 +356,7 @@ class NoVisitadasAPITests(BaseAPI):
         r = self.api.post(f"/api/hojas/{hoja1}/cerrar/")
         self.assertEqual(r.data["no_visitadas"], ["46-700003"])
         res = r.data["resumen"]
-        self.assertEqual(res["resultados"], {"ok": 1, "sin_ok": 0, "pasadas": 1, "no_visitadas": 1, "en_curso": 0})
+        self.assertEqual(res["resultados"], {"ok": 1, "sin_ok": 0, "pasadas": 1, "no_visitadas": 1, "en_curso": 0, "anuladas": 0})
         self.assertEqual(res["pasadas_a_brigada"], [{"servicio": "46-700002", "brigada": "Cable"}])
         detalle = self.api.get(f"/api/hojas/{hoja1}/").data
         self.assertEqual([a["estado"] for a in detalle["acciones"]], ["OK", "PASADA_A_BRIGADA", "NO_VISITADA"])
@@ -635,7 +635,7 @@ class CategoriasAPITests(BaseAPI):
         self.assertEqual(self.api.post(f"/api/acciones/{p}/ok/", {}, format="json").status_code, 200)
 
     def test_catalogos_para_el_formulario(self):
-        self.assertEqual([t["codigo"] for t in self.api.get("/api/tipos-mantenimiento/").data], ["MPI", "MPPE", "MPPI"])
+        self.assertEqual([t["codigo"] for t in self.api.get("/api/tipos-mantenimiento/").data], ["GAB", "MPI", "MPPE", "MPPI", "MTP"])
         trabajos = self.api.get("/api/tipos-trabajo/").data
         self.assertEqual([(t["nombre"], t["norma_min"]) for t in trabajos],
                          [("Sustitución de caja(s) terminal(es)", None), ("Sustitución de poste(s)", None)])  # los especialistas definen las normas

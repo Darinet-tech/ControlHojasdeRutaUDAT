@@ -200,3 +200,18 @@ a.boton { text-decoration: none; color: var(--texto); display: inline-block; }
 .fila-clave span { flex: 1; font-size: .88rem; } .fila-clave small { white-space: nowrap; }
 .antecedente { margin: .4rem 0; padding: .4rem .6rem; border-left: 4px solid var(--aviso); background: var(--aviso-fondo); color: var(--texto); border-radius: 4px; font-size: .9rem; }
 
+/* Parte diario */
+.tabla-parte { font-size: .8rem; }
+.tabla-parte th, .tabla-parte td { text-align: center; padding: .2rem .45rem; white-space: nowrap; }
+.tabla-parte td:first-child { text-align: left; }
+.tabla-parte thead th { background: var(--primario); color: #fff; }
+.tabla-parte .grupo-parte th { background: #ffc000; color: #1c2430; text-align: center; }
+.tabla-parte .col-total { background: rgba(232, 240, 160, .35); font-weight: 600; }
+.tabla-parte .col-mes { background: rgba(120, 230, 120, .28); font-weight: 600; }
+.tabla-parte .col-anio { background: rgba(120, 180, 255, .28); font-weight: 600; }
+.tabla-parte thead .col-total, .tabla-parte thead .col-mes, .tabla-parte thead .col-anio { color: #1c2430; }
+.tabla-parte .visitadas-parte td { font-weight: 700; background: rgba(232, 240, 160, .5); }
+.nota-parte { color: #c00000; margin: .25rem 0; }
+@media (prefers-color-scheme: dark) { :root[data-tema="oscuro"] .nota-parte { color: #ff8b80; } }
+:root[data-tema="oscuro"] .nota-parte { color: #ff8b80; }
+

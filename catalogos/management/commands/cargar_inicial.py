@@ -12,6 +12,7 @@ from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from catalogos.parte_datos import completar as completar_filas_parte
 from catalogos.models import (Brigada, CausaIncidencia, Centro, Clave, GrupoClave, NormaTiempo, TipoMantenimiento, TipoOrden,
                               TipoTrabajo)
 
@@ -134,6 +135,7 @@ class Command(BaseCommand):
                 NormaTiempo.objects.create(clave=clave, minutos=int(fila["tiempo_min"]), vigente_desde=INICIO_NORMAS)
                 creadas += 1
 
+        completar_filas_parte(Clave, TipoOrden, TipoMantenimiento)  # tipos del parte (MTP, GAB, CMIS) y fila de cada clave/tipo
         self._roles()
         self.stdout.write(self.style.SUCCESS(
             f"Claves creadas: {creadas}; total en catálogo: {Clave.objects.count()}; "

@@ -370,7 +370,7 @@ class ServiciosNoVisitadosTests(BaseOperacion):
     def test_el_resumen_muestra_las_pasadas_y_las_no_visitadas(self):
         h, *_ = self.cierre_del_dia()
         r = resumen_hoja(h, ahora=hora(15, 0))
-        self.assertEqual(r["resultados"], {"ok": 1, "sin_ok": 0, "pasadas": 1, "no_visitadas": 1, "en_curso": 0})
+        self.assertEqual(r["resultados"], {"ok": 1, "sin_ok": 0, "pasadas": 1, "no_visitadas": 1, "en_curso": 0, "anuladas": 0})
         self.assertEqual(r["pasadas_a_brigada"], [{"servicio": "46 100002", "brigada": "Cable"}])
         self.assertEqual(r["no_visitadas"], ["46 100003"])
         self.assertEqual(r["efectividad_pct"], 50.0)  # 1 OK de 2 atendidas: lo no visitado no cuenta

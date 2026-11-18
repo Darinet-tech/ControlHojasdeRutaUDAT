@@ -16,6 +16,7 @@ from django.utils import timezone
 from catalogos.models import Clave
 
 from .models import Accion, HojaDeRuta
+from .parte import parte_diario
 from .reportes import MAXIMO_LISTADO, Normas, hojas_del_periodo, resumen_periodo
 from .services import momento_del_corte
 
@@ -24,7 +25,7 @@ LOGO_UDAT = Path(settings.BASE_DIR) / "frontend" / "public" / "logo-udat.png"
 AZUL, VERDE = "#050752", "#059E1A"
 MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
 DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
-RESULTADO = {"OK": "OK", "SIN_OK": "Sin OK", "NO_VISITADA": "No visitada", "EN_CURSO": "En curso"}
+RESULTADO = {"OK": "OK", "SIN_OK": "Sin OK", "NO_VISITADA": "No visitada", "EN_CURSO": "En curso", "ANULADA": "Anulada (NULA)"}
 
 
 # ---------------------------------------------------------------- utilidades de formato
@@ -138,8 +139,9 @@ def reunir_datos(fecha, brigada=None, centro=None, solo_hoja=None, usuario=None,
         })
     # el parte de un día completo (sin filtros) recoge lo que quedó fuera del corte del día anterior
     complemento = None if (solo_hoja or brigada or centro) else complemento_del_dia_anterior(fecha)
+    parte = None if solo_hoja else parte_diario(fecha, brigada, centro)  # el parte de la Mesa de Prueba (no va en la hoja suelta)
     return {"fecha": fecha, "resumen": resumen, "hojas": detalle, "generado_en": ahora, "generado_por": nombre_de(usuario),
-            "una_hoja": bool(solo_hoja), "corte": corte, "complemento": complemento}
+            "una_hoja": bool(solo_hoja), "corte": corte, "complemento": complemento, "parte": parte}
 
 
 def _filas(hoja):
@@ -152,11 +154,12 @@ def _filas(hoja):
 def _pdf(datos):
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_CENTER
-    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.lib.units import mm
     from reportlab.pdfgen import canvas
-    from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+    from reportlab.platypus import (BaseDocTemplate, Frame, NextPageTemplate, PageBreak, PageTemplate, Paragraph, Spacer, Table,
+                                    TableStyle)
 
     azul, verde = colors.HexColor(AZUL), colors.HexColor(VERDE)
     gris, gris_claro = colors.HexColor("#c3cad5"), colors.HexColor("#eff1f5")
@@ -254,6 +257,51 @@ def _pdf(datos):
                              "" if f["tiempo_real"] is None else str(f["tiempo_real"])] for f in comp["acciones"]],
                            [34 * mm, 54 * mm, 14 * mm, 32 * mm, 32 * mm, 14 * mm]))
 
+    # ---------- el parte diario de la Mesa de Prueba, en una página apaisada
+    parte = datos.get("parte")
+    if parte and parte["columnas"]:  # un día sin hojas no tiene parte
+        story += [NextPageTemplate("horizontal"), PageBreak()]
+        story.append(Paragraph(esc(f"Parte diario de Mesa de Prueba — {fecha_larga(datos['fecha'])}"), titulo))
+        story.append(Spacer(1, 4))
+        columnas, n = parte["columnas"], len(parte["columnas"])
+        ancho_h = landscape(A4)[0] - 30 * mm
+        ancho_total, ancho_etiqueta = 15 * mm, 56 * mm
+        ancho_col = max(9 * mm, min(22 * mm, (ancho_h - ancho_etiqueta - 3 * ancho_total) / max(n, 1)))
+        cab_parte = ParagraphStyle("cab_parte", parent=cabecera_celda, fontSize=7.5, leading=8.5)
+        from reportlab.pdfbase.pdfmetrics import stringWidth
+
+        def cab_columna(etiqueta):  # la letra se ajusta al ancho de la columna; si aun así no cabe, se parte por los guiones
+            for tam in (7.5, 7, 6.5, 6, 5.5):
+                if stringWidth(etiqueta, "Helvetica-Bold", tam) <= ancho_col - 2 * mm:
+                    return Paragraph(esc(etiqueta), ParagraphStyle("cab_col", parent=cab_parte, fontSize=tam, leading=tam + 1))
+            return Paragraph(esc(etiqueta).replace("-", "-<br/>"), ParagraphStyle("cab_col", parent=cab_parte, fontSize=5.5, leading=6.5))
+
+        filas = [[""] + [cab_columna(c["etiqueta"]) for c in columnas] +
+                 [Paragraph("Total", cab_parte), Paragraph("Acum. mes", cab_parte), Paragraph("Acum. año", cab_parte)]]
+        estilos = [("FONTSIZE", (0, 1), (-1, -1), 7.5), ("TOPPADDING", (0, 0), (-1, -1), 1.3), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.3),
+                   ("ALIGN", (1, 1), (-1, -1), "CENTER"), ("BACKGROUND", (n + 1, 1), (n + 1, -1), colors.HexColor("#e8f0a0")),
+                   ("BACKGROUND", (n + 2, 1), (n + 2, -1), colors.HexColor("#bff5bf")),
+                   ("BACKGROUND", (n + 3, 1), (n + 3, -1), colors.HexColor("#cfe6ff")), ("TEXTCOLOR", (0, 0), (-1, 0), colors.white)]
+        for grupo in parte["grupos"]:
+            fila_grupo = len(filas)
+            filas.append([grupo["nombre"]] + [""] * (n + 3))
+            estilos += [("BACKGROUND", (0, fila_grupo), (-1, fila_grupo), colors.HexColor("#ffc000")),
+                        ("FONTNAME", (0, fila_grupo), (-1, fila_grupo), "Helvetica-Bold"), ("ALIGN", (0, fila_grupo), (0, fila_grupo), "CENTER")]
+            for f in grupo["filas"]:
+                filas.append([f["etiqueta"]] + f["valores"] + [f["total"], f["mes"], f["anio"]])
+        v = parte["visitadas"]
+        fila_v = len(filas)
+        filas.append([v["etiqueta"]] + v["valores"] + [v["total"], v["mes"], v["anio"]])
+        estilos += [("BACKGROUND", (0, fila_v), (-1, fila_v), colors.HexColor("#e9f2a0")), ("FONTNAME", (0, fila_v), (-1, fila_v), "Helvetica-Bold")]
+        story.append(tabla(filas, [ancho_etiqueta] + [ancho_col] * n + [ancho_total] * 3, extra=estilos))
+        story.append(Spacer(1, 3))
+        story.append(Paragraph(esc("Cada columna es una hoja de ruta (claves de sus operarios). Las acciones en curso o no visitadas no cuentan hasta que se informan; "
+                                   "las órdenes de trabajo no suman en «Visitadas»."), chico))
+        nota_roja = ParagraphStyle("nota_roja", parent=chico, textColor=colors.HexColor("#c00000"), fontSize=8.5, leading=10.5, spaceBefore=2)
+        for nota in parte["notas"]:
+            story.append(Paragraph(esc(f"{nota['columna']}: {nota['texto']}"), nota_roja))
+        story.append(NextPageTemplate("vertical"))
+
     # ---------- una página por hoja, con el formato de la hoja original
     for h in datos["hojas"]:
         story.append(PageBreak())
@@ -273,7 +321,7 @@ def _pdf(datos):
             filas.append([str(n), P(a["descripcion"] + (f" · Obs.: {a['observaciones']}" if a["observaciones"] else "")), a["hora"], P(a["cliente"]), P(a["resultado"]),
                           "" if a["tiempo_real"] is None else str(a["tiempo_real"]), "" if a["norma"] is None else str(a["norma"])])
             color = {"OK": verde, "SIN_OK": colors.HexColor("#b42318"), "PASADA_A_BRIGADA": colors.HexColor("#8a5a00"),
-                     "NO_VISITADA": colors.HexColor("#4b5666"), "EN_CURSO": azul}[a["estado"]]
+                     "NO_VISITADA": colors.HexColor("#4b5666"), "EN_CURSO": azul, "ANULADA": colors.HexColor("#4b5666")}[a["estado"]]
             estilos.append(("TEXTCOLOR", (4, len(filas) - 1), (4, len(filas) - 1), color))
         if len(filas) == 1:
             filas.append(["", P("Sin acciones registradas"), "", "", "", "", ""])
@@ -308,7 +356,7 @@ def _pdf(datos):
         subtitulo += f" · corte a las {timezone.localtime(datos['corte']):%H:%M}"
 
     def dibujar_cabecera(lienzo, doc):
-        w, hgt = A4
+        w, hgt = lienzo._pagesize  # las páginas del parte son apaisadas
         lienzo.saveState()
         lienzo.setFillColor(azul)
         lienzo.rect(0, hgt - 22 * mm, w, 22 * mm, stroke=0, fill=1)
@@ -342,14 +390,19 @@ def _pdf(datos):
                 self.setFont("Helvetica", 7.5)
                 self.setFillColor(colors.HexColor("#4b5666"))
                 self.drawString(15 * mm, 9 * mm, pie_texto)
-                self.drawRightString(A4[0] - 15 * mm, 9 * mm, f"Página {self._pageNumber} de {total}")
+                self.drawRightString(self._pagesize[0] - 15 * mm, 9 * mm, f"Página {self._pageNumber} de {total}")
                 super().showPage()
             super().save()
 
     memoria = io.BytesIO()
-    doc = SimpleDocTemplate(memoria, pagesize=A4, leftMargin=15 * mm, rightMargin=15 * mm, topMargin=29 * mm, bottomMargin=15 * mm,
-                            title=f"{subtitulo} {datos['fecha']:%d/%m/%Y}", author="UDAT")
-    doc.build(story, onFirstPage=dibujar_cabecera, onLaterPages=dibujar_cabecera, canvasmaker=LienzoNumerado)
+    def plantilla(nombre, tamano):
+        marco = Frame(15 * mm, 15 * mm, tamano[0] - 30 * mm, tamano[1] - 44 * mm, id=f"marco-{nombre}", leftPadding=0, rightPadding=0,
+                      topPadding=0, bottomPadding=0)
+        return PageTemplate(id=nombre, frames=[marco], onPage=dibujar_cabecera, pagesize=tamano)
+
+    doc = BaseDocTemplate(memoria, pagesize=A4, pageTemplates=[plantilla("vertical", A4), plantilla("horizontal", landscape(A4))],
+                          title=f"{subtitulo} {datos['fecha']:%d/%m/%Y}", author="UDAT")
+    doc.build(story, canvasmaker=LienzoNumerado)
     return memoria.getvalue()
 
 
@@ -415,6 +468,47 @@ def _excel(datos):
               [[f["hoja"], f["descripcion"], f["hora"], f["cliente"], f["resultado"], f["tiempo_real"]] for f in comp["acciones"]])
     for col, ancho in zip("ABCDEFGHIJKLM", [38, 34, 14, 14, 20, 14, 12, 14, 14, 16, 16, 20, 12]):
         ws.column_dimensions[col].width = ancho
+
+    # ----- Parte diario de la Mesa de Prueba (misma tabla que el PDF)
+    parte = datos.get("parte")
+    if parte and parte["columnas"]:
+        wp = wb.create_sheet("Parte diario")
+        wp["A1"] = f"Parte diario de Mesa de Prueba — {fecha_larga(datos['fecha'])}"
+        wp["A1"].font = Font(bold=True, size=14, color=AZUL[1:])
+        columnas, n = parte["columnas"], len(parte["columnas"])
+        encabezado(wp, 3, [""] + [c["etiqueta"] for c in columnas] + ["Total", "Acumulado mes", "Acumulado año"])
+        relleno = {n + 1: "E8F0A0", n + 2: "BFF5BF", n + 3: "CFE6FF"}
+        fila_x = 4
+
+        def escribir(valores, negrita=False, fondo=None):
+            nonlocal fila_x
+            for j, v in enumerate(valores, start=1):
+                c = wp.cell(fila_x, j, v)
+                c.border = borde
+                c.font = Font(bold=negrita)
+                if j > 1:
+                    c.alignment = Alignment(horizontal="center")
+                if fondo:
+                    c.fill = PatternFill("solid", fgColor=fondo)
+                elif j - 1 in relleno:
+                    c.fill = PatternFill("solid", fgColor=relleno[j - 1])
+            fila_x += 1
+
+        for grupo in parte["grupos"]:
+            escribir([grupo["nombre"]] + [""] * (n + 3), negrita=True, fondo="FFC000")
+            for f in grupo["filas"]:
+                escribir([f["etiqueta"]] + f["valores"] + [f["total"], f["mes"], f["anio"]])
+        v = parte["visitadas"]
+        escribir([v["etiqueta"]] + v["valores"] + [v["total"], v["mes"], v["anio"]], negrita=True, fondo="E9F2A0")
+        fila_x += 1
+        for nota in parte["notas"]:
+            wp.cell(fila_x, 1, f"{nota['columna']}: {nota['texto']}").font = Font(color="C00000")
+            fila_x += 1
+        wp.column_dimensions["A"].width = 40
+        for j in range(2, n + 5):
+            wp.column_dimensions[get_column_letter(j)].width = 12
+        wp.page_setup.orientation, wp.page_setup.fitToWidth, wp.page_setup.fitToHeight = "landscape", 1, 0
+        wp.sheet_properties.pageSetUpPr.fitToPage = True
 
     # ----- Hojas de ruta: mismo formato que la hoja original (bloques de 5 columnas, uno al lado del otro)
     wh = wb.create_sheet("Hojas de ruta")

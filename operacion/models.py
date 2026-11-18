@@ -40,10 +40,12 @@ def etiqueta_orden(categoria, numero_servicio="", tipo_mantenimiento="", tipo_or
     return " ".join(p for p in partes if p)
 
 
-def estado_de_accion(ok, pasada_a_id, no_visitada, hora_fin):
-    """OK, PASADA_A_BRIGADA, NO_VISITADA, SIN_OK (cerrada sin OK) o EN_CURSO."""
+def estado_de_accion(ok, pasada_a_id, no_visitada, hora_fin, anulada=False):
+    """OK, ANULADA (NULA), PASADA_A_BRIGADA, NO_VISITADA, SIN_OK (cerrada sin OK) o EN_CURSO."""
     if ok:
         return "OK"
+    if anulada:
+        return "ANULADA"
     if pasada_a_id:
         return "PASADA_A_BRIGADA"
     if no_visitada:
@@ -136,6 +138,7 @@ class OrdenServicio(Auditable):
         PENDIENTE = "PENDIENTE", "Pendiente de otra brigada"
         NO_VISITADA = "NO_VISITADA", "No visitada (pasa al siguiente día)"
         SIN_SOLUCION = "SIN_SOLUCION", "Sin solución (seguimiento al día siguiente)"
+        ANULADA = "ANULADA", "Anulada (NULA)"
         RESTABLECIDA = "RESTABLECIDA", "Restablecida (OK)"
 
     class Categoria(models.TextChoices):
@@ -144,7 +147,17 @@ class OrdenServicio(Auditable):
         ORDEN_SERVICIO = "ORDEN_SERVICIO", "Orden de servicio"
         ORDEN_TRABAJO = "ORDEN_TRABAJO", "Orden de trabajo"
 
+    class Variante(models.TextChoices):
+        NORMAL = "", "Normal"
+        TELEFONIA_PUBLICA = "TP", "Telefonía Pública (TP)"
+        NAUTA_HOGAR_PLUS = "NHP", "Nauta Hogar Plus (NH+)"
+        NAUTA_HOGAR = "NH", "Nauta Hogar (NH)"
+
     categoria = models.CharField(max_length=14, choices=Categoria.choices, default=Categoria.CORRECTIVO, db_index=True)
+    variante = models.CharField(
+        max_length=3, choices=Variante.choices, blank=True, default="",
+        help_text="Correctivo: TP o NH+. Alta de orden de servicio: NH. Define en qué fila del parte diario cuenta.",
+    )
     numero_servicio = models.CharField(max_length=30, blank=True, db_index=True, help_text="Servicio telefónico (no aplica a las órdenes de trabajo).")
     tipo_mantenimiento = models.ForeignKey(TipoMantenimiento, null=True, blank=True, on_delete=models.PROTECT, related_name="ordenes",
                                            help_text="Solo preventivos: MPPI, MPPE o MPI.")
@@ -202,6 +215,7 @@ class Accion(Auditable):
         help_text="Hora de fin menos la hora de fin de la acción anterior de la hoja (o el inicio de la jornada).",
     )
     ok = models.BooleanField(default=False, editable=False)
+    anulada = models.BooleanField(default=False, editable=False, help_text="Orden de servicio anulada (NULA): se cierra sin ejecutarse.")
     no_visitada = models.BooleanField(
         default=False, editable=False,
         help_text="La hoja se cerró sin que se atendiera este servicio: pasa al siguiente día.",
@@ -229,7 +243,7 @@ class Accion(Auditable):
 
     @property
     def estado(self):
-        return estado_de_accion(self.ok, self.pasada_a_id, self.no_visitada, self.hora_fin)
+        return estado_de_accion(self.ok, self.pasada_a_id, self.no_visitada, self.hora_fin, self.anulada)
 
 
 class DestinatarioInforme(models.Model):

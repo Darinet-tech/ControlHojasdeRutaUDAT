@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { api, fechaLarga, hoy, minutosATexto, porcentaje } from './api.js';
 import { Aviso, Chip, Estadistica } from './componentes.jsx';
 
@@ -60,6 +60,66 @@ function Barras({ datos, etiqueta }) {
         <span className="suave">{etiqueta}</span>
       </div>
     </>
+  );
+}
+
+// El parte diario de la Mesa de Prueba: acciones por tipo (filas) y por hoja de ruta (columnas), con total, acumulado del mes y del año.
+function ParteDiario({ fecha, brigada, centro }) {
+  const [parte, setParte] = useState(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let vigente = true;
+    setError(''); setParte(null);
+    const params = new URLSearchParams({ fecha });
+    if (brigada) params.set('brigada', brigada);
+    if (centro) params.set('centro', centro);
+    api.get(`/parte-diario/?${params}`).then((r) => vigente && setParte(r)).catch((e) => vigente && setError(e.message));
+    return () => { vigente = false; };
+  }, [fecha, brigada, centro]);
+
+  return (
+    <section className="tarjeta" aria-label="Parte diario">
+      <h2>Parte diario de Mesa de Prueba</h2>
+      <Aviso>{error}</Aviso>
+      {!parte && !error && <p className="cargando">Calculando…</p>}
+      {parte && parte.columnas.length === 0 && <p className="suave">No hay hojas de ruta este día.</p>}
+      {parte && parte.columnas.length > 0 && (
+        <>
+          <div className="tabla-envoltura">
+            <table className="tabla-parte">
+              <thead>
+                <tr>
+                  <th />
+                  {parte.columnas.map((c) => <th key={c.hoja_id} title={`${c.centros} · ${c.brigada}`}>{c.etiqueta}</th>)}
+                  <th className="col-total">Total</th><th className="col-mes">Acum. mes</th><th className="col-anio">Acum. año</th>
+                </tr>
+              </thead>
+              <tbody>
+                {parte.grupos.map((g) => (
+                  <Fragment key={g.nombre}>
+                    <tr className="grupo-parte"><th colSpan={parte.columnas.length + 4}>{g.nombre}</th></tr>
+                    {g.filas.map((f) => (
+                      <tr key={f.clave}>
+                        <td>{f.etiqueta}</td>
+                        {f.valores.map((v, i) => <td key={i}>{v}</td>)}
+                        <td className="col-total">{f.total}</td><td className="col-mes">{f.mes}</td><td className="col-anio">{f.anio}</td>
+                      </tr>
+                    ))}
+                  </Fragment>
+                ))}
+                <tr className="visitadas-parte">
+                  <td>{parte.visitadas.etiqueta}</td>
+                  {parte.visitadas.valores.map((v, i) => <td key={i}>{v}</td>)}
+                  <td className="col-total">{parte.visitadas.total}</td><td className="col-mes">{parte.visitadas.mes}</td><td className="col-anio">{parte.visitadas.anio}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="suave">Cada columna es una hoja de ruta (claves de sus operarios). Lo que sigue en curso o no se visitó no cuenta hasta que se informa.</p>
+          {parte.notas.map((n) => <p key={n.columna} className="nota-parte"><strong>{n.columna}:</strong> {n.texto}</p>)}
+        </>
+      )}
+    </section>
   );
 }
 
@@ -211,6 +271,8 @@ export default function Resumen({ catalogos, abrirHoja }) {
               { titulo: 'Situación', valor: (n) => (n.sigue_sin_visitar ? <Chip tipo="aviso">Sigue sin visitar</Chip> : <Chip tipo="ok">Ya atendida después</Chip>) },
             ]} />
           </section>
+
+          {periodo === 'dia' && <ParteDiario fecha={fecha} brigada={brigada} centro={centro} />}
 
           <div className="resultados">
             <section className="tarjeta">

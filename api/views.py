@@ -23,7 +23,8 @@ from operacion.models import Accion, DestinatarioInforme, HojaDeRuta, Incidencia
 from operacion.informes import generar_informe
 from operacion.reportes import analisis_de_jefatura, resumen_periodo
 from catalogos.models import NormaTiempo, NormaTrabajo
-from operacion.services import (asignar_no_visitadas, asignar_orden, asignar_pendientes, asignar_sin_solucion, generar_hoja, obtener_orden,
+from operacion.parte import parte_diario
+from operacion.services import (anular_orden, asignar_no_visitadas, asignar_orden, asignar_pendientes, asignar_sin_solucion, generar_hoja, obtener_orden,
                                 cerrar_hoja, cerrar_sin_ok, certificar_ok, finalizar_incidencia, historial_servicio, iniciar_incidencia,
                                 ordenes_no_visitadas, ordenes_pendientes, ordenes_sin_solucion, pasar_a_brigada, quitar_accion,
                                 reabrir_hoja, resumen_hoja)
@@ -286,7 +287,7 @@ class HojaViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Creat
         with transaction.atomic():
             orden = d.get("orden") or obtener_orden(
                 d["categoria"], usuario, numero_servicio=d["numero_servicio"], tipo_mantenimiento=d.get("tipo_mantenimiento"),
-                tipo_orden=d.get("tipo_orden"), numero_orden=d["numero_orden"], trabajos=d.get("trabajos"))
+                tipo_orden=d.get("tipo_orden"), numero_orden=d["numero_orden"], trabajos=d.get("trabajos"), variante=d["variante"])
             accion = asignar_orden(hoja, orden, usuario, centro=d.get("centro"), trabajos=d.get("trabajos") or None)
             accion.descripcion_trabajo = d["descripcion_trabajo"]
             accion.save(update_fields=["descripcion_trabajo", "modificado_en"])
@@ -334,6 +335,12 @@ class AccionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Upd
         datos.is_valid(raise_exception=True)
         datos.save(modificado_por=request.user)
         return self._respuesta(accion)
+
+    @action(detail=True, methods=["post"])
+    def anular(self, request, pk=None):
+        """Anula una orden de servicio (NULA): se cierra sin ejecutarse y no cuenta contra la efectividad."""
+        anular_orden(self.get_object(), request.user)
+        return self._respuesta(self.get_object())
 
     @action(detail=True, methods=["post"])
     def quitar(self, request, pk=None):
@@ -466,6 +473,22 @@ def _descargar(request, fecha, **filtros):
     # el PDF se abre en el navegador (para imprimir); el Excel se descarga
     disposicion = "inline" if formato == "pdf" else "attachment"
     return HttpResponse(contenido, content_type=tipo, headers={"Content-Disposition": f'{disposicion}; filename="{nombre}"'})
+
+
+class ParteDiarioView(APIView):
+    """GET /api/parte-diario/?fecha=AAAA-MM-DD[&brigada=][&centro=]
+
+    El parte de la Mesa de Prueba: acciones por tipo y por hoja (columnas), con total del día y acumulados del mes y del año."""
+
+    queryset = HojaDeRuta.objects.none()
+
+    def get(self, request):
+        p = request.query_params
+        try:
+            fecha = date.fromisoformat(p["fecha"]) if p.get("fecha") else timezone.localdate()
+        except ValueError:
+            raise ErrorDjango("Fecha inválida: use el formato AAAA-MM-DD.")
+        return Response(parte_diario(fecha, brigada=p.get("brigada") or None, centro=p.get("centro") or None))
 
 
 class InformeDiarioView(APIView):

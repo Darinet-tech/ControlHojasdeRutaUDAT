@@ -31,6 +31,11 @@ def _cuerpo(datos, corte):
     if abiertas:
         lineas += ["", "Hojas todavía abiertas al corte (su información puede cambiar al terminar la jornada):"]
         lineas += [f"  - {h['centros']} · {h['brigada']} ({h['operarios_claves']})" for h in abiertas]
+    parte = datos.get("parte")
+    if parte and parte["columnas"]:
+        v = parte["visitadas"]
+        lineas += ["", f"Parte diario: {v['total']} visitada(s) en el día · acumulado del mes: {v['mes']} · del año: {v['anio']} "
+                       f"(tabla completa en los adjuntos)."]
     comp = datos.get("complemento")
     if comp:
         ct = comp["totales"]

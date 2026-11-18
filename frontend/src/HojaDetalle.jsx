@@ -112,13 +112,17 @@ function FormularioAsignar({ catalogos, hoja, centrosDeLaHoja, ejecutar, verHist
   const [numeroOrden, setNumeroOrden] = useState('');
   const [trabajos, setTrabajos] = useState(new Set());
   const [centro, setCentro] = useState('');
+  const [variante, setVariante] = useState(''); // correctivo: TP o NHP; alta: NH
   const variosCentros = hoja.centros.length > 1;
   const centroElegido = centro || String(hoja.centros[0]);
 
   const cambiarCategoria = (nueva) => {
-    setCategoria(nueva); setServicio(''); setMantenimiento(''); setTipoOrden(''); setNumeroOrden(''); setTrabajos(new Set());
+    setCategoria(nueva); setServicio(''); setMantenimiento(''); setTipoOrden(''); setNumeroOrden(''); setTrabajos(new Set()); setVariante('');
   };
   const alternarTrabajo = (id) => setTrabajos((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+
+  // el check «Nauta Hogar» solo existe cuando la orden de servicio es un alta
+  const esAlta = categoria === 'ORDEN_SERVICIO' && catalogos.tiposOrden.find((t) => String(t.id) === String(tipoOrden))?.fila_parte === 'ALTAS';
 
   const completo = {
     CORRECTIVO: servicio.trim(),
@@ -134,8 +138,9 @@ function FormularioAsignar({ catalogos, hoja, centrosDeLaHoja, ejecutar, verHist
     if (categoria === 'PREVENTIVO') cuerpo.tipo_mantenimiento = Number(mantenimiento);
     if (categoria === 'ORDEN_SERVICIO') { cuerpo.tipo_orden = Number(tipoOrden); cuerpo.numero_orden = numeroOrden.trim(); }
     if (categoria === 'ORDEN_TRABAJO') { cuerpo.numero_orden = numeroOrden.trim(); cuerpo.trabajos = [...trabajos]; }
+    if (variante && (categoria === 'CORRECTIVO' || (esAlta && variante === 'NH'))) cuerpo.variante = variante;
     // el formulario se vacía en cuanto el servidor confirma, sin esperar a que se vuelva a cargar la hoja
-    await ejecutar(() => api.post(`/hojas/${hoja.id}/acciones/`, cuerpo), () => { setServicio(''); setNumeroOrden(''); setTrabajos(new Set()); });
+    await ejecutar(() => api.post(`/hojas/${hoja.id}/acciones/`, cuerpo), () => { setServicio(''); setNumeroOrden(''); setTrabajos(new Set()); setVariante(''); });
   }
 
   return (
@@ -157,7 +162,7 @@ function FormularioAsignar({ catalogos, hoja, centrosDeLaHoja, ejecutar, verHist
         {categoria === 'ORDEN_SERVICIO' && (
           <>
             <label>Tipo de orden
-              <select value={tipoOrden} onChange={(e) => setTipoOrden(e.target.value)} required>
+              <select value={tipoOrden} onChange={(e) => { setTipoOrden(e.target.value); setVariante(''); }} required>
                 <option value="">Seleccione…</option>
                 {catalogos.tiposOrden.map((t) => <option key={t.id} value={t.id}>{t.codigo} · {t.nombre}</option>)}
               </select>
@@ -175,6 +180,21 @@ function FormularioAsignar({ catalogos, hoja, centrosDeLaHoja, ejecutar, verHist
         {categoria !== 'ORDEN_TRABAJO' && (
           <label>Número de servicio
             <input value={servicio} onChange={(e) => setServicio(e.target.value)} placeholder="Ej.: 46-326407" required />
+          </label>
+        )}
+        {categoria === 'CORRECTIVO' && (
+          <label>Servicio
+            <select value={variante} onChange={(e) => setVariante(e.target.value)}>
+              <option value="">Red de Abonados</option>
+              <option value="TP">Telefonía Pública (TP)</option>
+              <option value="NHP">Nauta Hogar Plus (NH+)</option>
+            </select>
+          </label>
+        )}
+        {esAlta && (
+          <label className="casilla">
+            <input type="checkbox" checked={variante === 'NH'} onChange={(e) => setVariante(e.target.checked ? 'NH' : '')} />
+            <span>Alta de Nauta Hogar (NH)</span>
           </label>
         )}
         {variosCentros && (
@@ -211,7 +231,7 @@ function FormularioAsignar({ catalogos, hoja, centrosDeLaHoja, ejecutar, verHist
 
 // ---------------------------------------------------------------- una acción (un servicio de la hoja)
 
-const ETIQUETA_ESTADO = { EN_CURSO: ['info', 'En curso'], OK: ['ok', 'OK'], SIN_OK: ['mal', 'Cerrada sin OK'], NO_VISITADA: ['aviso', 'No visitada'] };
+const ETIQUETA_ESTADO = { EN_CURSO: ['info', 'En curso'], OK: ['ok', 'OK'], SIN_OK: ['mal', 'Cerrada sin OK'], NO_VISITADA: ['aviso', 'No visitada'], ANULADA: ['aviso', 'Anulada (NULA)'] };
 
 function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistorial }) {
   const [modo, setModo] = useState(null); // 'ok' | 'pasar' | 'sinok'
@@ -244,6 +264,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
       <div className="fila">
         <strong>#{accion.numero} · {accion.etiqueta}</strong>
         {accion.categoria !== 'CORRECTIVO' && <Chip tipo="info" titulo="Tipo de acción">{accion.categoria_texto}</Chip>}
+        {accion.variante && <Chip tipo="info" titulo="Cuenta en su propia fila del parte diario">{accion.variante_texto}</Chip>}
         {hoja.centros.length > 1 && accion.centro_codigo && <Chip tipo="info" titulo="Centro del servicio">📍 {accion.centro_codigo}</Chip>}
         <Chip tipo={tipo}>{texto}</Chip>
         {accion.estado_orden === 'PENDIENTE' && abierta && <Chip tipo="aviso">Orden pendiente</Chip>}
@@ -313,6 +334,9 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
             ➜ Pasar a otra brigada
           </button>
           <button className="boton" disabled={sinClaves && !hayObservacion} onClick={() => setModo('sinok')}>Cerrar sin OK</button>
+          {accion.categoria === 'ORDEN_SERVICIO' && (
+            <button className="boton" onClick={() => setModo('anular')} title="La orden se anula: no se ejecuta ni cuenta contra la efectividad">Anular (NULA)</button>
+          )}
           <button className="boton boton-peligro empujar" onClick={() => setModo('quitar')} title="Quitar de la hoja un servicio asignado por error">Quitar de la hoja</button>
           {sinClaves && <span className="suave">{esOT ? 'Seleccione al menos un trabajo para dar OK o pasar a otra brigada.' : 'Seleccione al menos una clave para dar OK o pasar a otra brigada.'} Para cerrar sin OK basta con una observación.</span>}
         </div>
@@ -338,6 +362,13 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
           <button className="boton boton-principal">Confirmar pase</button>
           <button type="button" className="boton" onClick={() => setModo(null)}>Cancelar</button>
         </form>
+      )}
+      {modo === 'anular' && (
+        <div className="confirmacion">
+          <span>¿Anular esta orden (NULA)? Se cierra sin ejecutarse, cuenta en la fila NULA del parte y no afecta la efectividad.</span>
+          <button className="boton boton-peligro" onClick={() => confirmar(() => api.post(`/acciones/${accion.id}/anular/`))}>Sí, anular</button>
+          <button className="boton" onClick={() => setModo(null)}>Cancelar</button>
+        </div>
       )}
       {modo === 'quitar' && (
         <div className="confirmacion">
@@ -660,6 +691,7 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
             <Chip tipo="mal">{r.resultados.sin_ok} sin OK</Chip>
             <Chip tipo="aviso">{r.resultados.pasadas} pasada(s) a otra brigada</Chip>
             <Chip>{r.resultados.no_visitadas} no visitada(s)</Chip>
+            {r.resultados.anuladas > 0 && <Chip>{r.resultados.anuladas} anulada(s) (NULA)</Chip>}
             {r.resultados.en_curso > 0 && <Chip tipo="info">{r.resultados.en_curso} en curso</Chip>}
           </div>
           {(r.pasadas_a_brigada.length > 0 || r.no_visitadas.length > 0) && (

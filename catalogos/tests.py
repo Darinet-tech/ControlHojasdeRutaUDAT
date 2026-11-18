@@ -35,7 +35,7 @@ class CargaInicialTests(TestCase):
         self.assertEqual(revisar, {"07-EP", "07-IP", "08", "09", "35-D"})
 
     def test_tipos_de_orden(self):
-        self.assertEqual(TipoOrden.objects.count(), 12)
+        self.assertEqual(TipoOrden.objects.count(), 15)  # incluye CMIS, CD y CA, del parte diario
         self.assertEqual(TipoOrden.objects.get(codigo="CMONT").nombre, "Cambio de montaje")
 
     def test_causas_de_incidencia_oficiales(self):

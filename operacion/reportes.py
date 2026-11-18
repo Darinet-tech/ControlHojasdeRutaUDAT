@@ -75,7 +75,7 @@ def indicadores(lista):
     disponible = sum(h["n_operarios"] * max(0, settings.JORNADA_EFECTIVA_MIN - h["incidencias_min"]) for h in lista)
     return {
         "hojas": len(lista), "acciones": suma("acciones"), "atendidas": atendidas, "ok": ok, "sin_ok": suma("sin_ok"),
-        "pasadas": suma("pasadas"), "no_visitadas": suma("no_visitadas"), "en_curso": suma("en_curso"),
+        "pasadas": suma("pasadas"), "no_visitadas": suma("no_visitadas"), "en_curso": suma("en_curso"), "anuladas": suma("anuladas"),
         "efectividad_pct": _porcentaje(ok, atendidas),
         "tiempo_real_min": real, "tiempo_normado_min": normado, "productividad_pct": _porcentaje(normado, real),
         "incidencias_min": suma("incidencias_min"), "tiempo_disponible_min": disponible,
@@ -87,11 +87,11 @@ def indicadores_de_acciones(filas):
     """Indicadores de un grupo de acciones (p. ej. las de un centro). No hay tiempo disponible ni ocupación: el tiempo
     disponible es de la hoja completa y no se puede repartir entre los centros de una misma hoja."""
     cuenta = lambda estado: sum(1 for f in filas if f["estado"] == estado)  # noqa: E731
-    atendidas = sum(1 for f in filas if f["estado"] != "NO_VISITADA")
+    atendidas = sum(1 for f in filas if f["estado"] not in ("NO_VISITADA", "ANULADA"))
     ok, real, normado = cuenta("OK"), sum(f["tiempo_real_min"] or 0 for f in filas), sum(f["normado"] for f in filas)
     return {"hojas": len({f["hoja_id"] for f in filas}), "acciones": len(filas), "atendidas": atendidas, "ok": ok,
             "sin_ok": cuenta("SIN_OK"), "pasadas": cuenta("PASADA_A_BRIGADA"), "no_visitadas": cuenta("NO_VISITADA"),
-            "en_curso": cuenta("EN_CURSO"), "efectividad_pct": _porcentaje(ok, atendidas), "tiempo_real_min": real,
+            "en_curso": cuenta("EN_CURSO"), "anuladas": cuenta("ANULADA"), "efectividad_pct": _porcentaje(ok, atendidas), "tiempo_real_min": real,
             "tiempo_normado_min": normado, "productividad_pct": _porcentaje(normado, real), "incidencias_min": None,
             "tiempo_disponible_min": None, "ocupacion_pct": None}
 
@@ -104,7 +104,7 @@ def _estadisticas_por_hoja(base, ahora):
         pk: {"hoja_id": pk, "fecha": h.fecha, "brigada": h.brigada.nombre, "brigada_id": h.brigada_id,
              "centro": h.etiqueta_centros, "cerrada": h.cerrada, "vehiculo": h.vehiculo.chapa if h.vehiculo_id else None,
              "operarios": [(o.pk, o.nombre) for o in h.operarios.all()], "n_operarios": h.operarios.count(),
-             "acciones": 0, "atendidas": 0, "ok": 0, "sin_ok": 0, "pasadas": 0, "no_visitadas": 0, "en_curso": 0,
+             "acciones": 0, "atendidas": 0, "ok": 0, "sin_ok": 0, "pasadas": 0, "no_visitadas": 0, "en_curso": 0, "anuladas": 0,
              "real": 0, "normado": 0, "incidencias_min": 0}
         for pk, h in hojas.items()
     }
@@ -119,17 +119,17 @@ def _estadisticas_por_hoja(base, ahora):
 
     filas = list(Accion.objects.filter(hoja__in=base).values(
         "id", "hoja_id", "orden_id", "orden__numero_servicio", "orden__categoria", "orden__numero_orden", "orden__tipo_orden__codigo",
-        "orden__tipo_mantenimiento__codigo", "orden__tipo_orden_id", "orden__estado", "centro__codigo", "ok",
+        "orden__tipo_mantenimiento__codigo", "orden__tipo_orden_id", "orden__estado", "centro__codigo", "ok", "anulada",
         "no_visitada", "pasada_a_id", "pasada_a__nombre", "hora_fin", "tiempo_real_min"))
-    contador = {"OK": "ok", "SIN_OK": "sin_ok", "PASADA_A_BRIGADA": "pasadas", "NO_VISITADA": "no_visitadas", "EN_CURSO": "en_curso"}
+    contador = {"OK": "ok", "SIN_OK": "sin_ok", "PASADA_A_BRIGADA": "pasadas", "NO_VISITADA": "no_visitadas", "EN_CURSO": "en_curso", "ANULADA": "anuladas"}
     for f in filas:
-        f["estado"] = estado_de_accion(f["ok"], f["pasada_a_id"], f["no_visitada"], f["hora_fin"])
+        f["estado"] = estado_de_accion(f["ok"], f["pasada_a_id"], f["no_visitada"], f["hora_fin"], f["anulada"])
         f["etiqueta"] = etiqueta_orden(f["orden__categoria"], f["orden__numero_servicio"], f["orden__tipo_mantenimiento__codigo"] or "",
                                        f["orden__tipo_orden__codigo"] or "", f["orden__numero_orden"])
         e = stats[f["hoja_id"]]
         e["acciones"] += 1
         e[contador[f["estado"]]] += 1
-        if f["estado"] != "NO_VISITADA":
+        if f["estado"] not in ("NO_VISITADA", "ANULADA"):
             e["atendidas"] += 1
         e["real"] += f["tiempo_real_min"] or 0
         f["normado"] = 0
