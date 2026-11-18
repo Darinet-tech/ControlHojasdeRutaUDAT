@@ -7,7 +7,8 @@ from rest_framework import serializers
 from catalogos.models import (Brigada, CausaIncidencia, Centro, Clave, NormaTrabajo, Operario, TipoMantenimiento, TipoOrden,
                               TipoTrabajo, Vehiculo)
 from operacion.models import Accion, HojaDeRuta, Incidencia, OrdenServicio
-from operacion.services import momento_del_corte, norma_accion, resumen_hoja, sugerir_ok, validar_operarios_libres
+from operacion.services import (momento_del_corte, norma_accion, resumen_hoja, sugerir_ok, validar_claves_de_la_accion,
+                                validar_operarios_libres)
 
 
 # ---------------------------------------------------------------- catálogos (solo lectura)
@@ -173,6 +174,13 @@ class ActualizarAccionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Accion
         fields = ["claves", "trabajos", "descripcion_trabajo", "observaciones", "centro"]
+
+    def validate_claves(self, claves):
+        try:
+            validar_claves_de_la_accion(self.instance.orden.categoria, claves)
+        except ErrorDjango as error:
+            raise serializers.ValidationError(error.messages)
+        return claves
 
     def validate_centro(self, centro):
         if centro.pk not in set(self.instance.hoja.centros.values_list("pk", flat=True)):

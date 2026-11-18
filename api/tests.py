@@ -101,7 +101,7 @@ class SesionYPermisosTests(BaseAPI):
                                      "especialista": True, "administrador": True})
 
     def test_catalogos_para_la_pantalla_de_captura(self):
-        self.assertEqual(len(self.api.get("/api/claves/").data), 177)
+        self.assertEqual(len(self.api.get("/api/claves/").data), 189)  # 177 de reparación + 12 de orden de servicio
         self.assertEqual({c["grupo"] for c in self.api.get("/api/claves/?grupo=Cable").data}, {"Cable"})
         c25r = next(c for c in self.api.get("/api/claves/?q=25-R").data if c["codigo"] == "25-R")
         self.assertEqual(c25r["norma_min"], 45)
@@ -816,3 +816,55 @@ class FlujoDeLaHojaAPITests(BaseAPI):
         self.assertEqual(self.api.get(f"/api/ordenes/sin-solucion/?brigada={self.rep.pk}").data, [])  # ya está en trabajo
         # escribir el mismo número de servicio también retoma la orden (no crea otra)
         self.assertEqual(self.api.post(f"/api/hojas/{hoja2}/asignar-sin-solucion/").data, [])
+
+
+class ClavesDeOrdenDeServicioAPITests(BaseAPI):
+    def os(self, hoja, n):
+        a = TipoOrden.objects.get(codigo="A")
+        return self.asignar(hoja, f"46-96{n}", categoria="ORDEN_SERVICIO", tipo_orden=a.pk, numero_orden=f"96{n}")
+
+    def test_catalogo_de_claves_de_orden(self):
+        claves = self.api.get("/api/claves/?ambito=ORDEN").data
+        self.assertEqual([c["codigo"] for c in claves], ["1", "13", "14", "18", "19", "2", "3", "4", "5", "6", "7", "9"])
+        self.assertEqual({c["grupo"] for c in claves}, {"Orden de servicio"})
+        self.assertEqual({c["codigo"]: c["descripcion"] for c in claves}["2"], "Casa cerrada")
+        self.assertEqual(len(self.api.get("/api/claves/?ambito=ACCION").data), 177)
+
+    def test_dar_ok_en_una_orden_de_servicio_no_pide_clave(self):
+        hoja = self.crear_hoja()
+        o = self.os(hoja, "0001")
+        r = self.api.post(f"/api/acciones/{o['id']}/ok/", {}, format="json")
+        self.assertEqual((r.status_code, r.data["estado"]), (200, "OK"))
+        c = self.asignar(hoja, "46-960010")  # un correctivo sí necesita clave para el OK
+        self.assertEqual(self.api.post(f"/api/acciones/{c['id']}/ok/", {"cliente_contactado": "X"}, format="json").status_code, 400)
+
+    def test_cada_tipo_de_accion_usa_sus_claves(self):
+        hoja = self.crear_hoja()
+        c2 = Clave.objects.get(codigo="2", ambito="ORDEN").pk
+        o = self.os(hoja, "0002")
+        r = self.api.patch(f"/api/acciones/{o['id']}/", {"claves": [self.clave("25-R")]}, format="json")  # clave de reparación en una orden
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("orden de servicio", str(r.data))
+        corr = self.asignar(hoja, "46-960020")
+        r = self.api.patch(f"/api/acciones/{corr['id']}/", {"claves": [c2]}, format="json")  # clave de orden en un correctivo
+        self.assertEqual(r.status_code, 400)
+        r = self.api.post(f"/api/hojas/{hoja}/acciones/", {"numero_servicio": "46-960021", "claves": [c2]}, format="json")
+        self.assertEqual(r.status_code, 400)
+
+    def test_orden_no_ejecutada_con_su_clave_cuenta_en_otras_causas_del_parte(self):
+        from operacion.parte import parte_diario
+        hoja = self.crear_hoja()
+        o = self.os(hoja, "0003")
+        c2 = Clave.objects.get(codigo="2", ambito="ORDEN").pk
+        self.assertEqual(self.api.patch(f"/api/acciones/{o['id']}/", {"claves": [c2]}, format="json").status_code, 200)
+        r = self.api.post(f"/api/acciones/{o['id']}/cerrar-sin-ok/", {}, format="json")
+        self.assertEqual((r.status_code, r.data["estado"], r.data["claves"][0]["codigo"]), (200, "SIN_OK", "2"))
+        fila = next(f for g in parte_diario(timezone.localdate())["grupos"] for f in g["filas"] if f["clave"] == "otras_os")
+        self.assertEqual(fila["total"], 1)
+
+    def test_las_claves_de_orden_no_se_cuentan_como_claves_sin_norma(self):
+        from django.contrib.auth import get_user_model
+        admin = get_user_model().objects.create_superuser("adm", "a@a.cu", "x")
+        self.api.force_authenticate(admin)
+        self.assertEqual(self.api.get("/api/inicio/").data["catalogos"]["claves_sin_norma"], 0)
+

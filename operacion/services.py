@@ -31,6 +31,17 @@ def norma_accion(accion):
     return max(minutos) if minutos else None
 
 
+def validar_claves_de_la_accion(categoria, claves):
+    """Las órdenes de servicio usan sus propias claves (ámbito ORDEN, 1 a 19); correctivos y preventivos, las de reparación."""
+    es_os = categoria == OrdenServicio.Categoria.ORDEN_SERVICIO
+    malas = [c.codigo for c in claves if (c.ambito == "ORDEN") != es_os]
+    if malas:
+        raise ValidationError(
+            f"La clave {', '.join(malas)} no corresponde a este tipo de acción: "
+            + ("una orden de servicio usa solo las claves de orden de servicio (1 a 19)." if es_os
+               else "un correctivo o preventivo usa las claves de reparación, no las de orden de servicio."))
+
+
 def es_orden_de_trabajo(accion):
     return accion.orden.categoria == OrdenServicio.Categoria.ORDEN_TRABAJO
 
@@ -213,8 +224,11 @@ def _cerrar(accion, usuario, ahora):
 
 @transaction.atomic
 def certificar_ok(accion, usuario, cliente_contactado, ahora=None):
-    """El probador da el OK tras hablar con el cliente: cierra la acción y deja la orden restablecida."""
-    _exigir_trabajo_registrado(accion, "dar el OK")
+    """El probador da el OK tras hablar con el cliente: cierra la acción y deja la orden restablecida.
+
+    En una orden de servicio el OK es el propio resultado (ejecutada): no lleva clave; las claves de orden (1 a 19) son los motivos de NO ejecutarla."""
+    if accion.orden.categoria != OrdenServicio.Categoria.ORDEN_SERVICIO:
+        _exigir_trabajo_registrado(accion, "dar el OK")
     cliente_contactado = (cliente_contactado or "").strip()
     if not cliente_contactado and accion.orden.categoria == OrdenServicio.Categoria.CORRECTIVO:
         raise ValidationError("Indique el cliente con quien se certificó el servicio.")  # el cliente es obligatorio solo en correctivos

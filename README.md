@@ -61,6 +61,15 @@ no cuenta hasta que se informa. Una orden **anulada (NULA)** no cuenta a favor n
 Dónde cuenta cada clave, tipo de orden y tipo de mantenimiento se cambia en `/admin` (campo «fila del parte diario»); los valores por defecto los pone `cargar_inicial`.
 Al actualizar una instalación: `python manage.py migrate` y `python manage.py cargar_inicial` (crea MTP, GAB, CMIS, CD y CA si faltan).
 
+## Claves de las órdenes de servicio
+Las órdenes de servicio tienen su **propio catálogo de claves** (1, 2, 3, 4, 5, 6, 7, 9, 13, 14, 18 y 19), independiente del de las claves de reparación:
+en `/admin` hay una sección aparte, **«Claves de orden de servicio»**, y al insertar una orden de servicio la pantalla **solo ofrece esas claves** (un correctivo o
+preventivo solo ofrece las de reparación; el sistema rechaza mezclarlas). Son los motivos por los que una orden **no** se ejecutó:
+- **Dar OK** (ejecutada) **no lleva clave**.
+- Si no se ejecutó: se selecciona su clave (o se escribe una observación) y se **cierra sin OK**, o se **anula (NULA)**; con clave también se puede pasar a otra brigada.
+- Cuentan en «Otras causas» de las órdenes de servicio del parte diario.
+Se cargan con `migrate` / `cargar_inicial` (no se pisan los cambios del administrador). Las claves ya usadas no se eliminan: se desmarca «activa».
+
 ## Tema claro / oscuro
 Cada usuario elige con el botón **☾ Oscuro / ☀ Claro** (cabecera y pantalla de inicio de sesión). La primera vez sigue la preferencia del sistema y después
 recuerda la elección **en ese navegador**. Al imprimir o exportar siempre se usa el tema claro. Los colores del tema están en las variables de `frontend/src/estilos.css`.

@@ -240,6 +240,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
   const [observaciones, setObservaciones] = useState(accion.observaciones || '');
   const abierta = accion.estado === 'EN_CURSO';
   const esOT = accion.categoria === 'ORDEN_TRABAJO';
+  const esOS = accion.categoria === 'ORDEN_SERVICIO'; // sus claves (1 a 19) son los motivos de NO ejecutarla; el OK no lleva clave
   const sinClaves = esOT ? accion.trabajos.length === 0 : accion.claves.length === 0; // nada registrado todavía
   const otrasBrigadas = catalogos.brigadas.filter((b) => b.id !== hoja.brigada);
   const [tipo, texto] = accion.estado === 'PASADA_A_BRIGADA'
@@ -293,7 +294,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
         <SelectorDeTrabajos catalogo={catalogos.tiposTrabajo} seleccionados={accion.trabajos} deshabilitado={!editable || !abierta}
           alCambiar={(ids) => ejecutar(() => api.patch(`/acciones/${accion.id}/`, { trabajos: ids }))} />
       ) : (
-        <SelectorDeClaves catalogo={catalogos.claves} seleccionadas={accion.claves}
+        <SelectorDeClaves catalogo={catalogos.claves.filter((c) => (c.ambito === 'ORDEN') === esOS)} seleccionadas={accion.claves}
           deshabilitado={!editable || !abierta}
           alCambiar={(ids) => ejecutar(() => api.patch(`/acciones/${accion.id}/`, { claves: ids }))} />
       )}
@@ -329,7 +330,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
 
       {editable && abierta && modo === null && (
         <div className="fila botones-accion">
-          <button className="boton boton-ok" disabled={sinClaves} onClick={() => setModo('ok')}>✔ Dar OK</button>
+          <button className="boton boton-ok" disabled={sinClaves && !esOS} onClick={() => setModo('ok')}>✔ Dar OK</button>
           <button className="boton" disabled={sinClaves || otrasBrigadas.length === 0} onClick={() => { setBrigada(otrasBrigadas[0]?.id ?? ''); setModo('pasar'); }}>
             ➜ Pasar a otra brigada
           </button>
@@ -338,7 +339,8 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
             <button className="boton" onClick={() => setModo('anular')} title="La orden se anula: no se ejecuta ni cuenta contra la efectividad">Anular (NULA)</button>
           )}
           <button className="boton boton-peligro empujar" onClick={() => setModo('quitar')} title="Quitar de la hoja un servicio asignado por error">Quitar de la hoja</button>
-          {sinClaves && <span className="suave">{esOT ? 'Seleccione al menos un trabajo para dar OK o pasar a otra brigada.' : 'Seleccione al menos una clave para dar OK o pasar a otra brigada.'} Para cerrar sin OK basta con una observación.</span>}
+          {sinClaves && !esOS && <span className="suave">{esOT ? 'Seleccione al menos un trabajo para dar OK o pasar a otra brigada.' : 'Seleccione al menos una clave para dar OK o pasar a otra brigada.'} Para cerrar sin OK basta con una observación.</span>}
+          {sinClaves && esOS && <span className="suave">Dar OK no lleva clave. Si la orden no se ejecutó, seleccione su clave (1 a 19) o escriba una observación y cierre sin OK; también puede anularla (NULA).</span>}
         </div>
       )}
 

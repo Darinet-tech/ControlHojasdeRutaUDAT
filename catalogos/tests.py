@@ -16,12 +16,13 @@ class CargaInicialTests(TestCase):
 
     def test_claves_unicas_y_clasificacion(self):
         # 183 filas del PDF: -3 repetidas (se conserva la de Datos) -3 eliminadas por el negocio
-        self.assertEqual(Clave.objects.count(), 177)
-        no_efectivas = set(Clave.objects.filter(clasificacion="NO_EFECTIVA").values_list("codigo", flat=True))
+        self.assertEqual(Clave.objects.count(), 189)  # 177 de reparación + 12 de orden de servicio
+        reparacion = Clave.objects.filter(ambito="ACCION")  # las claves de orden de servicio (1 a 19) son otro catálogo
+        no_efectivas = set(reparacion.filter(clasificacion="NO_EFECTIVA").values_list("codigo", flat=True))
         self.assertEqual(no_efectivas, {"01", "02", "14-P", "21", "22", "23", "24", "25", "27", "29", "36", "36-V",
                                         "36D-TXD", "37", "38", "39", "70"})
-        self.assertEqual(Clave.objects.filter(clasificacion="PENDIENTE").count(), 0)
-        self.assertEqual(Clave.objects.filter(clasificacion="EFECTIVA").count(), 160)
+        self.assertEqual(reparacion.filter(clasificacion="PENDIENTE").count(), 0)
+        self.assertEqual(reparacion.filter(clasificacion="EFECTIVA").count(), 160)
         self.assertEqual(Brigada.objects.count(), 5)
 
     def test_claves_eliminadas_y_repetidas(self):
@@ -57,7 +58,7 @@ class CargaInicialTests(TestCase):
 
     def test_es_idempotente(self):
         call_command("cargar_inicial", verbosity=0)
-        self.assertEqual(Clave.objects.count(), 177)
+        self.assertEqual(Clave.objects.count(), 189)  # 177 de reparación + 12 de orden de servicio
         self.assertEqual(NormaTiempo.objects.count(), 177)
 
 
@@ -74,7 +75,7 @@ class MigracionDecisionesTests(TestCase):
             Clave.objects.create(codigo=codigo, grupo=grupo, clasificacion=clas, revisar=True, notas="x")
         modulo = importlib.import_module("catalogos.migrations.0002_decisiones_negocio")
         modulo.aplicar_decisiones(apps, None)
-        self.assertEqual(set(Clave.objects.values_list("codigo", flat=True)), {"36-V", "36D-TXD", "3DS-TXD"})
+        self.assertEqual(set(Clave.objects.filter(ambito="ACCION").values_list("codigo", flat=True)), {"36-V", "36D-TXD", "3DS-TXD"})
         self.assertEqual(Clave.objects.get(codigo="36-V").clasificacion, "NO_EFECTIVA")
         self.assertEqual(Clave.objects.get(codigo="36D-TXD").clasificacion, "NO_EFECTIVA")
         dup = Clave.objects.get(codigo="3DS-TXD")
@@ -136,3 +137,33 @@ class ProteccionDeClavesTests(TestCase):
         accion.claves.add(clave)
         self.assertFalse(self.admin.has_delete_permission(self.request, clave))
         self.assertNotIn("delete_selected", self.admin.get_actions(self.request))
+
+
+class CatalogoDeClavesDeOrdenTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        from django.contrib.auth import get_user_model
+        call_command("cargar_inicial", verbosity=0)
+        cls.admin = get_user_model().objects.create_superuser("adm", "a@a.cu", "x")
+
+    def setUp(self):
+        self.client.force_login(self.admin)
+
+    def test_seccion_propia_en_la_administracion(self):
+        r = self.client.get("/admin/catalogos/claveordenservicio/")
+        self.assertContains(r, "Casa cerrada")
+        self.assertNotContains(r, "25-R")  # las de reparación no están aquí
+        self.assertNotContains(self.client.get("/admin/catalogos/clave/"), "Casa cerrada")  # ni estas en el catálogo de reparación
+
+    def test_una_clave_nueva_de_orden_queda_en_su_ambito(self):
+        r = self.client.post("/admin/catalogos/claveordenservicio/add/", {"codigo": "20", "descripcion": "Otra", "clasificacion": "NO_EFECTIVA",
+                                                                        "activa": "on", "notas": ""})
+        self.assertEqual(r.status_code, 302)
+        nueva = Clave.objects.get(codigo="20")
+        self.assertEqual((nueva.ambito, nueva.grupo.nombre), ("ORDEN", "Orden de servicio"))
+
+    def test_los_roles_ven_el_catalogo(self):
+        from django.contrib.auth.models import Group
+        self.assertTrue(Group.objects.get(name="Especialista").permissions.filter(codename="change_claveordenservicio").exists())
+        self.assertTrue(Group.objects.get(name="Probador").permissions.filter(codename="view_claveordenservicio").exists())
+

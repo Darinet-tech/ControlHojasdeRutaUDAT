@@ -27,7 +27,7 @@ from operacion.parte import parte_diario
 from operacion.services import (anular_orden, asignar_no_visitadas, asignar_orden, asignar_pendientes, asignar_sin_solucion, generar_hoja, obtener_orden,
                                 cerrar_hoja, cerrar_sin_ok, certificar_ok, finalizar_incidencia, historial_servicio, iniciar_incidencia,
                                 ordenes_no_visitadas, ordenes_pendientes, ordenes_sin_solucion, pasar_a_brigada, quitar_accion,
-                                reabrir_hoja, resumen_hoja)
+                                reabrir_hoja, resumen_hoja, validar_claves_de_la_accion)
 
 from . import serializers as s
 
@@ -148,6 +148,8 @@ class ClaveViewSet(CatalogoViewSet):
             qs = qs.filter(grupo__nombre__iexact=p["grupo"])
         if p.get("clasificacion"):
             qs = qs.filter(clasificacion=p["clasificacion"])
+        if p.get("ambito"):
+            qs = qs.filter(ambito=p["ambito"])
         if p.get("q"):
             qs = qs.filter(codigo__icontains=p["q"]) | qs.filter(descripcion__icontains=p["q"])
         return qs
@@ -288,6 +290,8 @@ class HojaViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Creat
             orden = d.get("orden") or obtener_orden(
                 d["categoria"], usuario, numero_servicio=d["numero_servicio"], tipo_mantenimiento=d.get("tipo_mantenimiento"),
                 tipo_orden=d.get("tipo_orden"), numero_orden=d["numero_orden"], trabajos=d.get("trabajos"), variante=d["variante"])
+            if orden.categoria != OrdenServicio.Categoria.ORDEN_TRABAJO:
+                validar_claves_de_la_accion(orden.categoria, d.get("claves", []))
             accion = asignar_orden(hoja, orden, usuario, centro=d.get("centro"), trabajos=d.get("trabajos") or None)
             accion.descripcion_trabajo = d["descripcion_trabajo"]
             accion.save(update_fields=["descripcion_trabajo", "modificado_en"])
@@ -551,7 +555,7 @@ class InicioView(APIView):
         if request.user.is_staff and (request.user.is_superuser or request.user.has_perm("catalogos.change_clave")):
             datos["catalogos"] = {
                 "claves_por_revisar": Clave.objects.filter(revisar=True, activa=True).count(),
-                "claves_sin_norma": Clave.objects.filter(activa=True).exclude(
+                "claves_sin_norma": Clave.objects.filter(activa=True).exclude(ambito="ORDEN").exclude(
                     pk__in=NormaTiempo.objects.values("clave_id")).count(),
                 "trabajos_sin_norma": TipoTrabajo.objects.filter(activo=True).exclude(
                     pk__in=NormaTrabajo.objects.values("tipo_trabajo_id")).count(),

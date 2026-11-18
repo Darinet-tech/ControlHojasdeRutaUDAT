@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import (Brigada, CausaIncidencia, Centro, Clave, GrupoClave, NormaTiempo, NormaTrabajo, Operario,
+from .models import (Brigada, CausaIncidencia, Centro, Clave, ClaveOrdenServicio, GrupoClave, NormaTiempo, NormaTrabajo, Operario,
                      TipoMantenimiento, TipoOrden, TipoTrabajo, Vehiculo)
 
 
@@ -38,6 +38,35 @@ class ClaveAdmin(admin.ModelAdmin):
         if request.path.endswith("/autocomplete/"):  # al registrar acciones solo se ofrecen las claves activas
             queryset = queryset.filter(activa=True)
         return queryset, distinct
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        # las claves de orden de servicio tienen su propia sección (salvo en el autocompletado de las acciones)
+        return qs if request.path.endswith("/autocomplete/") else qs.exclude(ambito="ORDEN")
+
+
+@admin.register(ClaveOrdenServicio)
+class ClaveOrdenServicioAdmin(admin.ModelAdmin):
+    """Claves de cierre de las órdenes de servicio (motivos por los que una orden no se ejecutó). Las usadas no se eliminan: se desmarcan."""
+
+    list_display = ("codigo", "descripcion", "clasificacion", "activa")
+    list_editable = ("clasificacion", "activa")
+    search_fields = ("codigo", "descripcion")
+    fields = ("codigo", "descripcion", "clasificacion", "activa", "notas")
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(ambito="ORDEN")
+
+    def save_model(self, request, obj, form, change):
+        obj.ambito = "ORDEN"
+        if not obj.grupo_id:
+            obj.grupo, _ = GrupoClave.objects.get_or_create(nombre="Orden de servicio")
+        super().save_model(request, obj, form, change)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and obj.acciones.exists():
+            return False
+        return super().has_delete_permission(request, obj)
 
 
 @admin.register(NormaTiempo)

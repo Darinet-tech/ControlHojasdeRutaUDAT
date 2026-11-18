@@ -161,6 +161,18 @@ class Clave(models.Model):
         return self.clasificacion == self.Clasificacion.EFECTIVA
 
 
+class ClaveOrdenServicio(Clave):
+    """Catálogo propio de las claves de cierre de las órdenes de servicio (1 a 19), separado del de las claves de reparación.
+
+    Es una vista del mismo modelo (ámbito ORDEN): no tiene normas de tiempo y es lo único que se ofrece al insertar una orden de servicio."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "clave de orden de servicio"
+        verbose_name_plural = "claves de orden de servicio"
+        ordering = ["codigo"]
+
+
 class NormaTiempo(models.Model):
     """Norma de tiempo (minutos) por clave y, opcionalmente, por tipo de orden, con vigencia en el tiempo.
 

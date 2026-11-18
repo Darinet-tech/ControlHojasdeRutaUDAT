@@ -12,6 +12,7 @@ from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from catalogos.claves_orden import crear as crear_claves_de_orden
 from catalogos.parte_datos import completar as completar_filas_parte
 from catalogos.models import (Brigada, CausaIncidencia, Centro, Clave, GrupoClave, NormaTiempo, TipoMantenimiento, TipoOrden,
                               TipoTrabajo)
@@ -35,16 +36,16 @@ INICIO_NORMAS = date(2000, 1, 1)  # cubre cualquier fecha histórica que se impo
 ROLES = {
     "Probador": {
         "operacion": (["hojaderuta", "ordenservicio", "accion", "incidencia"], ["add", "change", "view"]),
-        "catalogos": (["brigada", "centro", "vehiculo", "operario", "clave", "normatiempo", "tipoorden",
+        "catalogos": (["brigada", "centro", "vehiculo", "operario", "clave", "claveordenservicio", "normatiempo", "tipoorden",
                        "causaincidencia", "grupoclave", "tipomantenimiento", "tipotrabajo", "normatrabajo"], ["view"]),
     },
     "Especialista": {
-        "catalogos": (["brigada", "centro", "vehiculo", "operario", "clave", "normatiempo", "tipoorden",
+        "catalogos": (["brigada", "centro", "vehiculo", "operario", "clave", "claveordenservicio", "normatiempo", "tipoorden",
                        "causaincidencia", "grupoclave", "tipomantenimiento", "tipotrabajo", "normatrabajo"], ["add", "change", "delete", "view"]),
         "operacion": (["hojaderuta", "ordenservicio", "accion", "incidencia"], ["view"]),
     },
     "Jefe": {
-        "catalogos": (["brigada", "centro", "vehiculo", "operario", "clave", "normatiempo", "tipoorden",
+        "catalogos": (["brigada", "centro", "vehiculo", "operario", "clave", "claveordenservicio", "normatiempo", "tipoorden",
                        "causaincidencia", "grupoclave", "tipomantenimiento", "tipotrabajo", "normatrabajo"], ["view"]),
         "operacion": (["hojaderuta", "ordenservicio", "accion", "incidencia"], ["view"]),
     },
@@ -135,6 +136,7 @@ class Command(BaseCommand):
                 NormaTiempo.objects.create(clave=clave, minutos=int(fila["tiempo_min"]), vigente_desde=INICIO_NORMAS)
                 creadas += 1
 
+        crear_claves_de_orden(Clave, GrupoClave)  # claves de cierre de las órdenes de servicio (1 a 19)
         completar_filas_parte(Clave, TipoOrden, TipoMantenimiento)  # tipos del parte (MTP, GAB, CMIS) y fila de cada clave/tipo
         self._roles()
         self.stdout.write(self.style.SUCCESS(
