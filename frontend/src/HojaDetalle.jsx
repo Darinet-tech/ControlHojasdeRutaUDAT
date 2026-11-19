@@ -183,13 +183,18 @@ function FormularioAsignar({ catalogos, hoja, centrosDeLaHoja, ejecutar, verHist
           </label>
         )}
         {categoria === 'CORRECTIVO' && (
-          <label>Servicio
-            <select value={variante} onChange={(e) => setVariante(e.target.value)}>
-              <option value="">Red de Abonados</option>
-              <option value="TP">Telefonía Pública (TP)</option>
-              <option value="NHP">Nauta Hogar Plus (NH+)</option>
-            </select>
-          </label>
+          <>
+            <label>Servicio
+              <select value={variante === 'TP' ? 'TP' : ''} onChange={(e) => setVariante(e.target.value)}>
+                <option value="">Red de Abonados</option>
+                <option value="TP">Telefonía Pública (TP)</option>
+              </select>
+            </label>
+            <label className="casilla" title="Modalidad de los servicios de datos; no aplica a Telefonía Pública">
+              <input type="checkbox" checked={variante === 'NHP'} disabled={variante === 'TP'} onChange={(e) => setVariante(e.target.checked ? 'NHP' : '')} />
+              <span>Nauta Hogar Plus (NH+)</span>
+            </label>
+          </>
         )}
         {esAlta && (
           <label className="casilla">
@@ -393,13 +398,19 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
             </label>
           )}
           {nuevoTipo.categoria === 'CORRECTIVO' && (
-            <label>Servicio
-              <select value={nuevoTipo.variante} onChange={(e) => setNuevoTipo({ ...nuevoTipo, variante: e.target.value })}>
-                <option value="">Red de Abonados</option>
-                <option value="TP">Telefonía Pública (TP)</option>
-                <option value="NHP">Nauta Hogar Plus (NH+)</option>
-              </select>
-            </label>
+            <>
+              <label>Servicio
+                <select value={nuevoTipo.variante === 'TP' ? 'TP' : ''} onChange={(e) => setNuevoTipo({ ...nuevoTipo, variante: e.target.value })}>
+                  <option value="">Red de Abonados</option>
+                  <option value="TP">Telefonía Pública (TP)</option>
+                </select>
+              </label>
+              <label className="casilla" title="Modalidad de los servicios de datos; no aplica a Telefonía Pública">
+                <input type="checkbox" checked={nuevoTipo.variante === 'NHP'} disabled={nuevoTipo.variante === 'TP'}
+                  onChange={(e) => setNuevoTipo({ ...nuevoTipo, variante: e.target.checked ? 'NHP' : '' })} />
+                <span>Nauta Hogar Plus (NH+)</span>
+              </label>
+            </>
           )}
           <button className="boton boton-principal" disabled={nuevoTipo.categoria === 'PREVENTIVO' && !nuevoTipo.mantenimiento}
             onClick={() => confirmar(() => api.post(`/acciones/${accion.id}/cambiar-tipo/`, {

@@ -54,7 +54,7 @@ y el motivo de lo cerrado sin OK). **Es un documento aparte del informe** (el in
 
 | Grupo | Filas y cómo cuentan |
 |---|---|
-| Correctivo | **Reparadas Red de Abonados / Telefonía Pública (TP) / Nauta Hogar Plus (NH+)** (con OK; TP y NH+ se marcan al insertar el servicio) · **Pendiente de Par** (sin OK o pasado a otra brigada con clave 23 o 24) · **Otras causas** (el resto: 36, 36-V, 36D-TXD, 37, 39, 38, 29, 27, 25, 22, 21, 14-P, 02, 01 o sin clave) |
+| Correctivo | **Reparadas Red de Abonados / Telefonía Pública (TP) / Nauta Hogar Plus (NH+)** (con OK; Telefonía Pública se elige en el desplegable de servicio y NH+ es una casilla aparte, al insertar el servicio) · **Pendiente de Par** (sin OK o pasado a otra brigada con clave 23 o 24) · **Otras causas** (el resto: 36, 36-V, 36D-TXD, 37, 39, 38, 29, 27, 25, 22, 21, 14-P, 02, 01 o sin clave) |
 | Preventivo | **Mantenimiento Red de Abonados** (MPI, MPPI, MPPE) · **Mantenimiento Telefonía Pública** (MTP) · **Gabinetes** (GAB), con OK · **Otras causas** (sin OK) |
 | Órdenes de Servicio | **Altas (A), Traslados (TA), Bajas (B), Nauta Hogar (alta marcada NH), TE – TI, Misceláneas (AS, CL, CMONT, CMIS, REC), TxD (CTS, CVIV, CD, CA)** con OK · **NULA** (botón *Anular (NULA)*) · **Otras causas** (sin OK) |
 | Órdenes de Trabajo | **Ejecutadas (OK)** · **En ejecución** (abiertas) · **Pendientes de ejecución** (sin OK, pasadas a otra brigada o no visitadas) |
