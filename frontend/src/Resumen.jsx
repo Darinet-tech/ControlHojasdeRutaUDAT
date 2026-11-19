@@ -180,7 +180,7 @@ export default function Resumen({ catalogos, abrirHoja }) {
         </select>
         {periodo === 'dia' && (
           <span className="fila empujar descargas" aria-label="Documentos del día">
-            <Descarga activo={hayHojas} principal enNuevaPestana titulo="Parte diario de la Mesa de Prueba, en hoja apaisada"
+            <Descarga activo={hayHojas} enNuevaPestana titulo="Parte diario de la Mesa de Prueba, en hoja apaisada"
               href={`/api/parte-diario/?${new URLSearchParams({ fecha, ...(brigada && { brigada }), ...(centro && { centro }), formato: 'pdf' })}`}>Parte PDF</Descarga>
             <Descarga activo={hayHojas} titulo="Parte diario de la Mesa de Prueba en Excel"
               href={`/api/parte-diario/?${new URLSearchParams({ fecha, ...(brigada && { brigada }), ...(centro && { centro }), formato: 'xlsx' })}`}>Parte Excel</Descarga>
