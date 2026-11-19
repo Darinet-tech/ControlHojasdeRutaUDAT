@@ -601,11 +601,12 @@ function ImportarAcciones({ hoja, alCerrar, alImportar }) {
   const [error, setError] = useState('');
   const [trabajando, setTrabajando] = useState(false);
 
-  async function enviar(f, simular) {
+  async function enviar(f, simular, hojaExcel = '') {
     setError(''); setTrabajando(true);
     const datos = new FormData();
     datos.append('archivo', f);
     datos.append('simular', simular ? '1' : '0');
+    if (hojaExcel) datos.append('hoja_excel', hojaExcel);
     try {
       const r = await api.subir(`/hojas/${hoja.id}/importar/`, datos);
       setResultado(r);
@@ -633,6 +634,13 @@ function ImportarAcciones({ hoja, alCerrar, alImportar }) {
       </div>
       <Aviso>{error}</Aviso>
       {trabajando && <p className="cargando">Comprobando el archivo…</p>}
+      {resultado?.hojas_excel?.length > 1 && (
+        <label>Hoja del libro de Excel
+          <select value={resultado.hoja_excel} onChange={(e) => enviar(archivo, true, e.target.value)}>
+            {resultado.hojas_excel.map((h) => <option key={h} value={h}>{h}</option>)}
+          </select>
+        </label>
+      )}
       {resultado?.columnas && (
         <p className="suave">Columnas reconocidas en el archivo: <strong>{resultado.columnas.join(', ') || 'ninguna'}</strong>.
           {hoja.centros.length > 1 && !resultado.columnas.includes('centro') && ' La hoja trabaja en varios centros y el archivo no tiene una columna «CENTRO» reconocida: cada servicio necesita su centro.'}</p>
@@ -653,7 +661,7 @@ function ImportarAcciones({ hoja, alCerrar, alImportar }) {
       )}
       <div className="acciones-formulario">
         <button className="boton" onClick={alCerrar}>Cancelar</button>
-        <button className="boton boton-principal" disabled={!listo || trabajando} onClick={() => enviar(archivo, false)}>
+        <button className="boton boton-principal" disabled={!listo || trabajando} onClick={() => enviar(archivo, false, resultado.hoja_excel)}>
           {listo ? `Importar ${resultado.validas} acción(es)` : 'Importar'}
         </button>
       </div>

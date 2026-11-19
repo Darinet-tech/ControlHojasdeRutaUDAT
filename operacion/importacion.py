@@ -76,6 +76,8 @@ def _texto(valor):
 class Filas(list):
     """Las filas leídas; `columnas` son las columnas del archivo que se reconocieron (para mostrárselas a quien importa)."""
     columnas = ()
+    hojas = ()  # hojas del libro Excel que traen una columna de servicios (el libro de planificación trae una por brigada)
+    hoja = ""  # la hoja que se leyó
 
 
 def _tiene_encabezado(filas):
@@ -83,9 +85,10 @@ def _tiene_encabezado(filas):
     return any(normalizar(c) in COLUMNAS["servicio"] | COLUMNAS["tipo"] for fila in filas[:15] for c in fila)
 
 
-def leer_filas(nombre, contenido):
+def leer_filas(nombre, contenido, hoja=None):
     """[(número de fila del archivo, {columna canónica: texto})] sin las filas vacías. ValidationError si el archivo no sirve."""
     nombre = (nombre or "").lower()
+    lista, usada = [], ""
     if nombre.endswith(".csv"):
         try:
             texto = contenido.decode("utf-8-sig")
@@ -100,8 +103,15 @@ def leer_filas(nombre, contenido):
             libro = load_workbook(io.BytesIO(contenido), data_only=True)
         except Exception as error:  # archivo dañado o que no es un Excel
             raise ValidationError("No se pudo leer el archivo Excel.") from error
-        hojas = [[list(f) for f in hoja.iter_rows(values_only=True)] for hoja in libro.worksheets if hoja.sheet_state == "visible"]
-        filas = next((h for h in hojas if _tiene_encabezado(h)), hojas[0] if hojas else [])
+        hojas = {h.title: [list(f) for f in h.iter_rows(values_only=True)] for h in libro.worksheets if h.sheet_state == "visible"}
+        lista = [titulo for titulo, f in hojas.items() if _tiene_encabezado(f)]
+        if hoja:
+            if hoja not in hojas:
+                raise ValidationError(f"El libro no tiene una hoja llamada «{hoja}».")
+            usada = hoja
+        else:
+            usada = lista[0] if lista else next(iter(hojas), "")
+        filas = hojas.get(usada, [])
     elif nombre.endswith(".xls"):
         raise ValidationError("Ese es un Excel antiguo (.xls): ábralo y guárdelo como «Libro de Excel (.xlsx)» o como CSV.")
     else:
@@ -129,6 +139,7 @@ def leer_filas(nombre, contenido):
         raise ValidationError("Falta la columna «tipo» (Correctivo, Preventivo, Orden de servicio u Orden de trabajo) o, al menos, «servicio».")
     resultado = Filas()
     resultado.columnas = tuple(columnas)
+    resultado.hojas, resultado.hoja = tuple(lista), usada
     for numero, fila in enumerate(filas[encabezado + 1:], start=encabezado + 2):
         datos = {c: _texto(fila[i]) if i < len(fila) else "" for c, i in columnas.items()}
         if planificacion:

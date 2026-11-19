@@ -304,3 +304,41 @@ class PlanificacionConCentrosPorLaApiTests(BaseOperacion):
         self.assertEqual(set(r.data["columnas"]), {"servicio", "centro"})
         self.assertEqual({a.orden.numero_servicio: a.centro.codigo for a in Accion.objects.filter(hoja=hoja_x)},
                          {"46328758": self.centro.codigo, "NGED190069": "JM"})
+
+
+class LibroConVariasHojasTests(BaseOperacion):
+    def libro(self):
+        libro = Workbook()
+        a = libro.active
+        a.title = "POTICO"
+        a.append(["SERVICIO"])
+        a.append(["46 1"])
+        b = libro.create_sheet("Potico2")
+        b.append([None, "CENTRO"])
+        b.append(["SERVICIO", "CABLE"])
+        b.append(["46 2", "NG"])
+        c = libro.create_sheet("Notas")
+        c.append(["nada que importar"])
+        memoria = io.BytesIO()
+        libro.save(memoria)
+        return memoria.getvalue()
+
+    def test_se_puede_elegir_la_hoja_del_libro(self):
+        contenido = self.libro()
+        por_defecto = leer_filas("a.xlsx", contenido)
+        self.assertEqual((por_defecto.hoja, por_defecto.hojas), ("POTICO", ("POTICO", "Potico2")))  # «Notas» no trae servicios
+        elegida = leer_filas("a.xlsx", contenido, "Potico2")
+        self.assertEqual((elegida.hoja, elegida.columnas), ("Potico2", ("servicio", "centro")))
+        self.assertEqual(list(elegida), [(3, {"tipo": "Correctivo", "servicio": "462", "centro": "NG"})])
+        with self.assertRaisesMessage(ValidationError, "no tiene una hoja"):
+            leer_filas("a.xlsx", contenido, "Inexistente")
+
+    def test_la_api_acepta_hoja_excel(self):
+        hoja_x = self.hoja(fecha=date(2026, 10, 5))
+        probador = get_user_model().objects.create_user("probador_hojas")
+        probador.groups.add(Group.objects.get(name="Probador"))
+        api = APIClient()
+        api.force_authenticate(probador)
+        archivo = SimpleUploadedFile("l.xlsx", self.libro(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        r = api.post(f"/api/hojas/{hoja_x.pk}/importar/", {"archivo": archivo, "hoja_excel": "Potico2", "simular": "1"}, format="multipart")
+        self.assertEqual((r.status_code, r.data["hoja_excel"], r.data["hojas_excel"], r.data["validas"]), (200, "Potico2", ["POTICO", "Potico2"], 1))
