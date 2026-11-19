@@ -61,6 +61,10 @@ class LecturaDelArchivoTests(BaseOperacion):
             (3, {"tipo": "Correctivo", "servicio": "46328758"}), (4, {"tipo": "Correctivo", "servicio": "NGED190820"}),
             (5, {"tipo": "Correctivo", "servicio": "NGED190856"}), (8, {"tipo": "Correctivo", "servicio": "46325311"})])
 
+    def test_planificacion_con_columna_centro(self):
+        filas = leer_filas("plan.csv", "SERVICIO;CENTRO;CABLE\n46 1;NG;24\n46 2;;3\n".encode())
+        self.assertEqual(filas, [(2, {"tipo": "Correctivo", "servicio": "461", "centro": "NG"}), (3, {"tipo": "Correctivo", "servicio": "462"})])
+
     def test_archivos_que_no_sirven(self):
         for nombre, contenido, mensaje in [("a.txt", b"x", "Excel (.xlsx) o CSV"), ("a.csv", b"", "vacío"),
                                            ("a.csv", b"orden\n46-1\n", "Falta la columna"), ("a.csv", b"tipo\n", "no tiene filas"),
@@ -240,3 +244,22 @@ class SubirExcelPorLaApiTests(BaseOperacion):
         r = api.post(f"/api/hojas/{hoja_x.pk}/importar/", {"archivo": archivo}, format="multipart")
         self.assertEqual((r.status_code, r.data["importadas"], r.data["errores"]), (200, 2, []))
         self.assertEqual(sorted(a.orden.numero_servicio for a in Accion.objects.filter(hoja=hoja_x)), ["46315207", "NGED190069"])
+
+
+class CentroEnLaImportacionTests(BaseOperacion):
+    def test_el_centro_del_archivo_debe_ser_de_la_hoja(self):
+        from catalogos.models import Centro
+        otro = Centro.objects.create(codigo="ZZ", nombre="Otro Centro")
+        hoja = self.hoja(fecha=date(2026, 10, 5))
+        hoja.centros.add(otro)  # la hoja trabaja en dos centros: el centro de cada servicio es obligatorio
+        usuario = get_user_model().objects.create_user("probador_cen")
+        sin_centro = importar_acciones(hoja, leer_filas("a.csv", b"servicio\n46 1\n"), usuario)
+        self.assertIn("indique el centro", sin_centro["errores"][0]["mensaje"])
+        codigos = sorted(c.codigo for c in hoja.centros.all())
+        csv = f"servicio;centro\n46 1;{codigos[0]}\n46 2;{otro.nombre.upper()}\n".encode()
+        r = importar_acciones(hoja, leer_filas("a.csv", csv), usuario)
+        self.assertEqual((r["importadas"], r["errores"]), (2, []))
+        self.assertEqual(sorted(a.centro.codigo for a in Accion.objects.filter(hoja=hoja)), sorted([codigos[0], "ZZ"]))
+        fuera = Centro.objects.create(codigo="YY", nombre="Ajeno")
+        r = importar_acciones(hoja, leer_filas("a.csv", f"servicio;centro\n46 3;{fuera.codigo}\n".encode()), usuario)
+        self.assertIn("no es uno de los centros de la hoja", r["errores"][0]["mensaje"])

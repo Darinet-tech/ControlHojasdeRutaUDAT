@@ -13,7 +13,7 @@ El archivo tiene una fila por servicio y estas columnas (los nombres admiten may
 
 **Planificación diaria**: si el archivo no tiene columna «tipo» pero sí «servicio» (como el Excel de planificación diaria, cuyo encabezado puede
 estar en la segunda fila), solo se usa la columna SERVICIO y todo se importa como correctivo. Los espacios del número se quitan («46 315207» → «46315207», «NG ED190069» → «NGED190069»). Las filas de horario («11:00 – 02:00 PM») y las vacías se saltan;
-el resto de columnas (cable, par, nombre, dirección...) se ignora.
+la columna CENTRO, si existe, también se usa (debe ser uno de los centros de la hoja; sirve el código o el nombre). El resto de columnas (cable, par, nombre, dirección...) se ignora.
 
 Todo o nada: si alguna fila tiene un error no se importa ninguna, y se informa de cada error con su número de fila. Cada fila pasa por las mismas
 reglas que la inserción a mano (`obtener_orden` y `asignar_orden`).
@@ -124,7 +124,7 @@ def leer_filas(nombre, contenido):
             servicio = "".join(datos["servicio"].split())  # «46 315207» → «46315207»; «NG» y «ED190069» en dos líneas → «NGED190069»
             if not servicio or HORARIO.search(servicio):
                 continue
-            datos = {"tipo": "Correctivo", "servicio": servicio}
+            datos = {"tipo": "Correctivo", "servicio": servicio, **({"centro": datos["centro"]} if datos.get("centro") else {})}  # la columna CENTRO sí se usa
         if any(datos.values()):
             resultado.append((numero, datos))
     if len(resultado) > MAXIMO_FILAS:
@@ -141,6 +141,15 @@ def _buscar(modelo, campo, valor, descripcion):
     return objeto
 
 
+def _centro_del_archivo(texto):
+    """El centro por su código (NG) o por su nombre (Nueva Gerona), sin importar mayúsculas ni tildes."""
+    buscado = normalizar(texto)
+    for centro in Centro.objects.all():
+        if buscado in (normalizar(centro.codigo), normalizar(centro.nombre)):
+            return centro
+    raise ValidationError(f"El centro «{texto}» no existe en el catálogo.")
+
+
 def _crear_accion(hoja, datos, usuario):
     categoria = TIPOS.get(normalizar(datos.get("tipo")))
     if categoria is None:
@@ -152,7 +161,7 @@ def _crear_accion(hoja, datos, usuario):
     mantenimiento = (_buscar(TipoMantenimiento, "codigo", datos["mantenimiento"], "El tipo de mantenimiento")
                      if datos.get("mantenimiento") else None)
     trabajos = [_buscar(TipoTrabajo, "nombre", n.strip(), "El trabajo") for n in datos.get("trabajos", "").split(";") if n.strip()]
-    centro = _buscar(Centro, "codigo", datos["centro"], "El centro") if datos.get("centro") else None
+    centro = _centro_del_archivo(datos["centro"]) if datos.get("centro") else None
     orden = obtener_orden(categoria, usuario, numero_servicio=datos.get("servicio", ""), tipo_mantenimiento=mantenimiento, tipo_orden=tipo_orden,
                           numero_orden=datos.get("orden", ""), trabajos=trabajos, variante=variante)
     return asignar_orden(hoja, orden, usuario, centro=centro, trabajos=trabajos or None)
