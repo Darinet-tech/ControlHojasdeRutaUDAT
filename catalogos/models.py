@@ -5,6 +5,10 @@ from django.db.models import Q
 class Brigada(models.Model):
     nombre = models.CharField(max_length=60, unique=True)
     activa = models.BooleanField(default=True)
+    informa_con_texto = models.BooleanField(
+        default=False,
+        help_text="Sus hojas de ruta llevan un texto libre con lo que hizo la brigada, que sale bajo la tabla del parte diario (ej.: Línea).",
+    )
 
     class Meta:
         ordering = ["nombre"]

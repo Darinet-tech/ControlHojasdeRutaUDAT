@@ -64,6 +64,11 @@ no cuenta hasta que se informa. Una orden **anulada (NULA)** no cuenta a favor n
 Dónde cuenta cada clave, tipo de orden y tipo de mantenimiento se cambia en `/admin` (campo «fila del parte diario»); los valores por defecto los pone `cargar_inicial`.
 Al actualizar una instalación: `python manage.py migrate` y `python manage.py cargar_inicial` (crea MTP, GAB, CMIS, CD y CA si faltan).
 
+
+### Trabajos de la brigada de Línea
+
+La brigada de Línea muchas veces hace correctivos urgentes sin orden de trabajo. Las brigadas marcadas «informa con texto» (en el admin: Brigadas → *Informa con texto*; por defecto, Línea) muestran en su hoja de ruta un cuadro **Trabajos realizados por la brigada**. Ese texto sale bajo la tabla del parte diario con el rótulo «Brigada de Línea 1 (claves de los operarios)» (el número solo si hay varias hojas de esa brigada el mismo día) y también en la hoja de ruta del informe. Se puede editar mientras la hoja esté abierta.
+
 ## Claves de las órdenes de servicio
 Las órdenes de servicio tienen su **propio catálogo de claves** (1, 2, 3, 4, 5, 6, 7, 9, 13, 14, 18 y 19), independiente del de las claves de reparación:
 en `/admin` hay una sección aparte, **«Claves de orden de servicio»**, y al insertar una orden de servicio la pantalla **solo ofrece esas claves** (un correctivo o

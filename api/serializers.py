@@ -228,6 +228,7 @@ class DarOkSerializer(serializers.Serializer):
 
 class HojaSerializer(serializers.ModelSerializer):
     brigada_nombre = serializers.CharField(source="brigada.nombre", read_only=True)
+    informa_con_texto = serializers.BooleanField(source="brigada.informa_con_texto", read_only=True)
     centros_codigos = serializers.SerializerMethodField()
     centros_etiqueta = serializers.CharField(source="etiqueta_centros", read_only=True)
     vehiculo_chapa = serializers.CharField(source="vehiculo.chapa", read_only=True, default=None)
@@ -240,8 +241,8 @@ class HojaSerializer(serializers.ModelSerializer):
     class Meta:
         model = HojaDeRuta
         fields = ["id", "fecha", "brigada", "brigada_nombre", "centros", "centros_codigos", "centros_etiqueta", "vehiculo",
-                  "vehiculo_chapa", "operarios", "operarios_nombres", "hora_inicio", "observaciones", "cerrada",
-                  "cerrada_en", "reabierta_en", "generada", "generada_en", "cantidad_acciones", "resultados", "incidencia_activa"]
+                  "vehiculo_chapa", "operarios", "operarios_nombres", "hora_inicio", "observaciones", "trabajos_realizados",
+                  "informa_con_texto", "cerrada", "cerrada_en", "reabierta_en", "generada", "generada_en", "cantidad_acciones", "resultados", "incidencia_activa"]
         read_only_fields = ["fecha", "hora_inicio", "cerrada", "cerrada_en", "reabierta_en", "generada_en"]  # fecha y hora de inicio las pone el servidor al crear
         extra_kwargs = {
             "centros": {"error_messages": {"empty": "Indique al menos un centro."}},

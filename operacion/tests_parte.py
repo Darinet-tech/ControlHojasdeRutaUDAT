@@ -1,5 +1,5 @@
 import io
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -155,6 +155,32 @@ class AcumuladosYColumnasTests(ParteBase):
         texto = parte_diario(DIA)["notas"][0]["texto"]
         for esperado in ("Cambiando goma", "OT 7201", "Sustitución de poste(s)", "2 postes cambiados", "46-7202: Cita para 15/11"):
             self.assertIn(esperado, texto)
+
+    def test_la_brigada_de_linea_informa_con_texto_bajo_la_tabla(self):
+        from catalogos.models import Brigada, Operario
+        linea, _ = Brigada.objects.update_or_create(nombre="Línea", defaults={"informa_con_texto": True})
+        h1 = crear_hoja(fecha=DIA, brigada=linea, centro=self.centro, hora_inicio=time(8, 0))
+        h1.operarios.set([self.op3])
+        h1.trabajos_realizados = "Se sustituyó el cable de 50 pares por avería urgente"
+        h1.save()
+        h2 = crear_hoja(fecha=DIA, brigada=linea, centro=self.centro, hora_inicio=time(8, 0))
+        h2.operarios.set([Operario.objects.create(clave="A4", nombre="Operario Cuatro", brigada=linea)])
+        h2.trabajos_realizados = "Poda en la calle 5ta"
+        h2.save()
+        self.hoja_x.trabajos_realizados = "no debe salir: su brigada no informa con texto"
+        self.hoja_x.save()
+        notas = {n["columna"]: n["texto"] for n in parte_diario(DIA)["notas"]}
+        self.assertEqual(notas["Brigada de Línea 1 (A3)"], "Se sustituyó el cable de 50 pares por avería urgente")
+        self.assertEqual(notas["Brigada de Línea 2 (A4)"], "Poda en la calle 5ta")
+        self.assertEqual(len(notas), 2)
+
+    def test_la_api_expone_y_guarda_los_trabajos_de_la_hoja(self):
+        from django.contrib.auth import get_user_model
+        from rest_framework.test import APIClient
+        api = APIClient()
+        api.force_authenticate(get_user_model().objects.create_superuser("adm9", "a@a.cu", "x"))
+        r = api.patch(f"/api/hojas/{self.hoja_x.pk}/", {"trabajos_realizados": "Texto"}, format="json")
+        self.assertEqual((r.status_code, r.data["trabajos_realizados"], r.data["informa_con_texto"]), (200, "Texto", False))
 
 
 class VariantesYNulaTests(ParteBase):

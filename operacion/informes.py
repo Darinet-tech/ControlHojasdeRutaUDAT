@@ -132,7 +132,7 @@ def reunir_datos(fecha, brigada=None, centro=None, solo_hoja=None, usuario=None,
             "id": h.pk, "fecha": h.fecha, "brigada": h.brigada.nombre, "centros": h.etiqueta_centros,
             "centros_claves": "-".join(sorted(c.codigo for c in h.centros.all())), "operarios_claves": "-".join(c for c, _ in operarios),
             "pareja": " ".join(c for c, _ in operarios), "operarios": operarios, "vehiculo": h.vehiculo.chapa if h.vehiculo else "",
-            "hora_inicio": h.hora_inicio, "observaciones": h.observaciones, "cerrada": h.cerrada,
+            "hora_inicio": h.hora_inicio, "observaciones": h.observaciones, "trabajos_realizados": h.trabajos_realizados, "cerrada": h.cerrada,
             "cerrada_en": h.cerrada_en, "cerrada_por": nombre_de(h.cerrada_por), "creada_por": nombre_de(h.creado_por),
             "acciones": por_hoja[h.pk], "indicadores": indicadores.get(h.pk, {}),
             "incidencias": [{"causa": str(i.causa), "inicio": hora_corta(i.inicio), "fin": hora_corta(i.fin) if i.fin else "en curso",
@@ -350,6 +350,9 @@ def _pdf(datos):
                 story.append(Paragraph("Incidencias", h2))
                 story.append(tabla([["Causa", "Desde", "Hasta", "Tiempo"]] + [[P(i["causa"]), i["inicio"], i["fin"], minutos_a_texto(i["minutos"])] for i in h["incidencias"]],
                                    [90 * mm, 28 * mm, 28 * mm, 34 * mm]))
+            if h["trabajos_realizados"]:
+                story.append(Paragraph("Trabajos realizados", h2))
+                story.append(Paragraph(esc(h["trabajos_realizados"]).replace("\n", "<br/>"), base))
             if h["observaciones"]:
                 story.append(Paragraph("Observaciones", h2))
                 story.append(Paragraph(esc(h["observaciones"]), base))

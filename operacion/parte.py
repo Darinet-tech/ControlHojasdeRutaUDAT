@@ -86,6 +86,8 @@ def _notas(hojas, etiquetas):
     ids = [h.pk for h in hojas]
     lineas = defaultdict(list)
     for h in hojas:
+        if h.brigada.informa_con_texto and h.trabajos_realizados.strip():
+            lineas[h.pk].append(h.trabajos_realizados.strip())
         if h.observaciones.strip():
             lineas[h.pk].append(h.observaciones.strip())
     acciones = (Accion.objects.filter(hoja_id__in=ids).select_related("orden").prefetch_related("trabajos").order_by("hoja_id", "numero"))
@@ -95,7 +97,16 @@ def _notas(hojas, etiquetas):
             lineas[a.hoja_id].append(f"OT {a.orden.numero_orden}: " + " · ".join(p for p in partes if p))
         elif a.observaciones.strip() and a.estado in ("SIN_OK", "PASADA_A_BRIGADA"):
             lineas[a.hoja_id].append(f"{a.orden.etiqueta}: {a.observaciones.strip()}")
-    return [{"columna": etiquetas[pk], "texto": " | ".join(textos)} for pk, textos in lineas.items()]
+    por_brigada = defaultdict(list)
+    for h in hojas:
+        por_brigada[h.brigada_id].append(h.pk)
+    rotulo = {}
+    for h in hojas:
+        if h.brigada.informa_con_texto:
+            varias = len(por_brigada[h.brigada_id]) > 1
+            numero = f" {por_brigada[h.brigada_id].index(h.pk) + 1}" if varias else ""
+            rotulo[h.pk] = f"Brigada de {h.brigada.nombre}{numero} ({etiquetas[h.pk]})"
+    return [{"columna": rotulo.get(pk, etiquetas[pk]), "texto": " | ".join(textos)} for pk, textos in lineas.items()]
 
 
 def parte_diario(fecha, brigada=None, centro=None):

@@ -108,7 +108,7 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **opts):
         for nombre in BRIGADAS:
-            Brigada.objects.get_or_create(nombre=nombre)
+            Brigada.objects.get_or_create(nombre=nombre, defaults={"informa_con_texto": nombre == "Línea"})
         for codigo, nombre in CAUSAS:
             CausaIncidencia.objects.get_or_create(codigo=codigo, defaults={"nombre": nombre})
         for codigo, nombre in CENTROS:

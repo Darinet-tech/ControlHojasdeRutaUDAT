@@ -620,6 +620,25 @@ function ImportarAcciones({ hoja, alCerrar, alImportar }) {
   );
 }
 
+// ---------------------------------------------------------------- trabajos realizados (brigadas que informan con texto, ej. Línea)
+
+function TrabajosRealizados({ hoja, editable, ejecutar }) {
+  const [texto, setTexto] = useState(hoja.trabajos_realizados || '');
+  useEffect(() => { setTexto(hoja.trabajos_realizados || ''); }, [hoja.trabajos_realizados]);
+  const guardar = () => {
+    if (texto.trim() !== (hoja.trabajos_realizados || '').trim()) ejecutar(() => api.patch(`/hojas/${hoja.id}/`, { trabajos_realizados: texto.trim() }));
+  };
+  return (
+    <section className="tarjeta">
+      <label className="observaciones"><strong>Trabajos realizados por la brigada</strong>
+        <textarea rows={4} value={texto} onChange={(e) => setTexto(e.target.value)} onBlur={guardar} disabled={!editable} maxLength={3000}
+          placeholder="Ej.: Brigada de Línea 1 (integrantes). Se sustituyó el cable de 50 pares en la calle 5ta por avería urgente, sin orden de trabajo…" />
+      </label>
+      <p className="suave">Este texto sale bajo la tabla del parte diario, para que quien lo reciba sepa lo que realizó la brigada. Se guarda al salir del cuadro.</p>
+    </section>
+  );
+}
+
 // ---------------------------------------------------------------- editar la hoja (centros, vehículo, operarios, observaciones)
 
 function EditarHoja({ hoja, catalogos, ejecutar, alCerrar }) {
@@ -788,6 +807,7 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
       <Aviso tipo="aviso" alCerrar={() => setAviso('')}>{aviso}</Aviso>
       {hoja.cerrada && <Aviso tipo="info">Esta hoja está cerrada: solo consulta.</Aviso>}
       {!hoja.cerrada && hoja.reabierta_en && <Aviso tipo="aviso">Esta hoja se reabrió el {new Date(hoja.reabierta_en).toLocaleString('es')}. Recuerde cerrarla al terminar.</Aviso>}
+      {hoja.informa_con_texto && <TrabajosRealizados hoja={hoja} editable={editable} ejecutar={ejecutar} />}
       {editando && <EditarHoja hoja={hoja} catalogos={catalogos} ejecutar={ejecutar} alCerrar={() => setEditando(false)} />}
       {!hoja.cerrada && !hoja.generada && hoja.acciones.length === 0 && editable && (
         <Aviso tipo="info">Inserte los servicios del día. Cuando termine, aparecerá el botón «Generar hoja de ruta».</Aviso>

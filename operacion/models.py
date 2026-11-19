@@ -68,6 +68,9 @@ class HojaDeRuta(Auditable):
         help_text="Inicio de la jornada (08:00 por defecto): base del tiempo real de la primera acción.",
     )
     observaciones = models.TextField(blank=True)
+    trabajos_realizados = models.TextField(
+        blank=True, help_text="Solo brigadas que informan con texto (Línea): lo que hizo la brigada, sale bajo la tabla del parte diario."
+    )
     cerrada = models.BooleanField(default=False, editable=False, help_text="Se cierra al finalizar el día.")
     cerrada_en = models.DateTimeField(null=True, blank=True, editable=False)
     cerrada_por = models.ForeignKey(
