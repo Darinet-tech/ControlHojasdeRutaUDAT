@@ -43,9 +43,27 @@ class LecturaDelArchivoTests(BaseOperacion):
         libro.save(memoria)
         self.assertEqual(leer_filas("a.xlsx", memoria.getvalue()), [(2, {"tipo": "Correctivo", "servicio": "46326407"})])
 
+    def test_planificacion_diaria_solo_usa_la_columna_servicio(self):
+        libro = Workbook()
+        hoja = libro.active
+        hoja.append([None, "RED PRIMARIA", None, None, "NE"])  # títulos de grupo encima del encabezado
+        hoja.append(["SERVICIO", "CABLE", "PAR", "TERM", "NE", "NOMBRE"])
+        hoja.append(["46 328758", "24", 140, "NG ED448802", "003-06-187", "CARIDAD"])
+        hoja.append(["NG\nED190820", "Ger2A", 64, None, "002-10-232", "EMPRESA"])
+        hoja.append(["NGED190856", "Ger4E1", 94, "B5", "002-06-082", "EMPRESA"])
+        hoja.append(["11:00 – 02:00 PM"])
+        hoja.append([None, None])
+        hoja.append([46325311, 2, 46])
+        hoja.append(["05:00 – 08:00 PM"])
+        memoria = io.BytesIO()
+        libro.save(memoria)
+        self.assertEqual(leer_filas("plan.xlsx", memoria.getvalue()), [
+            (3, {"tipo": "Correctivo", "servicio": "46 328758"}), (4, {"tipo": "Correctivo", "servicio": "NG ED190820"}),
+            (5, {"tipo": "Correctivo", "servicio": "NGED190856"}), (8, {"tipo": "Correctivo", "servicio": "46325311"})])
+
     def test_archivos_que_no_sirven(self):
         for nombre, contenido, mensaje in [("a.txt", b"x", "Excel (.xlsx) o CSV"), ("a.csv", b"", "vacío"),
-                                           ("a.csv", b"servicio\n46-1\n", "Falta la columna"), ("a.csv", b"tipo\n", "no tiene filas"),
+                                           ("a.csv", b"orden\n46-1\n", "Falta la columna"), ("a.csv", b"tipo\n", "no tiene filas"),
                                            ("a.xlsx", b"no es un excel", "No se pudo leer")]:
             with self.assertRaisesMessage(ValidationError, mensaje):
                 leer_filas(nombre, contenido)

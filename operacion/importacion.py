@@ -11,11 +11,16 @@ El archivo tiene una fila por servicio y estas columnas (los nombres admiten may
 - centro (opcional): código del centro, si la hoja trabaja en varios.
 - trabajos (órdenes de trabajo): nombres de los trabajos separados por «;».
 
+**Planificación diaria**: si el archivo no tiene columna «tipo» pero sí «servicio» (como el Excel de planificación diaria, cuyo encabezado puede
+estar en la segunda fila), solo se usa la columna SERVICIO y todo se importa como correctivo. Las filas de horario («11:00 – 02:00 PM») y las vacías se saltan;
+el resto de columnas (cable, par, nombre, dirección...) se ignora.
+
 Todo o nada: si alguna fila tiene un error no se importa ninguna, y se informa de cada error con su número de fila. Cada fila pasa por las mismas
 reglas que la inserción a mano (`obtener_orden` y `asignar_orden`).
 """
 import csv
 import io
+import re
 import unicodedata
 
 from django.core.exceptions import ValidationError
@@ -27,6 +32,7 @@ from .models import OrdenServicio
 from .services import asignar_orden, obtener_orden
 
 MAXIMO_FILAS = 500
+HORARIO = re.compile(r"\d\s*:\s*\d|\b[ap]\.?m\b", re.IGNORECASE)  # «11:00 – 02:00 PM»: separador de turno en la planificación
 COLUMNAS = {  # nombre canónico: alias (ya normalizados)
     "tipo": {"tipo", "tipo de accion", "accion", "categoria"},
     "servicio": {"servicio", "numero de servicio", "numero servicio", "no servicio", "telefono", "servicio telefonico"},
@@ -89,16 +95,28 @@ def leer_filas(nombre, contenido):
         raise ValidationError("El archivo debe ser Excel (.xlsx) o CSV (.csv).")
     if not filas:
         raise ValidationError("El archivo está vacío.")
-    columnas = {}
-    for indice, titulo in enumerate(filas[0]):
-        for canonico, alias in COLUMNAS.items():
-            if normalizar(titulo) in alias:
-                columnas.setdefault(canonico, indice)
-    if "tipo" not in columnas:
-        raise ValidationError("Falta la columna «tipo» (Correctivo, Preventivo, Orden de servicio u Orden de trabajo).")
+    columnas, encabezado = {}, 0
+    for posicion, candidata in enumerate(filas[:15]):  # el encabezado puede no ser la primera fila (títulos de grupo encima)
+        encontradas = {}
+        for indice, titulo in enumerate(candidata):
+            for canonico, alias in COLUMNAS.items():
+                if normalizar(titulo) in alias:
+                    encontradas.setdefault(canonico, indice)
+        if "tipo" in encontradas or ("servicio" in encontradas and not columnas):
+            columnas, encabezado = encontradas, posicion
+            if "tipo" in encontradas:
+                break
+    planificacion = "tipo" not in columnas and "servicio" in columnas
+    if "tipo" not in columnas and not planificacion:
+        raise ValidationError("Falta la columna «tipo» (Correctivo, Preventivo, Orden de servicio u Orden de trabajo) o, al menos, «servicio».")
     resultado = []
-    for numero, fila in enumerate(filas[1:], start=2):
+    for numero, fila in enumerate(filas[encabezado + 1:], start=encabezado + 2):
         datos = {c: _texto(fila[i]) if i < len(fila) else "" for c, i in columnas.items()}
+        if planificacion:
+            servicio = " ".join(datos["servicio"].split())  # una celda «NG» y «ED190820» en dos líneas queda «NG ED190820»
+            if not servicio or HORARIO.search(servicio):
+                continue
+            datos = {"tipo": "Correctivo", "servicio": servicio}
         if any(datos.values()):
             resultado.append((numero, datos))
     if len(resultado) > MAXIMO_FILAS:

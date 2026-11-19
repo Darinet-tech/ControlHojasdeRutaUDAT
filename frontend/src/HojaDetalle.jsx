@@ -589,10 +589,10 @@ function ImportarAcciones({ hoja, alCerrar, alImportar }) {
 
   return (
     <Modal titulo="Importar acciones desde un archivo" alCerrar={alCerrar}>
-      <p className="suave">Archivo Excel (.xlsx) o CSV con una fila por servicio. Se comprueba antes de guardar: si alguna fila tiene un error no se importa ninguna.</p>
+      <p className="suave">Archivo Excel (.xlsx) o CSV con una fila por servicio. Se comprueba antes de guardar: si alguna fila tiene un error no se importa ninguna. También sirve el Excel de la planificación diaria: solo se usa la columna SERVICIO (todo como correctivo).</p>
       <div className="fila">
         <input type="file" accept=".xlsx,.csv" onChange={elegir} aria-label="Archivo de acciones" />
-        <a className="boton" href="/api/hojas/plantilla-importacion/" title="Excel de ejemplo con las columnas y los códigos válidos">Descargar plantilla</a>
+        <a className="boton" href="/api/hojas/plantilla-importacion/" download="UDAT_plantilla_acciones.xlsx" title="Excel de ejemplo con las columnas y los códigos válidos">Descargar plantilla</a>
       </div>
       <Aviso>{error}</Aviso>
       {trabajando && <p className="cargando">Comprobando el archivo…</p>}
