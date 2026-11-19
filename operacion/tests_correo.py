@@ -35,7 +35,10 @@ class EnvioDelInformeTests(EscenarioDosDias, BaseOperacion):
         self.assertEqual(sorted(m.to), ["especialista@etecsa.cu", "jefe.dpto@etecsa.cu"])  # solo los activos
         self.assertEqual(m.subject, "UDAT · Informe diario 05/10/2026 (corte 16:00)")
         nombres = {a[0]: a for a in m.attachments}
-        self.assertEqual(set(nombres), {"UDAT_informe_diario_2026-10-05.pdf", "UDAT_informe_diario_2026-10-05.xlsx"})
+        self.assertEqual(set(nombres), {"UDAT_informe_diario_2026-10-05.pdf", "UDAT_informe_diario_2026-10-05.xlsx",
+                                        "UDAT_parte_diario_2026-10-05.pdf", "UDAT_parte_diario_2026-10-05.xlsx"})  # el parte va aparte del informe
+        self.assertTrue(nombres["UDAT_parte_diario_2026-10-05.pdf"][1].startswith(b"%PDF"))
+        self.assertTrue(nombres["UDAT_parte_diario_2026-10-05.xlsx"][1].startswith(b"PK"))
         self.assertTrue(nombres["UDAT_informe_diario_2026-10-05.pdf"][1].startswith(b"%PDF"))
         self.assertTrue(nombres["UDAT_informe_diario_2026-10-05.xlsx"][1].startswith(b"PK"))
         for esperado in ("Informe diario — lunes, 5 de octubre de 2026", "Corte a las 16:00", "Hojas de ruta: 1 (1 cerradas y 0 abiertas al corte)",
@@ -49,6 +52,9 @@ class EnvioDelInformeTests(EscenarioDosDias, BaseOperacion):
         self.assertEqual(registro.destinatarios, "especialista@etecsa.cu, jefe.dpto@etecsa.cu")
         self.assertTrue(bytes(registro.pdf).startswith(b"%PDF") and bytes(registro.excel).startswith(b"PK"))
         self.assertEqual(bytes(registro.pdf), mail.outbox[0].attachments[0][1])  # la copia es exactamente lo que se envió
+        adjuntos = {a[0]: a[1] for a in mail.outbox[0].attachments}
+        self.assertEqual(bytes(registro.parte_pdf), adjuntos["UDAT_parte_diario_2026-10-05.pdf"])  # también la del parte diario
+        self.assertEqual(bytes(registro.parte_excel), adjuntos["UDAT_parte_diario_2026-10-05.xlsx"])
 
     def test_el_corte_se_hace_aunque_haya_hojas_abiertas(self):
         import openpyxl

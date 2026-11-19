@@ -42,7 +42,7 @@ class InformeExcelTests(EscenarioDosDias, BaseOperacion):
 
     def test_tiene_las_tres_hojas_y_el_nombre_del_archivo(self):
         wb, tipo, nombre = self.libro()
-        self.assertEqual(wb.sheetnames, ["Resumen", "Parte diario", "Hojas de ruta", "Auditoría"])
+        self.assertEqual(wb.sheetnames, ["Resumen", "Hojas de ruta", "Auditoría"])  # el parte diario es un documento aparte
         self.assertEqual((tipo, nombre), ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "UDAT_informe_diario_2026-10-05.xlsx"))
 
     def test_las_hojas_de_ruta_siguen_la_disposicion_del_original(self):
@@ -131,10 +131,10 @@ class InformePdfTests(EscenarioDosDias, BaseOperacion):
         self.assertTrue(contenido.startswith(b"%PDF"))
         self.assertEqual((tipo, nombre), ("application/pdf", "UDAT_informe_diario_2026-10-05.pdf"))
         paginas = paginas_del_pdf(contenido)
-        self.assertEqual(len(paginas), 4)  # resumen + parte diario (apaisada) + 2 hojas
+        self.assertEqual(len(paginas), 3)  # resumen + 2 hojas (el parte diario es un documento aparte)
         for n, texto in enumerate(paginas, start=1):
             self.assertIn("Unidad de Asistencia Técnica", texto)
-            self.assertIn(f"Página {n} de 4", texto)
+            self.assertIn(f"Página {n} de 3", texto)
 
     def test_la_primera_pagina_es_el_resumen_del_dia(self):
         if pdfplumber is None:

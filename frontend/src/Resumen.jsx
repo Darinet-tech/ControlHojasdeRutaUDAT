@@ -170,6 +170,8 @@ export default function Resumen({ catalogos, abrirHoja }) {
         </select>
         {periodo === 'dia' && (
           <span className="fila empujar descargas" aria-label="Informe del día">
+            <a className="boton boton-principal" href={`/api/parte-diario/?${new URLSearchParams({ fecha, ...(brigada && { brigada }), ...(centro && { centro }), formato: 'pdf' })}`} target="_blank" rel="noreferrer" title="Parte diario de la Mesa de Prueba, en hoja apaisada">Parte PDF</a>
+            <a className="boton" href={`/api/parte-diario/?${new URLSearchParams({ fecha, ...(brigada && { brigada }), ...(centro && { centro }), formato: 'xlsx' })}`} title="Parte diario de la Mesa de Prueba en Excel">Parte Excel</a>
             <a className="boton" href={`/api/informe-diario/?${new URLSearchParams({ fecha, ...(brigada && { brigada }), ...(centro && { centro }), formato: 'pdf' })}`} target="_blank" rel="noreferrer" title="Resumen del día y cada hoja de ruta con el formato original">Informe PDF</a>
             <a className="boton" href={`/api/informe-diario/?${new URLSearchParams({ fecha, ...(brigada && { brigada }), ...(centro && { centro }), formato: 'xlsx' })}`} title="Resumen, hojas de ruta con el formato original y hoja de auditoría">Informe Excel</a>
           </span>

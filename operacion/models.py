@@ -279,6 +279,8 @@ class InformeEnviado(models.Model):
     detalle = models.TextField(blank=True, help_text="Motivo del error o de que se omitiera el envío.")
     pdf = models.BinaryField(null=True, blank=True, editable=False)
     excel = models.BinaryField(null=True, blank=True, editable=False)
+    parte_pdf = models.BinaryField(null=True, blank=True, editable=False)  # el parte diario va como documento aparte
+    parte_excel = models.BinaryField(null=True, blank=True, editable=False)
     creado_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:

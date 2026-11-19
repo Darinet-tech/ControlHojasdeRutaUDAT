@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from catalogos.models import Clave, TipoMantenimiento, TipoOrden, TipoTrabajo
 
-from .informes import generar_informe
+from .informes import generar_informe, generar_parte
 from .models import Accion, HojaDeRuta, OrdenServicio
 from .parte import CLAVES_DE_FILAS, parte_diario
 from .services import (anular_orden, asignar_orden, cerrar_hoja, cerrar_sin_ok, certificar_ok, obtener_orden, pasar_a_brigada,
@@ -190,32 +190,48 @@ class ParteEnInformesYApiTests(ParteBase):
         cerrar_sin_ok(self.nuevo("CORRECTIVO", 9002, claves=("23",)), self.user, ahora=self.ahora())
         self.ok(self.nuevo("ORDEN_SERVICIO", 9003, tipo_orden="A", variante="NH"))
 
-    def test_el_pdf_trae_el_parte_en_una_pagina_apaisada(self):
+    def test_el_parte_es_un_pdf_propio_y_apaisado(self):
+        if pdfplumber is None:
+            self.skipTest("pdfplumber no está instalado")
+        contenido, tipo, nombre = generar_parte(DIA, "pdf")
+        self.assertEqual((tipo, nombre), ("application/pdf", "UDAT_parte_diario_2026-10-05.pdf"))
+        with pdfplumber.open(io.BytesIO(contenido)) as pdf:
+            self.assertTrue(all(p.width > p.height for p in pdf.pages))  # todas las hojas del documento son apaisadas
+            texto = "\n".join(p.extract_text() or "" for p in pdf.pages)
+        for esperado in ("Parte diario", "A1-A2", "Correctivo", "Reparadas Red de Abonados", "Pendiente de Par", "Nauta Hogar (NH)",
+                         "Visitadas en el día", "Total", "Acum.", "mes", "año"):
+            self.assertIn(esperado, texto)
+        self.assertIn("Visitadas en el día 3 3 3 3", texto)
+        self.assertNotIn("Efectividad", texto)  # el resumen del día es del informe, no del parte
+
+    def test_el_informe_ya_no_trae_el_parte(self):
         if pdfplumber is None:
             self.skipTest("pdfplumber no está instalado")
         with pdfplumber.open(io.BytesIO(generar_informe(DIA, "pdf")[0])) as pdf:
-            pagina = next(p for p in pdf.pages if "Parte diario de Mesa de Prueba" in (p.extract_text() or ""))
-            texto = pagina.extract_text()
-            self.assertGreater(pagina.width, pagina.height)  # apaisada
-        for esperado in ("A1-A2", "Correctivo", "Reparadas Red de Abonados", "Pendiente de Par", "Nauta Hogar (NH)", "Visitadas en el día",
-                         "Total", "Acum.", "mes", "año"):
-            self.assertIn(esperado, texto)
-        self.assertIn("Visitadas en el día 3 3 3 3", texto)
-
-    def test_el_excel_trae_la_hoja_del_parte(self):
+            self.assertTrue(all(p.width < p.height for p in pdf.pages))  # el informe sigue siendo vertical
+            self.assertNotIn("Parte diario de Mesa de Prueba", " ".join(p.extract_text() or "" for p in pdf.pages))
         from openpyxl import load_workbook
-        ws = load_workbook(io.BytesIO(generar_informe(DIA, "xlsx")[0]))["Parte diario"]
+        self.assertNotIn("Parte diario", load_workbook(io.BytesIO(generar_informe(DIA, "xlsx")[0])).sheetnames)
+
+    def test_el_parte_es_un_excel_propio_con_una_sola_hoja(self):
+        from openpyxl import load_workbook
+        contenido, _, nombre = generar_parte(DIA, "xlsx")
+        self.assertEqual(nombre, "UDAT_parte_diario_2026-10-05.xlsx")
+        libro = load_workbook(io.BytesIO(contenido))
+        self.assertEqual(libro.sheetnames, ["Parte diario"])
+        ws = libro["Parte diario"]
         filas = {ws.cell(r, 1).value: [ws.cell(r, c).value for c in range(2, 6)] for r in range(1, ws.max_row + 1) if ws.cell(r, 1).value}
         self.assertEqual(filas["Reparadas Red de Abonados"], [1, 1, 1, 1])  # A1-A2, total, mes, año
         self.assertEqual(filas["Visitadas en el día"], [3, 3, 3, 3])
         self.assertEqual([ws.cell(3, c).value for c in range(2, 6)], ["A1-A2", "Total", "Acumulado mes", "Acumulado año"])
+        self.assertEqual(ws.page_setup.orientation, "landscape")
 
-    def test_la_hoja_suelta_no_lleva_el_parte(self):
+    def test_un_dia_sin_hojas_da_un_parte_con_el_aviso(self):
         if pdfplumber is None:
             self.skipTest("pdfplumber no está instalado")
-        pdf = generar_informe(DIA, "pdf", solo_hoja=self.hoja_x.pk)[0]
-        with pdfplumber.open(io.BytesIO(pdf)) as doc:
-            self.assertNotIn("Parte diario de Mesa de Prueba", " ".join(p.extract_text() or "" for p in doc.pages))
+        with pdfplumber.open(io.BytesIO(generar_parte(date(2026, 1, 2), "pdf")[0])) as pdf:
+            self.assertIn("No hay hojas de ruta para este día", pdf.pages[0].extract_text())
+        self.assertEqual(generar_parte(date(2026, 1, 2), "xlsx")[2], "UDAT_parte_diario_2026-01-02.xlsx")
 
     def test_endpoint_del_parte(self):
         from django.contrib.auth import get_user_model
@@ -228,6 +244,20 @@ class ParteEnInformesYApiTests(ParteBase):
         self.assertEqual([c["etiqueta"] for c in r.data["columnas"]], ["A1-A2"])
         self.assertEqual(r.data["visitadas"]["total"], 3)
         self.assertEqual(api.get("/api/parte-diario/?fecha=2026-13-45").status_code, 400)
+
+    def test_descarga_del_parte_por_la_api(self):
+        from django.contrib.auth import get_user_model
+        from rest_framework.test import APIClient
+        api = APIClient()
+        api.force_authenticate(get_user_model().objects.create_superuser("admin3", "a@a.cu", "x"))
+        r = api.get(f"/api/parte-diario/?fecha={DIA}&formato=pdf")
+        self.assertEqual((r.status_code, r["Content-Type"]), (200, "application/pdf"))
+        self.assertEqual(r["Content-Disposition"], 'inline; filename="UDAT_parte_diario_2026-10-05.pdf"')
+        self.assertTrue(r.content.startswith(b"%PDF"))
+        r = api.get(f"/api/parte-diario/?fecha={DIA}&formato=xlsx")
+        self.assertEqual(r["Content-Disposition"], 'attachment; filename="UDAT_parte_diario_2026-10-05.xlsx"')
+        self.assertTrue(r.content.startswith(b"PK"))
+        self.assertEqual(api.get(f"/api/parte-diario/?fecha={DIA}&formato=doc").status_code, 400)
 
 
 class NormasPorTipoTests(ParteBase):

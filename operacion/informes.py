@@ -140,9 +140,14 @@ def reunir_datos(fecha, brigada=None, centro=None, solo_hoja=None, usuario=None,
         })
     # el parte de un día completo (sin filtros) recoge lo que quedó fuera del corte del día anterior
     complemento = None if (solo_hoja or brigada or centro) else complemento_del_dia_anterior(fecha)
-    parte = None if solo_hoja else parte_diario(fecha, brigada, centro)  # el parte de la Mesa de Prueba (no va en la hoja suelta)
     return {"fecha": fecha, "resumen": resumen, "hojas": detalle, "generado_en": ahora, "generado_por": nombre_de(usuario),
-            "una_hoja": bool(solo_hoja), "corte": corte, "complemento": complemento, "parte": parte}
+            "una_hoja": bool(solo_hoja), "corte": corte, "complemento": complemento}
+
+
+def reunir_datos_parte(fecha, brigada=None, centro=None, usuario=None, ahora=None, corte=None):
+    """Datos del parte diario de la Mesa de Prueba: es un documento propio, aparte del informe (que es más extenso)."""
+    return {"modo": "parte", "fecha": fecha, "parte": parte_diario(fecha, brigada, centro), "generado_en": ahora or timezone.now(),
+            "generado_por": nombre_de(usuario), "una_hoja": False, "corte": corte}
 
 
 def _filas(hoja):
@@ -159,8 +164,7 @@ def _pdf(datos):
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.lib.units import mm
     from reportlab.pdfgen import canvas
-    from reportlab.platypus import (BaseDocTemplate, Frame, NextPageTemplate, PageBreak, PageTemplate, Paragraph, Spacer, Table,
-                                    TableStyle)
+    from reportlab.platypus import BaseDocTemplate, Frame, PageBreak, PageTemplate, Paragraph, Spacer, Table, TableStyle
 
     azul, verde = colors.HexColor(AZUL), colors.HexColor(VERDE)
     gris, gris_claro = colors.HexColor("#c3cad5"), colors.HexColor("#eff1f5")
@@ -188,82 +192,85 @@ def _pdf(datos):
         t.setStyle(TableStyle(estilo + list(extra)))
         return t
 
-    # ---------- primera página: resumen del día
-    r, t = datos["resumen"], datos["resumen"]["totales"]
-    story = [Paragraph(esc("Informe diario" if not datos["una_hoja"] else "Hoja de ruta"), titulo),
-             Paragraph(esc(fecha_larga(datos["fecha"]).capitalize()), base), Spacer(1, 5)]
-    kpi = [[P("Hojas de ruta"), P("Servicios"), P("Efectividad"), P("Productividad")],
-           [Paragraph(f"<b>{t['hojas']}</b>", titulo), Paragraph(f"<b>{t['acciones']}</b>", titulo),
-            Paragraph(f"<b>{esc(pct(t['efectividad_pct']))}</b>", titulo), Paragraph(f"<b>{esc(pct(t['productividad_pct']))}</b>", titulo)],
-           [P("Tiempo real"), P("Incidencias"), P("Tiempo disponible"), P("Ocupación")],
-           [Paragraph(f"<b>{esc(minutos_a_texto(t['tiempo_real_min']))}</b>", titulo), Paragraph(f"<b>{esc(minutos_a_texto(t['incidencias_min']))}</b>", titulo),
-            Paragraph(f"<b>{esc(minutos_a_texto(t['tiempo_disponible_min']))}</b>", titulo), Paragraph(f"<b>{esc(pct(t['ocupacion_pct']))}</b>", titulo)]]
-    story.append(tabla(kpi, [ancho / 4] * 4, encabezado=False, extra=[("BACKGROUND", (0, 0), (-1, 0), gris_claro), ("BACKGROUND", (0, 2), (-1, 2), gris_claro),
-                                                                       ("TEXTCOLOR", (0, 0), (-1, -1), azul)]))
-    story.append(Spacer(1, 4))
-    story.append(Paragraph(esc(f"Con OK: {t['ok']}  ·  Sin OK: {t['sin_ok']}  ·  Pasadas a otra brigada: {t['pasadas']}  ·  "
-                               f"No visitadas: {t['no_visitadas']}  ·  En curso: {t['en_curso']}"), base))
-    story.append(Paragraph(esc("Efectividad = con OK entre atendidas (las no visitadas no cuentan). Productividad = tiempo normado de lo efectivo entre tiempo real."), chico))
-
-    if r["hojas"]:
-        story.append(Paragraph("Hojas de ruta del día", h2))
-        filas = [["Hoja", "Operarios", "Serv.", "OK / sin OK / pasadas / no visitadas", "Efect.", "Prod."]]
-        for h in r["hojas"]:
-            filas.append([P(f"{h['centro']} · {h['brigada']}"), P(", ".join(h["operarios"])), h["acciones"],
-                          f"{h['ok']} / {h['sin_ok']} / {h['pasadas']} / {h['no_visitadas']}", pct(h["efectividad_pct"]), pct(h["productividad_pct"])])
-        story.append(tabla(filas, [44 * mm, 52 * mm, 12 * mm, 40 * mm, 16 * mm, 16 * mm]))
-
-        story.append(Paragraph("Productividad individual", h2))
-        story.append(Paragraph(esc("La productividad es de la hoja completa: cada operario recibe la de las hojas en que participó."), chico))
-        filas = [["Operario", "Hojas", "Servicios", "Con OK", "Efectividad", "Productividad"]]
-        filas += [[P(o["nombre"]), o["hojas"], o["acciones"], o["ok"], pct(o["efectividad_pct"]), pct(o["productividad_pct"])] for o in r["por_operario"]]
-        story.append(tabla(filas, [60 * mm, 16 * mm, 20 * mm, 20 * mm, 30 * mm, 34 * mm]))
-
-        if r["por_centro"]:
-            story.append(Paragraph("Por centro (según el centro de cada servicio)", h2))
-            filas = [["Centro", "Servicios", "Con OK", "Efectividad", "Productividad"]]
-            filas += [[c["nombre"], c["acciones"], c["ok"], pct(c["efectividad_pct"]), pct(c["productividad_pct"])] for c in r["por_centro"]]
-            story.append(tabla(filas, [40 * mm, 30 * mm, 30 * mm, 40 * mm, 40 * mm]))
-
-        def listado(titulo_, filas_, cab, anchos, vacio):
-            story.append(Paragraph(esc(titulo_), h2))
-            story.append(tabla([cab] + filas_, anchos) if filas_ else Paragraph(esc(vacio), chico))
-
-        pa = r["pasadas_a_brigada"]
-        listado(f"Pasaron a otra brigada ({pa['total']})", [[p["servicio"], P(f"{p['centro']} · {p['desde']}"), P(p["hacia"]), P(p["estado_actual"])] for p in pa["lista"]],
-                ["Servicio", "De", "Hacia", "Estado actual"], [34 * mm, 55 * mm, 40 * mm, 51 * mm], "Ningún servicio pasó a otra brigada.")
-        nv = r["no_visitadas"]
-        listado(f"No visitadas ({nv['total']}) — pasan al siguiente día", [[n["servicio"], P(f"{n['centro']} · {n['brigada']}"), "Sigue sin visitar" if n["sigue_sin_visitar"] else "Ya atendida"] for n in nv["lista"]],
-                ["Servicio", "Brigada", "Situación"], [34 * mm, 90 * mm, 56 * mm], "Todos los servicios se visitaron.")
-        rn = r["reincidencias"]
-        if rn["total"]:
-            listado(f"Reincidencias ({rn['total']})", [[x["servicio"], x["ordenes"], P(", ".join(x["operarios"]))] for x in rn["lista"]],
-                    ["Servicio", "Órdenes", "Operarios que lo trabajaron"], [34 * mm, 20 * mm, 126 * mm], "")
-        if r["incidencias"]:
-            listado("Incidencias por causa", [[P(f"{i['codigo']} · {i['nombre']}"), minutos_a_texto(i["minutos"]), i["hojas"]] for i in r["incidencias"]],
-                    ["Causa", "Tiempo", "Hojas"], [100 * mm, 40 * mm, 40 * mm], "")
-    else:
-        story.append(Spacer(1, 12))
-        story.append(Paragraph(esc("No hay hojas de ruta para este día."), base))
-
-    comp = datos.get("complemento")
-    if comp:
-        ct = comp["totales"]
-        story.append(Paragraph(esc(f"Complemento del {comp['fecha']:%d/%m/%Y}: acciones posteriores al corte de las {comp['corte']:%H:%M}"), h2))
-        story.append(Paragraph(esc(f"Estas acciones no estaban en el parte de ese día. Se contabilizan en el {comp['fecha']:%d/%m/%Y}, "
-                                   f"no en el de hoy. Total: {ct['acciones']} · con OK: {ct['ok']} · sin OK: {ct['sin_ok']} · "
-                                   f"pasadas: {ct['pasadas']} · tiempo real: {minutos_a_texto(ct['tiempo_real_min'])}."), chico))
-        story.append(tabla([["Hoja", "Servicio", "Hora", "Cliente", "Resultado", "T. real"]] +
-                           [[P(f["hoja"]), P(f["descripcion"]), f["hora"], P(f["cliente"]), P(f["resultado"]),
-                             "" if f["tiempo_real"] is None else str(f["tiempo_real"])] for f in comp["acciones"]],
-                           [34 * mm, 54 * mm, 14 * mm, 32 * mm, 32 * mm, 14 * mm]))
-
-    # ---------- el parte diario de la Mesa de Prueba, en una página apaisada
-    parte = datos.get("parte")
-    if parte and parte["columnas"]:  # un día sin hojas no tiene parte
-        story += [NextPageTemplate("horizontal"), PageBreak()]
-        story.append(Paragraph(esc(f"Parte diario de Mesa de Prueba — {fecha_larga(datos['fecha'])}"), titulo))
+    modo = datos.get("modo", "informe")  # «parte»: documento propio del parte diario (apaisado)
+    story = []
+    if modo != "parte":
+        # ---------- primera página: resumen del día
+        r, t = datos["resumen"], datos["resumen"]["totales"]
+        story = [Paragraph(esc("Informe diario" if not datos["una_hoja"] else "Hoja de ruta"), titulo),
+                 Paragraph(esc(fecha_larga(datos["fecha"]).capitalize()), base), Spacer(1, 5)]
+        kpi = [[P("Hojas de ruta"), P("Servicios"), P("Efectividad"), P("Productividad")],
+               [Paragraph(f"<b>{t['hojas']}</b>", titulo), Paragraph(f"<b>{t['acciones']}</b>", titulo),
+                Paragraph(f"<b>{esc(pct(t['efectividad_pct']))}</b>", titulo), Paragraph(f"<b>{esc(pct(t['productividad_pct']))}</b>", titulo)],
+               [P("Tiempo real"), P("Incidencias"), P("Tiempo disponible"), P("Ocupación")],
+               [Paragraph(f"<b>{esc(minutos_a_texto(t['tiempo_real_min']))}</b>", titulo), Paragraph(f"<b>{esc(minutos_a_texto(t['incidencias_min']))}</b>", titulo),
+                Paragraph(f"<b>{esc(minutos_a_texto(t['tiempo_disponible_min']))}</b>", titulo), Paragraph(f"<b>{esc(pct(t['ocupacion_pct']))}</b>", titulo)]]
+        story.append(tabla(kpi, [ancho / 4] * 4, encabezado=False, extra=[("BACKGROUND", (0, 0), (-1, 0), gris_claro), ("BACKGROUND", (0, 2), (-1, 2), gris_claro),
+                                                                           ("TEXTCOLOR", (0, 0), (-1, -1), azul)]))
         story.append(Spacer(1, 4))
+        story.append(Paragraph(esc(f"Con OK: {t['ok']}  ·  Sin OK: {t['sin_ok']}  ·  Pasadas a otra brigada: {t['pasadas']}  ·  "
+                                   f"No visitadas: {t['no_visitadas']}  ·  En curso: {t['en_curso']}"), base))
+        story.append(Paragraph(esc("Efectividad = con OK entre atendidas (las no visitadas no cuentan). Productividad = tiempo normado de lo efectivo entre tiempo real."), chico))
+
+        if r["hojas"]:
+            story.append(Paragraph("Hojas de ruta del día", h2))
+            filas = [["Hoja", "Operarios", "Serv.", "OK / sin OK / pasadas / no visitadas", "Efect.", "Prod."]]
+            for h in r["hojas"]:
+                filas.append([P(f"{h['centro']} · {h['brigada']}"), P(", ".join(h["operarios"])), h["acciones"],
+                              f"{h['ok']} / {h['sin_ok']} / {h['pasadas']} / {h['no_visitadas']}", pct(h["efectividad_pct"]), pct(h["productividad_pct"])])
+            story.append(tabla(filas, [44 * mm, 52 * mm, 12 * mm, 40 * mm, 16 * mm, 16 * mm]))
+
+            story.append(Paragraph("Productividad individual", h2))
+            story.append(Paragraph(esc("La productividad es de la hoja completa: cada operario recibe la de las hojas en que participó."), chico))
+            filas = [["Operario", "Hojas", "Servicios", "Con OK", "Efectividad", "Productividad"]]
+            filas += [[P(o["nombre"]), o["hojas"], o["acciones"], o["ok"], pct(o["efectividad_pct"]), pct(o["productividad_pct"])] for o in r["por_operario"]]
+            story.append(tabla(filas, [60 * mm, 16 * mm, 20 * mm, 20 * mm, 30 * mm, 34 * mm]))
+
+            if r["por_centro"]:
+                story.append(Paragraph("Por centro (según el centro de cada servicio)", h2))
+                filas = [["Centro", "Servicios", "Con OK", "Efectividad", "Productividad"]]
+                filas += [[c["nombre"], c["acciones"], c["ok"], pct(c["efectividad_pct"]), pct(c["productividad_pct"])] for c in r["por_centro"]]
+                story.append(tabla(filas, [40 * mm, 30 * mm, 30 * mm, 40 * mm, 40 * mm]))
+
+            def listado(titulo_, filas_, cab, anchos, vacio):
+                story.append(Paragraph(esc(titulo_), h2))
+                story.append(tabla([cab] + filas_, anchos) if filas_ else Paragraph(esc(vacio), chico))
+
+            pa = r["pasadas_a_brigada"]
+            listado(f"Pasaron a otra brigada ({pa['total']})", [[p["servicio"], P(f"{p['centro']} · {p['desde']}"), P(p["hacia"]), P(p["estado_actual"])] for p in pa["lista"]],
+                    ["Servicio", "De", "Hacia", "Estado actual"], [34 * mm, 55 * mm, 40 * mm, 51 * mm], "Ningún servicio pasó a otra brigada.")
+            nv = r["no_visitadas"]
+            listado(f"No visitadas ({nv['total']}) — pasan al siguiente día", [[n["servicio"], P(f"{n['centro']} · {n['brigada']}"), "Sigue sin visitar" if n["sigue_sin_visitar"] else "Ya atendida"] for n in nv["lista"]],
+                    ["Servicio", "Brigada", "Situación"], [34 * mm, 90 * mm, 56 * mm], "Todos los servicios se visitaron.")
+            rn = r["reincidencias"]
+            if rn["total"]:
+                listado(f"Reincidencias ({rn['total']})", [[x["servicio"], x["ordenes"], P(", ".join(x["operarios"]))] for x in rn["lista"]],
+                        ["Servicio", "Órdenes", "Operarios que lo trabajaron"], [34 * mm, 20 * mm, 126 * mm], "")
+            if r["incidencias"]:
+                listado("Incidencias por causa", [[P(f"{i['codigo']} · {i['nombre']}"), minutos_a_texto(i["minutos"]), i["hojas"]] for i in r["incidencias"]],
+                        ["Causa", "Tiempo", "Hojas"], [100 * mm, 40 * mm, 40 * mm], "")
+        else:
+            story.append(Spacer(1, 12))
+            story.append(Paragraph(esc("No hay hojas de ruta para este día."), base))
+
+        comp = datos.get("complemento")
+        if comp:
+            ct = comp["totales"]
+            story.append(Paragraph(esc(f"Complemento del {comp['fecha']:%d/%m/%Y}: acciones posteriores al corte de las {comp['corte']:%H:%M}"), h2))
+            story.append(Paragraph(esc(f"Estas acciones no estaban en el parte de ese día. Se contabilizan en el {comp['fecha']:%d/%m/%Y}, "
+                                       f"no en el de hoy. Total: {ct['acciones']} · con OK: {ct['ok']} · sin OK: {ct['sin_ok']} · "
+                                       f"pasadas: {ct['pasadas']} · tiempo real: {minutos_a_texto(ct['tiempo_real_min'])}."), chico))
+            story.append(tabla([["Hoja", "Servicio", "Hora", "Cliente", "Resultado", "T. real"]] +
+                               [[P(f["hoja"]), P(f["descripcion"]), f["hora"], P(f["cliente"]), P(f["resultado"]),
+                                 "" if f["tiempo_real"] is None else str(f["tiempo_real"])] for f in comp["acciones"]],
+                               [34 * mm, 54 * mm, 14 * mm, 32 * mm, 32 * mm, 14 * mm]))
+
+    def contenido_del_parte(parte):
+        """Título, tabla y notas del parte diario (documento propio, apaisado)."""
+        story = [Paragraph(esc(f"Parte diario de Mesa de Prueba — {fecha_larga(datos['fecha'])}"), titulo), Spacer(1, 4)]
+        if not parte["columnas"]:
+            story.append(Paragraph(esc("No hay hojas de ruta para este día."), base))
+            return story
         columnas, n = parte["columnas"], len(parte["columnas"])
         ancho_h = landscape(A4)[0] - 30 * mm
         ancho_total, ancho_etiqueta = 15 * mm, 56 * mm
@@ -279,7 +286,7 @@ def _pdf(datos):
 
         filas = [[""] + [cab_columna(c["etiqueta"]) for c in columnas] +
                  [Paragraph("Total", cab_parte), Paragraph("Acum. mes", cab_parte), Paragraph("Acum. año", cab_parte)]]
-        estilos = [("FONTSIZE", (0, 1), (-1, -1), 7.5), ("TOPPADDING", (0, 0), (-1, -1), 1.3), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.3),
+        estilos = [("FONTSIZE", (0, 1), (-1, -1), 7.5), ("LEADING", (0, 1), (-1, -1), 8.8), ("TOPPADDING", (0, 0), (-1, -1), 1.3), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.3),
                    ("ALIGN", (1, 1), (-1, -1), "CENTER"), ("BACKGROUND", (n + 1, 1), (n + 1, -1), colors.HexColor("#e8f0a0")),
                    ("BACKGROUND", (n + 2, 1), (n + 2, -1), colors.HexColor("#bff5bf")),
                    ("BACKGROUND", (n + 3, 1), (n + 3, -1), colors.HexColor("#cfe6ff")), ("TEXTCOLOR", (0, 0), (-1, 0), colors.white)]
@@ -301,63 +308,64 @@ def _pdf(datos):
         nota_roja = ParagraphStyle("nota_roja", parent=chico, textColor=colors.HexColor("#c00000"), fontSize=8.5, leading=10.5, spaceBefore=2)
         for nota in parte["notas"]:
             story.append(Paragraph(esc(f"{nota['columna']}: {nota['texto']}"), nota_roja))
-        story.append(NextPageTemplate("vertical"))
+        return story
 
-    # ---------- una página por hoja, con el formato de la hoja original
-    for h in datos["hojas"]:
-        story.append(PageBreak())
-        caja = Table([[Paragraph("HOJA DE RUTA", hoja_titulo)]], colWidths=[ancho])
-        caja.setStyle(TableStyle([("BOX", (0, 0), (-1, -1), 1, azul), ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)]))
-        story.append(caja)
-        cab = [[Paragraph(f"<b>Centro:</b> {esc(h['centros_claves'])}", base), Paragraph(f"<b>Fecha:</b> {h['fecha']:%d/%m/%Y}", base)],
-               [Paragraph(f"<b>Operarios:</b> {esc(h['operarios_claves'])}", base), Paragraph(f"<b>Vehículo (chapa):</b> {esc(h['vehiculo'] or '—')}", base)],
-               [P(f"{h['brigada']} · " + ", ".join(n for _, n in h["operarios"]) + (f" · jornada desde las {h['hora_inicio']:%H:%M}" if h["hora_inicio"] else ""), chico), ""]]
-        c = tabla(cab, [ancho * 0.6, ancho * 0.4], encabezado=False, extra=[("SPAN", (0, 2), (-1, 2)), ("BACKGROUND", (0, 0), (-1, 1), gris_claro)])
-        story.append(c)
-        story.append(Spacer(1, 4))
+    if modo != "parte":
+        # ---------- una página por hoja, con el formato de la hoja original
+        for h in datos["hojas"]:
+            story.append(PageBreak())
+            caja = Table([[Paragraph("HOJA DE RUTA", hoja_titulo)]], colWidths=[ancho])
+            caja.setStyle(TableStyle([("BOX", (0, 0), (-1, -1), 1, azul), ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)]))
+            story.append(caja)
+            cab = [[Paragraph(f"<b>Centro:</b> {esc(h['centros_claves'])}", base), Paragraph(f"<b>Fecha:</b> {h['fecha']:%d/%m/%Y}", base)],
+                   [Paragraph(f"<b>Operarios:</b> {esc(h['operarios_claves'])}", base), Paragraph(f"<b>Vehículo (chapa):</b> {esc(h['vehiculo'] or '—')}", base)],
+                   [P(f"{h['brigada']} · " + ", ".join(n for _, n in h["operarios"]) + (f" · jornada desde las {h['hora_inicio']:%H:%M}" if h["hora_inicio"] else ""), chico), ""]]
+            c = tabla(cab, [ancho * 0.6, ancho * 0.4], encabezado=False, extra=[("SPAN", (0, 2), (-1, 2)), ("BACKGROUND", (0, 0), (-1, 1), gris_claro)])
+            story.append(c)
+            story.append(Spacer(1, 4))
 
-        filas = [["Trabajo", "Descripción del Trabajo", "Hora", "Cliente", "Resultado", "T. real", "Norma"]]
-        estilos = []
-        for n, a in _filas(h):
-            filas.append([str(n), P(a["descripcion"] + (f" · Obs.: {a['observaciones']}" if a["observaciones"] else "")), a["hora"], P(a["cliente"]), P(a["resultado"]),
-                          "" if a["tiempo_real"] is None else str(a["tiempo_real"]), "" if a["norma"] is None else str(a["norma"])])
-            color = {"OK": verde, "SIN_OK": colors.HexColor("#b42318"), "PASADA_A_BRIGADA": colors.HexColor("#8a5a00"),
-                     "NO_VISITADA": colors.HexColor("#4b5666"), "EN_CURSO": azul, "ANULADA": colors.HexColor("#4b5666")}[a["estado"]]
-            estilos.append(("TEXTCOLOR", (4, len(filas) - 1), (4, len(filas) - 1), color))
-        if len(filas) == 1:
-            filas.append(["", P("Sin acciones registradas"), "", "", "", "", ""])
-        anchos = [16 * mm, 55 * mm, 15 * mm, 32 * mm, 34 * mm, 14 * mm, 14 * mm]
-        estilos += [("BACKGROUND", (4, 0), (-1, 0), verde), ("ALIGN", (0, 0), (0, -1), "CENTER"), ("ALIGN", (2, 0), (2, -1), "CENTER"),
-                    ("ALIGN", (5, 0), (6, -1), "CENTER"), ("LINEBEFORE", (4, 0), (4, -1), 1.2, azul), ("FONTSIZE", (0, 1), (-1, -1), 8.5),
-                    ("TOPPADDING", (0, 1), (-1, -1), 3), ("BOTTOMPADDING", (0, 1), (-1, -1), 3)]
-        story.append(tabla(filas, anchos, extra=estilos))
-        story.append(Paragraph(esc("Las columnas Resultado, T. real y Norma (minutos) son de control: no figuran en la hoja manuscrita."), chico))
+            filas = [["Trabajo", "Descripción del Trabajo", "Hora", "Cliente", "Resultado", "T. real", "Norma"]]
+            estilos = []
+            for n, a in _filas(h):
+                filas.append([str(n), P(a["descripcion"] + (f" · Obs.: {a['observaciones']}" if a["observaciones"] else "")), a["hora"], P(a["cliente"]), P(a["resultado"]),
+                              "" if a["tiempo_real"] is None else str(a["tiempo_real"]), "" if a["norma"] is None else str(a["norma"])])
+                color = {"OK": verde, "SIN_OK": colors.HexColor("#b42318"), "PASADA_A_BRIGADA": colors.HexColor("#8a5a00"),
+                         "NO_VISITADA": colors.HexColor("#4b5666"), "EN_CURSO": azul, "ANULADA": colors.HexColor("#4b5666")}[a["estado"]]
+                estilos.append(("TEXTCOLOR", (4, len(filas) - 1), (4, len(filas) - 1), color))
+            if len(filas) == 1:
+                filas.append(["", P("Sin acciones registradas"), "", "", "", "", ""])
+            anchos = [16 * mm, 55 * mm, 15 * mm, 32 * mm, 34 * mm, 14 * mm, 14 * mm]
+            estilos += [("BACKGROUND", (4, 0), (-1, 0), verde), ("ALIGN", (0, 0), (0, -1), "CENTER"), ("ALIGN", (2, 0), (2, -1), "CENTER"),
+                        ("ALIGN", (5, 0), (6, -1), "CENTER"), ("LINEBEFORE", (4, 0), (4, -1), 1.2, azul), ("FONTSIZE", (0, 1), (-1, -1), 8.5),
+                        ("TOPPADDING", (0, 1), (-1, -1), 3), ("BOTTOMPADDING", (0, 1), (-1, -1), 3)]
+            story.append(tabla(filas, anchos, extra=estilos))
+            story.append(Paragraph(esc("Las columnas Resultado, T. real y Norma (minutos) son de control: no figuran en la hoja manuscrita."), chico))
 
-        ind = h["indicadores"]
-        if ind:
-            story.append(Paragraph(esc(f"Servicios: {ind['acciones']} · Con OK: {ind['ok']} · Efectividad: {pct(ind['efectividad_pct'])} · Productividad: "
-                                       f"{pct(ind['productividad_pct'])} · Tiempo real: {minutos_a_texto(ind['tiempo_real_min'])} · Incidencias: "
-                                       f"{minutos_a_texto(ind['incidencias_min'])}"), base))
-        if h["incidencias"]:
-            story.append(Paragraph("Incidencias", h2))
-            story.append(tabla([["Causa", "Desde", "Hasta", "Tiempo"]] + [[P(i["causa"]), i["inicio"], i["fin"], minutos_a_texto(i["minutos"])] for i in h["incidencias"]],
-                               [90 * mm, 28 * mm, 28 * mm, 34 * mm]))
-        if h["observaciones"]:
-            story.append(Paragraph("Observaciones", h2))
-            story.append(Paragraph(esc(h["observaciones"]), base))
-        cierre = (f"Cerrada el {timezone.localtime(h['cerrada_en']):%d/%m/%Y %H:%M} por {h['cerrada_por']}" if h["cerrada"] and h["cerrada_en"]
-                  else (f"Hoja abierta al corte de las {timezone.localtime(datos['corte']):%H:%M}" if datos["corte"] else "Hoja abierta (no se ha cerrado el día)"))
-        story.append(Spacer(1, 4))
-        story.append(Paragraph(esc(f"Elaborada por: {h['creada_por'] or '—'}  ·  {cierre}"), chico))
+            ind = h["indicadores"]
+            if ind:
+                story.append(Paragraph(esc(f"Servicios: {ind['acciones']} · Con OK: {ind['ok']} · Efectividad: {pct(ind['efectividad_pct'])} · Productividad: "
+                                           f"{pct(ind['productividad_pct'])} · Tiempo real: {minutos_a_texto(ind['tiempo_real_min'])} · Incidencias: "
+                                           f"{minutos_a_texto(ind['incidencias_min'])}"), base))
+            if h["incidencias"]:
+                story.append(Paragraph("Incidencias", h2))
+                story.append(tabla([["Causa", "Desde", "Hasta", "Tiempo"]] + [[P(i["causa"]), i["inicio"], i["fin"], minutos_a_texto(i["minutos"])] for i in h["incidencias"]],
+                                   [90 * mm, 28 * mm, 28 * mm, 34 * mm]))
+            if h["observaciones"]:
+                story.append(Paragraph("Observaciones", h2))
+                story.append(Paragraph(esc(h["observaciones"]), base))
+            cierre = (f"Cerrada el {timezone.localtime(h['cerrada_en']):%d/%m/%Y %H:%M} por {h['cerrada_por']}" if h["cerrada"] and h["cerrada_en"]
+                      else (f"Hoja abierta al corte de las {timezone.localtime(datos['corte']):%H:%M}" if datos["corte"] else "Hoja abierta (no se ha cerrado el día)"))
+            story.append(Spacer(1, 4))
+            story.append(Paragraph(esc(f"Elaborada por: {h['creada_por'] or '—'}  ·  {cierre}"), chico))
 
     # ---------- encabezado y pie de cada página
     pie_texto = f"Generado el {timezone.localtime(datos['generado_en']):%d/%m/%Y %H:%M}" + (f" por {datos['generado_por']}" if datos["generado_por"] else "")
-    subtitulo = "Informe diario" if not datos["una_hoja"] else "Hoja de ruta"
+    subtitulo = "Parte diario" if modo == "parte" else ("Informe diario" if not datos["una_hoja"] else "Hoja de ruta")
     if datos["corte"]:
         subtitulo += f" · corte a las {timezone.localtime(datos['corte']):%H:%M}"
 
     def dibujar_cabecera(lienzo, doc):
-        w, hgt = lienzo._pagesize  # las páginas del parte son apaisadas
+        w, hgt = lienzo._pagesize
         lienzo.saveState()
         lienzo.setFillColor(azul)
         lienzo.rect(0, hgt - 22 * mm, w, 22 * mm, stroke=0, fill=1)
@@ -401,7 +409,10 @@ def _pdf(datos):
                       topPadding=0, bottomPadding=0)
         return PageTemplate(id=nombre, frames=[marco], onPage=dibujar_cabecera, pagesize=tamano)
 
-    doc = BaseDocTemplate(memoria, pagesize=A4, pageTemplates=[plantilla("vertical", A4), plantilla("horizontal", landscape(A4))],
+    if modo == "parte":
+        story = contenido_del_parte(datos["parte"])
+    tamano = landscape(A4) if modo == "parte" else A4
+    doc = BaseDocTemplate(memoria, pagesize=tamano, pageTemplates=[plantilla("pagina", tamano)],
                           title=f"{subtitulo} {datos['fecha']:%d/%m/%Y}", author="UDAT")
     doc.build(story, canvasmaker=LienzoNumerado)
     return memoria.getvalue()
@@ -469,47 +480,6 @@ def _excel(datos):
               [[f["hoja"], f["descripcion"], f["hora"], f["cliente"], f["resultado"], f["tiempo_real"]] for f in comp["acciones"]])
     for col, ancho in zip("ABCDEFGHIJKLM", [38, 34, 14, 14, 20, 14, 12, 14, 14, 16, 16, 20, 12]):
         ws.column_dimensions[col].width = ancho
-
-    # ----- Parte diario de la Mesa de Prueba (misma tabla que el PDF)
-    parte = datos.get("parte")
-    if parte and parte["columnas"]:
-        wp = wb.create_sheet("Parte diario")
-        wp["A1"] = f"Parte diario de Mesa de Prueba — {fecha_larga(datos['fecha'])}"
-        wp["A1"].font = Font(bold=True, size=14, color=AZUL[1:])
-        columnas, n = parte["columnas"], len(parte["columnas"])
-        encabezado(wp, 3, [""] + [c["etiqueta"] for c in columnas] + ["Total", "Acumulado mes", "Acumulado año"])
-        relleno = {n + 1: "E8F0A0", n + 2: "BFF5BF", n + 3: "CFE6FF"}
-        fila_x = 4
-
-        def escribir(valores, negrita=False, fondo=None):
-            nonlocal fila_x
-            for j, v in enumerate(valores, start=1):
-                c = wp.cell(fila_x, j, v)
-                c.border = borde
-                c.font = Font(bold=negrita)
-                if j > 1:
-                    c.alignment = Alignment(horizontal="center")
-                if fondo:
-                    c.fill = PatternFill("solid", fgColor=fondo)
-                elif j - 1 in relleno:
-                    c.fill = PatternFill("solid", fgColor=relleno[j - 1])
-            fila_x += 1
-
-        for grupo in parte["grupos"]:
-            escribir([grupo["nombre"]] + [""] * (n + 3), negrita=True, fondo="FFC000")
-            for f in grupo["filas"]:
-                escribir([f["etiqueta"]] + f["valores"] + [f["total"], f["mes"], f["anio"]])
-        v = parte["visitadas"]
-        escribir([v["etiqueta"]] + v["valores"] + [v["total"], v["mes"], v["anio"]], negrita=True, fondo="E9F2A0")
-        fila_x += 1
-        for nota in parte["notas"]:
-            wp.cell(fila_x, 1, f"{nota['columna']}: {nota['texto']}").font = Font(color="C00000")
-            fila_x += 1
-        wp.column_dimensions["A"].width = 40
-        for j in range(2, n + 5):
-            wp.column_dimensions[get_column_letter(j)].width = 12
-        wp.page_setup.orientation, wp.page_setup.fitToWidth, wp.page_setup.fitToHeight = "landscape", 1, 0
-        wp.sheet_properties.pageSetUpPr.fitToPage = True
 
     # ----- Hojas de ruta: mismo formato que la hoja original (bloques de 5 columnas, uno al lado del otro)
     wh = wb.create_sheet("Hojas de ruta")
@@ -595,6 +565,70 @@ def _excel(datos):
     return memoria.getvalue()
 
 
+def _excel_parte(datos):
+    """Libro con solo el parte diario (una hoja, apaisada)."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+    from openpyxl.utils import get_column_letter
+
+    wb = Workbook()
+    fino = Side(style="thin", color="999999")
+    borde = Border(left=fino, right=fino, top=fino, bottom=fino)
+    azul = PatternFill("solid", fgColor=AZUL[1:])
+    blanco_negrita = Font(bold=True, color="FFFFFF")
+    centro = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    parte = datos["parte"]
+
+    def encabezado(ws, fila, textos, col=1):
+        for i, texto in enumerate(textos):
+            c = ws.cell(fila, col + i, texto)
+            c.fill, c.font, c.alignment, c.border = azul, blanco_negrita, centro, borde
+
+    wp = wb.active
+    wp.title = "Parte diario"
+    wp["A1"] = f"Parte diario de Mesa de Prueba — {fecha_larga(datos['fecha'])}"
+    wp["A1"].font = Font(bold=True, size=14, color=AZUL[1:])
+    columnas, n = parte["columnas"], len(parte["columnas"])
+    encabezado(wp, 3, [""] + [c["etiqueta"] for c in columnas] + ["Total", "Acumulado mes", "Acumulado año"])
+    relleno = {n + 1: "E8F0A0", n + 2: "BFF5BF", n + 3: "CFE6FF"}
+    fila_x = 4
+
+    def escribir(valores, negrita=False, fondo=None):
+        nonlocal fila_x
+        for j, v in enumerate(valores, start=1):
+            c = wp.cell(fila_x, j, v)
+            c.border = borde
+            c.font = Font(bold=negrita)
+            if j > 1:
+                c.alignment = Alignment(horizontal="center")
+            if fondo:
+                c.fill = PatternFill("solid", fgColor=fondo)
+            elif j - 1 in relleno:
+                c.fill = PatternFill("solid", fgColor=relleno[j - 1])
+        fila_x += 1
+
+    for grupo in parte["grupos"]:
+        escribir([grupo["nombre"]] + [""] * (n + 3), negrita=True, fondo="FFC000")
+        for f in grupo["filas"]:
+            escribir([f["etiqueta"]] + f["valores"] + [f["total"], f["mes"], f["anio"]])
+    v = parte["visitadas"]
+    escribir([v["etiqueta"]] + v["valores"] + [v["total"], v["mes"], v["anio"]], negrita=True, fondo="E9F2A0")
+    fila_x += 1
+    for nota in parte["notas"]:
+        wp.cell(fila_x, 1, f"{nota['columna']}: {nota['texto']}").font = Font(color="C00000")
+        fila_x += 1
+    wp.column_dimensions["A"].width = 40
+    for j in range(2, n + 5):
+        wp.column_dimensions[get_column_letter(j)].width = 12
+    wp.page_setup.orientation, wp.page_setup.fitToWidth, wp.page_setup.fitToHeight = "landscape", 1, 0
+    wp.sheet_properties.pageSetUpPr.fitToPage = True
+    if not parte["columnas"]:
+        wp["A3"] = "No hay hojas de ruta para este día."
+    memoria = io.BytesIO()
+    wb.save(memoria)
+    return memoria.getvalue()
+
+
 # ---------------------------------------------------------------- punto de entrada
 
 TIPOS = {"pdf": "application/pdf", "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
@@ -604,9 +638,12 @@ def renderizar(datos, formato="pdf"):
     """Devuelve (contenido, tipo_mime, nombre_de_archivo) a partir de los datos ya reunidos."""
     if formato not in TIPOS:
         raise ValueError("El formato debe ser pdf o xlsx.")
-    contenido = _pdf(datos) if formato == "pdf" else _excel(datos)
+    parte = datos.get("modo") == "parte"
+    contenido = (_pdf(datos) if formato == "pdf" else (_excel_parte(datos) if parte else _excel(datos)))
     fecha = datos["fecha"]
-    if datos["una_hoja"] and datos["hojas"]:
+    if parte:
+        nombre = f"UDAT_parte_diario_{fecha:%Y-%m-%d}.{formato}"
+    elif datos["una_hoja"] and datos["hojas"]:
         h = datos["hojas"][0]
         nombre = f"UDAT_hoja_de_ruta_{fecha:%Y-%m-%d}_{_limpio(h['centros'])}_{_limpio(h['brigada'])}_{h['id']}.{formato}"
     else:
@@ -619,3 +656,10 @@ def generar_informe(fecha, formato="pdf", usuario=None, brigada=None, centro=Non
     if formato not in TIPOS:
         raise ValueError("El formato debe ser pdf o xlsx.")
     return renderizar(reunir_datos(fecha, brigada, centro, solo_hoja, usuario, ahora, corte), formato)
+
+
+def generar_parte(fecha, formato="pdf", usuario=None, brigada=None, centro=None, ahora=None, corte=None):
+    """Devuelve (contenido, tipo_mime, nombre_de_archivo) del parte diario de la Mesa de Prueba, como documento propio y apaisado."""
+    if formato not in TIPOS:
+        raise ValueError("El formato debe ser pdf o xlsx.")
+    return renderizar(reunir_datos_parte(fecha, brigada, centro, usuario, ahora, corte), formato)

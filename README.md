@@ -46,8 +46,11 @@ la pantalla, la API y `/admin` en un solo puerto (por defecto `http://<equipo>:8
 ## Parte diario de la Mesa de Prueba
 Tabla como la del parte en PDF: **filas = tipo de acción**, **columnas = una por hoja de ruta del día** (cabecera con las claves de sus operarios), más
 **Total** del día, **Acum. mes** y **Acum. año**, y bajo la tabla las notas de cada brigada en rojo (observaciones de la hoja, descripción de las órdenes de trabajo
-y el motivo de lo cerrado sin OK). Se ve en **Resumen → Día**, en una **página apaisada del informe PDF** (tras el resumen), en la hoja **«Parte diario» del Excel**
-y en `GET /api/parte-diario/?fecha=`. Un día sin hojas no tiene parte.
+y el motivo de lo cerrado sin OK). **Es un documento aparte del informe** (el informe es más extenso: resumen del día y una página por hoja):
+- **PDF apaisado** (una sola hoja si caben las notas) y **Excel** de una sola hoja: botones *Parte PDF* y *Parte Excel* en **Resumen → Día**, o `GET /api/parte-diario/?fecha=&formato=pdf|xlsx`
+  (sin `formato` devuelve los datos). También se ve como tabla en esa pantalla.
+- **El correo de las 16:00 adjunta cuatro archivos:** el parte (PDF y Excel) y el informe (PDF y Excel).
+Un día sin hojas da un parte con el aviso «No hay hojas de ruta para este día».
 
 | Grupo | Filas y cómo cuentan |
 |---|---|

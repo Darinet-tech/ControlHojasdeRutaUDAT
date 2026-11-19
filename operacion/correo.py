@@ -10,11 +10,11 @@ from django.conf import settings
 from django.core.mail import EmailMessage
 from django.utils import timezone
 
-from .informes import fecha_larga, minutos_a_texto, pct, renderizar, reunir_datos
+from .informes import fecha_larga, minutos_a_texto, pct, renderizar, reunir_datos, reunir_datos_parte
 from .models import DestinatarioInforme, HojaDeRuta, InformeEnviado
 
 
-def _cuerpo(datos, corte):
+def _cuerpo(datos, corte, parte=None):
     t, hojas = datos["resumen"]["totales"], datos["hojas"]
     abiertas = [h for h in hojas if not h["cerrada"]]
     lineas = [
@@ -31,11 +31,10 @@ def _cuerpo(datos, corte):
     if abiertas:
         lineas += ["", "Hojas todavía abiertas al corte (su información puede cambiar al terminar la jornada):"]
         lineas += [f"  - {h['centros']} · {h['brigada']} ({h['operarios_claves']})" for h in abiertas]
-    parte = datos.get("parte")
     if parte and parte["columnas"]:
         v = parte["visitadas"]
         lineas += ["", f"Parte diario: {v['total']} visitada(s) en el día · acumulado del mes: {v['mes']} · del año: {v['anio']} "
-                       f"(tabla completa en los adjuntos)."]
+                       f"(tabla completa en el documento del parte diario, adjunto)."]
     comp = datos.get("complemento")
     if comp:
         ct = comp["totales"]
@@ -44,8 +43,9 @@ def _cuerpo(datos, corte):
                    f"  {ct['acciones']} acción(es) · con OK: {ct['ok']} · sin OK: {ct['sin_ok']} · pasadas: {ct['pasadas']} · "
                    f"tiempo real: {minutos_a_texto(ct['tiempo_real_min'])}"]
         lineas += [f"  - {f['hora']} {f['hoja']}: {f['descripcion']} → {f['resultado']}" for f in comp["acciones"]]
-    lineas += ["", "Se adjuntan:", "  - PDF: resumen del día y cada hoja de ruta con el formato de la hoja original.",
-               "  - Excel: resumen, hojas de ruta y hoja de auditoría con una fila por servicio.", "",
+    lineas += ["", "Se adjuntan:", "  - Parte diario (PDF apaisado y Excel): acciones por tipo y por brigada, con total del día y acumulados.",
+               "  - Informe (PDF): resumen del día y cada hoja de ruta con el formato de la hoja original.",
+               "  - Informe (Excel): resumen, hojas de ruta y hoja de auditoría con una fila por servicio.", "",
                "Mensaje generado automáticamente por el sistema de la UDAT."]
     return "\n".join(lineas)
 
@@ -80,14 +80,20 @@ def enviar_informe_diario(fecha=None, ahora=None, forzar=False, simular=False):
     datos = reunir_datos(fecha, ahora=ahora, corte=ahora)
     pdf, tipo_pdf, nombre_pdf = renderizar(datos, "pdf")
     excel, tipo_excel, nombre_excel = renderizar(datos, "xlsx")
+    datos_parte = reunir_datos_parte(fecha, ahora=ahora, corte=ahora)  # el parte diario es un documento aparte del informe
+    parte_pdf, tipo_parte_pdf, nombre_parte_pdf = renderizar(datos_parte, "pdf")
+    parte_excel, tipo_parte_excel, nombre_parte_excel = renderizar(datos_parte, "xlsx")
     asunto = f"UDAT · Informe diario {fecha:%d/%m/%Y} (corte {timezone.localtime(ahora):%H:%M})"
-    campos = {"remitente": remitente, "destinatarios": ", ".join(destinatarios), "asunto": asunto, "pdf": pdf, "excel": excel}
+    campos = {"remitente": remitente, "destinatarios": ", ".join(destinatarios), "asunto": asunto, "pdf": pdf, "excel": excel,
+              "parte_pdf": parte_pdf, "parte_excel": parte_excel}
     if simular:
         return "SIMULADO", f"Se enviaría «{asunto}» a: {', '.join(destinatarios)} (desde {remitente}).", None
 
-    mensaje = EmailMessage(asunto, _cuerpo(datos, ahora), from_email=remitente, to=destinatarios, reply_to=[parseaddr(remitente)[1]])
+    mensaje = EmailMessage(asunto, _cuerpo(datos, ahora, datos_parte["parte"]), from_email=remitente, to=destinatarios, reply_to=[parseaddr(remitente)[1]])
     mensaje.attach(nombre_pdf, pdf, tipo_pdf)
     mensaje.attach(nombre_excel, excel, tipo_excel)
+    mensaje.attach(nombre_parte_pdf, parte_pdf, tipo_parte_pdf)
+    mensaje.attach(nombre_parte_excel, parte_excel, tipo_parte_excel)
     try:
         mensaje.send(fail_silently=False)
     except Exception as error:  # servidor caído, correo rechazado, tiempo agotado...

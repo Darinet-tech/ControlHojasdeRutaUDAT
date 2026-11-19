@@ -25,6 +25,7 @@ from operacion.informes import generar_informe
 from operacion.reportes import analisis_de_jefatura, resumen_periodo
 from catalogos.models import NormaMantenimiento, NormaTiempo, NormaTipoOrden, NormaTrabajo
 from operacion.importacion import importar_acciones, leer_filas, plantilla_xlsx
+from operacion.informes import generar_parte
 from operacion.parte import parte_diario
 from operacion.services import (anular_orden, asignar_no_visitadas, asignar_orden, asignar_pendientes, asignar_sin_solucion, generar_hoja, obtener_orden,
                                 cerrar_hoja, cerrar_sin_ok, certificar_ok, finalizar_incidencia, historial_servicio, iniciar_incidencia,
@@ -505,9 +506,10 @@ def _descargar(request, fecha, **filtros):
 
 
 class ParteDiarioView(APIView):
-    """GET /api/parte-diario/?fecha=AAAA-MM-DD[&brigada=][&centro=]
+    """GET /api/parte-diario/?fecha=AAAA-MM-DD[&brigada=][&centro=][&formato=pdf|xlsx]
 
-    El parte de la Mesa de Prueba: acciones por tipo y por hoja (columnas), con total del día y acumulados del mes y del año."""
+    El parte de la Mesa de Prueba: acciones por tipo y por hoja (columnas), con total del día y acumulados del mes y del año.
+    Sin `formato` devuelve los datos (JSON); con `formato` descarga el documento del parte, apaisado y aparte del informe."""
 
     queryset = HojaDeRuta.objects.none()
 
@@ -517,7 +519,16 @@ class ParteDiarioView(APIView):
             fecha = date.fromisoformat(p["fecha"]) if p.get("fecha") else timezone.localdate()
         except ValueError:
             raise ErrorDjango("Fecha inválida: use el formato AAAA-MM-DD.")
-        return Response(parte_diario(fecha, brigada=p.get("brigada") or None, centro=p.get("centro") or None))
+        brigada, centro = p.get("brigada") or None, p.get("centro") or None
+        formato = p.get("formato")
+        if not formato:
+            return Response(parte_diario(fecha, brigada=brigada, centro=centro))
+        try:
+            contenido, tipo, nombre = generar_parte(fecha, formato, usuario=request.user, brigada=brigada, centro=centro)
+        except ValueError as error:
+            raise ErrorDjango(str(error))
+        disposicion = "inline" if formato == "pdf" else "attachment"  # el PDF se abre en el navegador; el Excel se descarga
+        return HttpResponse(contenido, content_type=tipo, headers={"Content-Disposition": f'{disposicion}; filename="{nombre}"'})
 
 
 class InformeDiarioView(APIView):
