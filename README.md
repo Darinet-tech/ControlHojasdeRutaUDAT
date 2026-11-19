@@ -94,7 +94,7 @@ Además de insertarlas a mano, en la hoja (abierta) el botón **«Importar accio
 Primero se **comprueba** el archivo sin guardar nada (cuántas filas son correctas y el error de cada fila fallida); **todo o nada**: si alguna fila falla no se importa ninguna.
 Columnas (admiten tildes, mayúsculas y alias; las que sobren se ignoran): `tipo` (Correctivo, Preventivo, Orden de servicio, Orden de trabajo), `servicio`, `tipo de orden`, `orden`,
 `mantenimiento`, `variante` (TP, NH+, NH), `centro`, `trabajos` (separados por «;»). **Planificación diaria**: un Excel con columna `SERVICIO` y sin columna `tipo` (el de la planificación diaria; el encabezado puede estar en la segunda fila) se importa
-usando **solo esa columna**, todo como correctivo; se saltan las filas de horario («11:00 – 02:00 PM») y se ignoran cable, par, nombre, dirección... El botón **Descargar plantilla** baja un Excel de ejemplo con los códigos válidos.
+usando **solo esa columna**, todo como correctivo; se saltan las filas de horario («11:00 – 02:00 PM») y se ignoran cable, par, nombre, dirección... El número queda sin espacios («46 315207» → `46315207`, «NG ED190069» → `NGED190069`). Lo importado entra como correctivo: en la tarjeta de la acción, **Cambiar tipo** lo pasa a preventivo (con su tipo de mantenimiento) o le pone la variante TP / NH+ (API: `POST /api/acciones/{id}/cambiar-tipo/`) El botón **Descargar plantilla** baja un Excel de ejemplo con los códigos válidos.
 Cada fila pasa por las mismas reglas que insertarla a mano. Se puede ocultar la opción con `IMPORTAR_ACCIONES=0` en el `.env` (1 por defecto). API: `POST /api/hojas/{id}/importar/`.
 
 ## Tema claro / oscuro

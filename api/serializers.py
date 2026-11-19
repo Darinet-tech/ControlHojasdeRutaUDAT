@@ -226,6 +226,12 @@ class DarOkSerializer(serializers.Serializer):
     cliente_contactado = serializers.CharField(max_length=120, required=False, allow_blank=True, default="")  # obligatorio solo en correctivos
 
 
+class CambiarTipoSerializer(serializers.Serializer):
+    categoria = serializers.ChoiceField(choices=["CORRECTIVO", "PREVENTIVO"])
+    tipo_mantenimiento = serializers.PrimaryKeyRelatedField(queryset=TipoMantenimiento.objects.filter(activo=True), required=False, allow_null=True)
+    variante = serializers.ChoiceField(choices=["", "TP", "NHP"], required=False, allow_blank=True, default="")
+
+
 class HojaSerializer(serializers.ModelSerializer):
     brigada_nombre = serializers.CharField(source="brigada.nombre", read_only=True)
     informa_con_texto = serializers.BooleanField(source="brigada.informa_con_texto", read_only=True)

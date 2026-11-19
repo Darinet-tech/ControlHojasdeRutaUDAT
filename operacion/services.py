@@ -513,6 +513,31 @@ def quitar_accion(accion, usuario):
 
 
 @transaction.atomic
+def cambiar_tipo_de_accion(accion, usuario, categoria, tipo_mantenimiento=None, variante=""):
+    """Cambia un servicio aún abierto entre correctivo y preventivo (o su variante TP/NH+). Sirve para corregir lo que se importó,
+    que entra siempre como correctivo. Conserva la acción (número, claves, observaciones)."""
+    C = OrdenServicio.Categoria
+    if accion.hoja.cerrada:
+        raise ValidationError("La hoja de ruta está cerrada.")
+    if accion.hora_fin is not None or accion.no_visitada:
+        raise ValidationError("Solo se puede cambiar el tipo de un servicio que todavía no está cerrado.")
+    orden = accion.orden
+    if orden.categoria not in (C.CORRECTIVO, C.PREVENTIVO) or categoria not in (C.CORRECTIVO, C.PREVENTIVO):
+        raise ValidationError("Solo se puede cambiar entre correctivo y preventivo.")
+    nueva = obtener_orden(categoria, usuario, numero_servicio=orden.numero_servicio, tipo_mantenimiento=tipo_mantenimiento, variante=variante)
+    if nueva.pk != orden.pk:
+        if accion.hoja.acciones.filter(orden=nueva, hora_fin__isnull=True, no_visitada=False).exclude(pk=accion.pk).exists():
+            raise ValidationError("Ese servicio ya está asignado a esta hoja con ese tipo.")
+        if nueva.estado in (OrdenServicio.Estado.NO_VISITADA, OrdenServicio.Estado.SIN_SOLUCION):
+            nueva.estado, nueva.brigada_pendiente = OrdenServicio.Estado.ABIERTA, None
+            nueva.save(update_fields=["estado", "brigada_pendiente", "modificado_en"])
+        accion.orden, accion.modificado_por = nueva, usuario
+        accion.save()
+        _restaurar_estado_orden(orden)  # la orden anterior vuelve a su estado (o se borra si se creó solo para esta acción)
+    return accion
+
+
+@transaction.atomic
 def generar_hoja(hoja, usuario, ahora=None):
     """Genera oficialmente la hoja de ruta cuando ya se insertaron los servicios del día.
 

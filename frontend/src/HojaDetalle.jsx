@@ -238,6 +238,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
   const [cliente, setCliente] = useState('');
   const [brigada, setBrigada] = useState('');
   const [observaciones, setObservaciones] = useState(accion.observaciones || '');
+  const [nuevoTipo, setNuevoTipo] = useState({ categoria: accion.categoria, mantenimiento: '', variante: accion.variante || '' });
   const abierta = accion.estado === 'EN_CURSO';
   const esOT = accion.categoria === 'ORDEN_TRABAJO';
   const esOS = accion.categoria === 'ORDEN_SERVICIO'; // sus claves (1 a 19) son los motivos de NO ejecutarla; el OK no lleva clave
@@ -338,6 +339,9 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
           {accion.categoria === 'ORDEN_SERVICIO' && (
             <button className="boton" onClick={() => setModo('anular')} title="La orden se anula: no se ejecuta ni cuenta contra la efectividad">Anular (NULA)</button>
           )}
+          {(accion.categoria === 'CORRECTIVO' || accion.categoria === 'PREVENTIVO') && (
+            <button className="boton" onClick={() => setModo('tipo')} title="Cambiar el servicio entre correctivo y preventivo">Cambiar tipo</button>
+          )}
           <button className="boton boton-peligro empujar" onClick={() => setModo('quitar')} title="Quitar de la hoja un servicio asignado por error">Quitar de la hoja</button>
           {sinClaves && !esOS && <span className="suave">{esOT ? 'Seleccione al menos un trabajo para dar OK o pasar a otra brigada.' : 'Seleccione al menos una clave para dar OK o pasar a otra brigada.'} Para cerrar sin OK basta con una observación.</span>}
           {sinClaves && esOS && <span className="suave">Dar OK no lleva clave. Si la orden no se ejecutó, seleccione su clave (1 a 19) o escriba una observación y cierre sin OK; también puede anularla (NULA).</span>}
@@ -369,6 +373,39 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
         <div className="confirmacion">
           <span>¿Anular esta orden (NULA)? Se cierra sin ejecutarse, cuenta en la fila NULA del parte y no afecta la efectividad.</span>
           <button className="boton boton-peligro" onClick={() => confirmar(() => api.post(`/acciones/${accion.id}/anular/`))}>Sí, anular</button>
+          <button className="boton" onClick={() => setModo(null)}>Cancelar</button>
+        </div>
+      )}
+      {modo === 'tipo' && (
+        <div className="confirmacion">
+          <label>Tipo de acción
+            <select value={nuevoTipo.categoria} onChange={(e) => setNuevoTipo({ ...nuevoTipo, categoria: e.target.value, variante: '' })}>
+              <option value="CORRECTIVO">Correctivo</option>
+              <option value="PREVENTIVO">Preventivo</option>
+            </select>
+          </label>
+          {nuevoTipo.categoria === 'PREVENTIVO' && (
+            <label>Tipo de mantenimiento
+              <select value={nuevoTipo.mantenimiento} onChange={(e) => setNuevoTipo({ ...nuevoTipo, mantenimiento: e.target.value })}>
+                <option value="">Seleccione…</option>
+                {catalogos.tiposMantenimiento.map((t) => <option key={t.id} value={t.id}>{t.codigo} · {t.nombre}</option>)}
+              </select>
+            </label>
+          )}
+          {nuevoTipo.categoria === 'CORRECTIVO' && (
+            <label>Servicio
+              <select value={nuevoTipo.variante} onChange={(e) => setNuevoTipo({ ...nuevoTipo, variante: e.target.value })}>
+                <option value="">Red de Abonados</option>
+                <option value="TP">Telefonía Pública (TP)</option>
+                <option value="NHP">Nauta Hogar Plus (NH+)</option>
+              </select>
+            </label>
+          )}
+          <button className="boton boton-principal" disabled={nuevoTipo.categoria === 'PREVENTIVO' && !nuevoTipo.mantenimiento}
+            onClick={() => confirmar(() => api.post(`/acciones/${accion.id}/cambiar-tipo/`, {
+              categoria: nuevoTipo.categoria, variante: nuevoTipo.variante,
+              ...(nuevoTipo.categoria === 'PREVENTIVO' && { tipo_mantenimiento: Number(nuevoTipo.mantenimiento) }),
+            }))}>Guardar</button>
           <button className="boton" onClick={() => setModo(null)}>Cancelar</button>
         </div>
       )}

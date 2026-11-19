@@ -11,7 +11,7 @@ from rest_framework.test import APIClient
 
 from .importacion import ENCABEZADOS, importar_acciones, leer_filas
 from .models import Accion, OrdenServicio
-from .services import cerrar_hoja
+from .services import cambiar_tipo_de_accion, cerrar_hoja
 from .tests import BaseOperacion
 
 CSV = """Tipo;Servicio;Tipo de orden;Orden;Mantenimiento;Variante;Centro;Trabajos
@@ -58,7 +58,7 @@ class LecturaDelArchivoTests(BaseOperacion):
         memoria = io.BytesIO()
         libro.save(memoria)
         self.assertEqual(leer_filas("plan.xlsx", memoria.getvalue()), [
-            (3, {"tipo": "Correctivo", "servicio": "46 328758"}), (4, {"tipo": "Correctivo", "servicio": "NG ED190820"}),
+            (3, {"tipo": "Correctivo", "servicio": "46328758"}), (4, {"tipo": "Correctivo", "servicio": "NGED190820"}),
             (5, {"tipo": "Correctivo", "servicio": "NGED190856"}), (8, {"tipo": "Correctivo", "servicio": "46325311"})])
 
     def test_archivos_que_no_sirven(self):
@@ -172,3 +172,71 @@ class ImportarPorLaApiTests(BaseOperacion):
         self.assertTrue(self.api.get("/api/auth/me/").data["importar_acciones"])
         with override_settings(IMPORTAR_ACCIONES=False):
             self.assertFalse(self.api.get("/api/auth/me/").data["importar_acciones"])
+
+
+class CambiarTipoTests(BaseOperacion):
+    def setUp(self):
+        self.hoja_x = self.hoja(fecha=date(2026, 10, 5))
+        self.usuario = get_user_model().objects.create_user("probador_tipo")
+        self.usuario.groups.add(Group.objects.get(name="Probador"))
+        filas = leer_filas("a.csv", b"servicio\n46 315207\n")
+        importar_acciones(self.hoja_x, filas, self.usuario)
+        self.accion = Accion.objects.get(hoja=self.hoja_x)
+
+    def test_lo_importado_pasa_a_preventivo_conservando_la_accion(self):
+        from catalogos.models import TipoMantenimiento
+        numero, pk = self.accion.numero, self.accion.pk
+        orden_vieja = self.accion.orden.pk
+        mant = TipoMantenimiento.objects.get(codigo="MPI")
+        cambiar_tipo_de_accion(self.accion, self.usuario, "PREVENTIVO", mant)
+        self.accion.refresh_from_db()
+        self.assertEqual((self.accion.pk, self.accion.numero, self.accion.orden.categoria, self.accion.orden.tipo_mantenimiento), (pk, numero, "PREVENTIVO", mant))
+        self.assertEqual(self.accion.orden.numero_servicio, "46315207")
+        self.assertFalse(OrdenServicio.objects.filter(pk=orden_vieja).exists())  # la orden correctiva se creó solo para esta acción
+
+    def test_un_preventivo_exige_el_tipo_de_mantenimiento(self):
+        with self.assertRaisesMessage(ValidationError, "hay que indicar"):
+            cambiar_tipo_de_accion(self.accion, self.usuario, "PREVENTIVO")
+
+    def test_cambia_la_variante_de_un_correctivo(self):
+        cambiar_tipo_de_accion(self.accion, self.usuario, "CORRECTIVO", variante="TP")
+        self.accion.refresh_from_db()
+        self.assertEqual(self.accion.orden.variante, "TP")
+
+    def test_no_se_cambia_un_servicio_cerrado_ni_una_hoja_cerrada(self):
+        from catalogos.models import TipoMantenimiento
+        mant = TipoMantenimiento.objects.get(codigo="MPI")
+        cerrar_hoja(self.hoja_x, self.usuario)
+        with self.assertRaisesMessage(ValidationError, "cerrada"):
+            cambiar_tipo_de_accion(self.accion, self.usuario, "PREVENTIVO", mant)
+
+    def test_por_la_api(self):
+        from catalogos.models import TipoMantenimiento
+        api = APIClient()
+        api.force_authenticate(self.usuario)
+        mant = TipoMantenimiento.objects.get(codigo="MPPE")
+        r = api.post(f"/api/acciones/{self.accion.pk}/cambiar-tipo/", {"categoria": "PREVENTIVO", "tipo_mantenimiento": mant.pk}, format="json")
+        self.assertEqual((r.status_code, r.data["categoria"]), (200, "PREVENTIVO"))
+        r = api.post(f"/api/acciones/{self.accion.pk}/cambiar-tipo/", {"categoria": "ORDEN_SERVICIO"}, format="json")
+        self.assertEqual(r.status_code, 400)
+
+
+class SubirExcelPorLaApiTests(BaseOperacion):
+    def test_sube_el_excel_de_planificacion_por_la_api(self):
+        hoja_x = self.hoja(fecha=date(2026, 10, 5))
+        probador = get_user_model().objects.create_user("probador_xl")
+        probador.groups.add(Group.objects.get(name="Probador"))
+        api = APIClient()
+        api.force_authenticate(probador)
+        libro = Workbook()
+        ws = libro.active
+        ws.append(["SERVICIO", "CABLE"])
+        ws.append(["46 315207", "24"])
+        ws.append(["NG ED190069", "Ger2A"])
+        memoria = io.BytesIO()
+        libro.save(memoria)
+        archivo = SimpleUploadedFile("Planificación Diaria - copia.xlsx", memoria.getvalue(),
+                                     content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        r = api.post(f"/api/hojas/{hoja_x.pk}/importar/", {"archivo": archivo}, format="multipart")
+        self.assertEqual((r.status_code, r.data["importadas"], r.data["errores"]), (200, 2, []))
+        self.assertEqual(sorted(a.orden.numero_servicio for a in Accion.objects.filter(hoja=hoja_x)), ["46315207", "NGED190069"])

@@ -29,7 +29,7 @@ from operacion.informes import generar_parte
 from operacion.parte import parte_diario
 from operacion.services import (anular_orden, asignar_no_visitadas, asignar_orden, asignar_pendientes, asignar_sin_solucion, generar_hoja, obtener_orden,
                                 cerrar_hoja, cerrar_sin_ok, certificar_ok, finalizar_incidencia, historial_servicio, iniciar_incidencia,
-                                ordenes_no_visitadas, ordenes_pendientes, ordenes_sin_solucion, pasar_a_brigada, quitar_accion,
+                                ordenes_no_visitadas, ordenes_pendientes, ordenes_sin_solucion, pasar_a_brigada, quitar_accion, cambiar_tipo_de_accion,
                                 reabrir_hoja, resumen_hoja, validar_claves_de_la_accion)
 
 from . import serializers as s
@@ -268,8 +268,8 @@ class HojaViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Creat
         archivo = request.FILES.get("archivo")
         if archivo is None:
             raise ErrorDjango("Adjunte el archivo en el campo «archivo».")
-        if archivo.size > 2 * 1024 * 1024:
-            raise ErrorDjango("El archivo es demasiado grande (máximo 2 MB).")
+        if archivo.size > 10 * 1024 * 1024:
+            raise ErrorDjango("El archivo es demasiado grande (máximo 10 MB).")
         simular = str(request.data.get("simular", "")).strip().lower() in ("1", "true", "si", "sí")
         filas = leer_filas(archivo.name, archivo.read())
         return Response(importar_acciones(hoja, filas, request.user, simular=simular))
@@ -370,6 +370,16 @@ class AccionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Upd
     def anular(self, request, pk=None):
         """Anula una orden de servicio (NULA): se cierra sin ejecutarse y no cuenta contra la efectividad."""
         anular_orden(self.get_object(), request.user)
+        return self._respuesta(self.get_object())
+
+    @action(detail=True, methods=["post"], url_path="cambiar-tipo")
+    def cambiar_tipo(self, request, pk=None):
+        """Cambia un servicio abierto entre correctivo y preventivo (lo importado entra como correctivo)."""
+        datos = s.CambiarTipoSerializer(data=request.data)
+        datos.is_valid(raise_exception=True)
+        d = datos.validated_data
+        variante = d["variante"] if d["categoria"] == "CORRECTIVO" else ""
+        cambiar_tipo_de_accion(self.get_object(), request.user, d["categoria"], d.get("tipo_mantenimiento"), variante)
         return self._respuesta(self.get_object())
 
     @action(detail=True, methods=["post"])

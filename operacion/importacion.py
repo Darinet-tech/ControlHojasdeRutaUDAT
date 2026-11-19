@@ -12,7 +12,7 @@ El archivo tiene una fila por servicio y estas columnas (los nombres admiten may
 - trabajos (órdenes de trabajo): nombres de los trabajos separados por «;».
 
 **Planificación diaria**: si el archivo no tiene columna «tipo» pero sí «servicio» (como el Excel de planificación diaria, cuyo encabezado puede
-estar en la segunda fila), solo se usa la columna SERVICIO y todo se importa como correctivo. Las filas de horario («11:00 – 02:00 PM») y las vacías se saltan;
+estar en la segunda fila), solo se usa la columna SERVICIO y todo se importa como correctivo. Los espacios del número se quitan («46 315207» → «46315207», «NG ED190069» → «NGED190069»). Las filas de horario («11:00 – 02:00 PM») y las vacías se saltan;
 el resto de columnas (cable, par, nombre, dirección...) se ignora.
 
 Todo o nada: si alguna fila tiene un error no se importa ninguna, y se informa de cada error con su número de fila. Cada fila pasa por las mismas
@@ -73,6 +73,11 @@ def _texto(valor):
     return str(valor).strip()
 
 
+def _tiene_encabezado(filas):
+    """¿Alguna de las primeras filas trae la columna «servicio» o «tipo»?"""
+    return any(normalizar(c) in COLUMNAS["servicio"] | COLUMNAS["tipo"] for fila in filas[:15] for c in fila)
+
+
 def leer_filas(nombre, contenido):
     """[(número de fila del archivo, {columna canónica: texto})] sin las filas vacías. ValidationError si el archivo no sirve."""
     nombre = (nombre or "").lower()
@@ -87,10 +92,13 @@ def leer_filas(nombre, contenido):
     elif nombre.endswith(".xlsx"):
         from openpyxl import load_workbook
         try:
-            libro = load_workbook(io.BytesIO(contenido), read_only=True, data_only=True)
+            libro = load_workbook(io.BytesIO(contenido), data_only=True)
         except Exception as error:  # archivo dañado o que no es un Excel
             raise ValidationError("No se pudo leer el archivo Excel.") from error
-        filas = [list(f) for f in libro.worksheets[0].iter_rows(values_only=True)]
+        hojas = [[list(f) for f in hoja.iter_rows(values_only=True)] for hoja in libro.worksheets if hoja.sheet_state == "visible"]
+        filas = next((h for h in hojas if _tiene_encabezado(h)), hojas[0] if hojas else [])
+    elif nombre.endswith(".xls"):
+        raise ValidationError("Ese es un Excel antiguo (.xls): ábralo y guárdelo como «Libro de Excel (.xlsx)» o como CSV.")
     else:
         raise ValidationError("El archivo debe ser Excel (.xlsx) o CSV (.csv).")
     if not filas:
@@ -113,7 +121,7 @@ def leer_filas(nombre, contenido):
     for numero, fila in enumerate(filas[encabezado + 1:], start=encabezado + 2):
         datos = {c: _texto(fila[i]) if i < len(fila) else "" for c, i in columnas.items()}
         if planificacion:
-            servicio = " ".join(datos["servicio"].split())  # una celda «NG» y «ED190820» en dos líneas queda «NG ED190820»
+            servicio = "".join(datos["servicio"].split())  # «46 315207» → «46315207»; «NG» y «ED190069» en dos líneas → «NGED190069»
             if not servicio or HORARIO.search(servicio):
                 continue
             datos = {"tipo": "Correctivo", "servicio": servicio}
