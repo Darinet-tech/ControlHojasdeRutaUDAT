@@ -61,6 +61,19 @@ class LecturaDelArchivoTests(BaseOperacion):
             (3, {"tipo": "Correctivo", "servicio": "46328758"}), (4, {"tipo": "Correctivo", "servicio": "NGED190820"}),
             (5, {"tipo": "Correctivo", "servicio": "NGED190856"}), (8, {"tipo": "Correctivo", "servicio": "46325311"})])
 
+    def test_centro_escrito_en_la_fila_de_titulos_de_grupo(self):
+        libro = Workbook()
+        ws = libro.active
+        ws.append([None, "CENTRO"])  # CENTRO quedó encima del encabezado, sobre la columna de los centros
+        ws.append(["SERVICIO", "CABLE"])
+        ws.append(["46 1", "NG"])
+        ws.append(["46 2", "JM"])
+        memoria = io.BytesIO()
+        libro.save(memoria)
+        filas = leer_filas("plan.xlsx", memoria.getvalue())
+        self.assertEqual(filas[1], (4, {"tipo": "Correctivo", "servicio": "462", "centro": "JM"}))
+        self.assertEqual(set(filas.columnas), {"servicio", "centro"})
+
     def test_planificacion_con_columna_centro(self):
         filas = leer_filas("plan.csv", "SERVICIO;CENTRO;CABLE\n46 1;NG;24\n46 2;;3\n".encode())
         self.assertEqual(filas, [(2, {"tipo": "Correctivo", "servicio": "461", "centro": "NG"}), (3, {"tipo": "Correctivo", "servicio": "462"})])

@@ -272,7 +272,7 @@ class HojaViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Creat
             raise ErrorDjango("El archivo es demasiado grande (máximo 10 MB).")
         simular = str(request.data.get("simular", "")).strip().lower() in ("1", "true", "si", "sí")
         filas = leer_filas(archivo.name, archivo.read())
-        return Response(importar_acciones(hoja, filas, request.user, simular=simular))
+        return Response({**importar_acciones(hoja, filas, request.user, simular=simular), "columnas": list(getattr(filas, "columnas", ()))})
 
     @action(detail=False, methods=["get"], url_path="plantilla-importacion")
     def plantilla_importacion(self, request):

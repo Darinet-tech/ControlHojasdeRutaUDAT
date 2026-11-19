@@ -40,7 +40,7 @@ COLUMNAS = {  # nombre canónico: alias (ya normalizados)
     "orden": {"orden", "numero de orden", "numero orden", "no orden"},
     "mantenimiento": {"mantenimiento", "tipo de mantenimiento", "tipo mantenimiento"},
     "variante": {"variante", "modalidad", "servicio especial"},
-    "centro": {"centro"},
+    "centro": {"centro", "centros", "centro de trabajo", "ctro", "cod centro", "codigo de centro"},
     "trabajos": {"trabajos", "trabajo"},
 }
 TIPOS = {
@@ -71,6 +71,11 @@ def _texto(valor):
     if isinstance(valor, float) and valor.is_integer():  # Excel guarda 46326407 como número
         return str(int(valor))
     return str(valor).strip()
+
+
+class Filas(list):
+    """Las filas leídas; `columnas` son las columnas del archivo que se reconocieron (para mostrárselas a quien importa)."""
+    columnas = ()
 
 
 def _tiene_encabezado(filas):
@@ -114,10 +119,16 @@ def leer_filas(nombre, contenido):
             columnas, encabezado = encontradas, posicion
             if "tipo" in encontradas:
                 break
+    for candidata in filas[:encabezado]:  # una columna (p. ej. CENTRO) puede haberse escrito en la fila de títulos de grupo, encima del encabezado
+        for indice, titulo in enumerate(candidata):
+            for canonico, alias in COLUMNAS.items():
+                if normalizar(titulo) in alias and canonico not in columnas and indice not in columnas.values():
+                    columnas[canonico] = indice
     planificacion = "tipo" not in columnas and "servicio" in columnas
     if "tipo" not in columnas and not planificacion:
         raise ValidationError("Falta la columna «tipo» (Correctivo, Preventivo, Orden de servicio u Orden de trabajo) o, al menos, «servicio».")
-    resultado = []
+    resultado = Filas()
+    resultado.columnas = tuple(columnas)
     for numero, fila in enumerate(filas[encabezado + 1:], start=encabezado + 2):
         datos = {c: _texto(fila[i]) if i < len(fila) else "" for c, i in columnas.items()}
         if planificacion:

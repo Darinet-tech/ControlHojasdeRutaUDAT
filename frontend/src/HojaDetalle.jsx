@@ -633,6 +633,10 @@ function ImportarAcciones({ hoja, alCerrar, alImportar }) {
       </div>
       <Aviso>{error}</Aviso>
       {trabajando && <p className="cargando">Comprobando el archivo…</p>}
+      {resultado?.columnas && (
+        <p className="suave">Columnas reconocidas en el archivo: <strong>{resultado.columnas.join(', ') || 'ninguna'}</strong>.
+          {hoja.centros.length > 1 && !resultado.columnas.includes('centro') && ' La hoja trabaja en varios centros y el archivo no tiene una columna «CENTRO» reconocida: cada servicio necesita su centro.'}</p>
+      )}
       {resultado && (
         <>
           <p>{resultado.validas} de {resultado.filas} fila(s) correcta(s){resultado.errores.length > 0 && <>, <strong>{resultado.errores.length} con error</strong></>}.</p>
