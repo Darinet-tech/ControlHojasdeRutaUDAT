@@ -80,6 +80,8 @@ class EnvioDelInformeTests(EscenarioDosDias, BaseOperacion):
     def test_un_dia_sin_hojas_no_genera_correo(self):
         estado, mensaje, registro = enviar_informe_diario(fecha=date(2026, 10, 20), ahora=en(20, 16))
         self.assertEqual((estado, len(mail.outbox), registro.estado), ("OMITIDO", 0, "OMITIDO"))
+        # ni el informe ni el parte diario: no se genera ningún documento ni se guarda copia de ninguno
+        self.assertEqual([registro.pdf, registro.excel, registro.parte_pdf, registro.parte_excel], [None] * 4)
         self.assertIn("No hay hojas de ruta", mensaje)
 
     def test_sin_destinatarios_queda_el_error_registrado(self):
