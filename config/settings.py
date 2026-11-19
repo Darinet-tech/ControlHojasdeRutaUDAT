@@ -182,9 +182,10 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {'login': os.environ.get('LOGIN_LIMITE', '10/min')},
 }
 
-# La pantalla web en desarrollo (Vite, puerto 5173) llama a la API desde otro puerto: se declara de confianza.
-CSRF_TRUSTED_ORIGINS = os.environ.get(
-    'DJANGO_CSRF_TRUSTED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
+# La pantalla web en desarrollo (Vite) llama a la API desde otro puerto: se declara de confianza. Vite usa el 5173 y, si está
+# ocupado por otro proyecto, salta al siguiente (5174, 5175...), así que se admiten los primeros puertos.
+_ORIGENES_VITE = ','.join(f'http://{host}:{puerto}' for puerto in range(5173, 5181) for host in ('localhost', '127.0.0.1'))
+CSRF_TRUSTED_ORIGINS = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', _ORIGENES_VITE).split(',')
 
 # ---- Cookies y HTTPS: se activan en producción. Si el servidor aún va por http (intranet sin certificado),
 # ponga DJANGO_HTTPS=0 en el .env, porque con las cookies "secure" no se podría iniciar sesión.

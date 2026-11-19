@@ -7,7 +7,6 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    strictPort: true, // si el 5173 está ocupado (otro proyecto), avisa en vez de saltar a otro puerto: otro puerto no es un origen de confianza y las escrituras darían 403
     proxy: {
       '/api': { target: api, changeOrigin: true },
       '/admin': { target: api, changeOrigin: true },
