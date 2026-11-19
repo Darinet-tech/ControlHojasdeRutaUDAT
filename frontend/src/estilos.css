@@ -226,4 +226,4 @@ a.boton { text-decoration: none; color: var(--texto); display: inline-block; }
 .fila-accion-ok td:first-child { border-left: 4px solid var(--verde); }
 .fila-accion-sin_ok td:first-child, .fila-accion-pasada_a_brigada td:first-child, .fila-accion-anulada td:first-child { border-left: 4px solid var(--aviso); }
 .accion-en-modal { border: 0; border-left: 0; padding: 0; margin: 0; background: transparent; }
-
+.boton-desactivado { opacity: .45; cursor: not-allowed; user-select: none; }

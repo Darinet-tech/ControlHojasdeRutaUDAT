@@ -123,6 +123,15 @@ function ParteDiario({ fecha, brigada, centro }) {
   );
 }
 
+// Botón de descarga de un documento del día: sin hojas de ruta no hay nada que enviar ni descargar, así que se desactiva.
+function Descarga({ activo, href, titulo, principal = false, enNuevaPestana = false, children }) {
+  const clase = `boton ${principal ? 'boton-principal' : ''}`;
+  if (!activo) {
+    return <span className={`${clase} boton-desactivado`} role="link" aria-disabled="true" title="No hay hojas de ruta este día: no hay nada que descargar">{children}</span>;
+  }
+  return <a className={clase} href={href} title={titulo} {...(enNuevaPestana && { target: '_blank', rel: 'noreferrer' })}>{children}</a>;
+}
+
 export default function Resumen({ catalogos, abrirHoja }) {
   const [periodo, setPeriodo] = useState('dia');
   const [fecha, setFecha] = useState(hoy());
@@ -142,6 +151,7 @@ export default function Resumen({ catalogos, abrirHoja }) {
   }, [periodo, fecha, brigada, centro]);
 
   const t = datos?.totales;
+  const hayHojas = (t?.hojas ?? 0) > 0; // mientras carga, o sin hojas ese día, las descargas quedan desactivadas
   const serie = datos && (datos.por_dia
     ? datos.por_dia.map((d) => ({ ...d, clave: d.fecha, nombre: formatoFecha(d.fecha), etiqueta: d.fecha.slice(8) }))
     : datos.por_mes
@@ -169,11 +179,15 @@ export default function Resumen({ catalogos, abrirHoja }) {
           {catalogos.centros.map((c) => <option key={c.id} value={c.id}>{c.codigo} · {c.nombre}</option>)}
         </select>
         {periodo === 'dia' && (
-          <span className="fila empujar descargas" aria-label="Informe del día">
-            <a className="boton boton-principal" href={`/api/parte-diario/?${new URLSearchParams({ fecha, ...(brigada && { brigada }), ...(centro && { centro }), formato: 'pdf' })}`} target="_blank" rel="noreferrer" title="Parte diario de la Mesa de Prueba, en hoja apaisada">Parte PDF</a>
-            <a className="boton" href={`/api/parte-diario/?${new URLSearchParams({ fecha, ...(brigada && { brigada }), ...(centro && { centro }), formato: 'xlsx' })}`} title="Parte diario de la Mesa de Prueba en Excel">Parte Excel</a>
-            <a className="boton" href={`/api/informe-diario/?${new URLSearchParams({ fecha, ...(brigada && { brigada }), ...(centro && { centro }), formato: 'pdf' })}`} target="_blank" rel="noreferrer" title="Resumen del día y cada hoja de ruta con el formato original">Informe PDF</a>
-            <a className="boton" href={`/api/informe-diario/?${new URLSearchParams({ fecha, ...(brigada && { brigada }), ...(centro && { centro }), formato: 'xlsx' })}`} title="Resumen, hojas de ruta con el formato original y hoja de auditoría">Informe Excel</a>
+          <span className="fila empujar descargas" aria-label="Documentos del día">
+            <Descarga activo={hayHojas} principal enNuevaPestana titulo="Parte diario de la Mesa de Prueba, en hoja apaisada"
+              href={`/api/parte-diario/?${new URLSearchParams({ fecha, ...(brigada && { brigada }), ...(centro && { centro }), formato: 'pdf' })}`}>Parte PDF</Descarga>
+            <Descarga activo={hayHojas} titulo="Parte diario de la Mesa de Prueba en Excel"
+              href={`/api/parte-diario/?${new URLSearchParams({ fecha, ...(brigada && { brigada }), ...(centro && { centro }), formato: 'xlsx' })}`}>Parte Excel</Descarga>
+            <Descarga activo={hayHojas} enNuevaPestana titulo="Resumen del día y cada hoja de ruta con el formato original"
+              href={`/api/informe-diario/?${new URLSearchParams({ fecha, ...(brigada && { brigada }), ...(centro && { centro }), formato: 'pdf' })}`}>Informe PDF</Descarga>
+            <Descarga activo={hayHojas} titulo="Resumen, hojas de ruta con el formato original y hoja de auditoría"
+              href={`/api/informe-diario/?${new URLSearchParams({ fecha, ...(brigada && { brigada }), ...(centro && { centro }), formato: 'xlsx' })}`}>Informe Excel</Descarga>
           </span>
         )}
         <button className={`boton ${periodo === 'dia' ? '' : 'empujar'}`} onClick={() => window.print()}>Imprimir</button>

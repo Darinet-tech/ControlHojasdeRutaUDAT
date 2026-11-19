@@ -50,7 +50,7 @@ y el motivo de lo cerrado sin OK). **Es un documento aparte del informe** (el in
 - **PDF apaisado** (una sola hoja si caben las notas) y **Excel** de una sola hoja: botones *Parte PDF* y *Parte Excel* en **Resumen → Día**, o `GET /api/parte-diario/?fecha=&formato=pdf|xlsx`
   (sin `formato` devuelve los datos). También se ve como tabla en esa pantalla.
 - **El correo de las 16:00 adjunta cuatro archivos:** el parte (PDF y Excel) y el informe (PDF y Excel).
-Un día sin hojas da un parte con el aviso «No hay hojas de ruta para este día».
+**Un día sin hojas de ruta no tiene documentos:** no se envía ningún correo (ni el parte ni el informe) y los botones *Parte PDF/Excel* e *Informe PDF/Excel* de Resumen aparecen desactivados.
 
 | Grupo | Filas y cómo cuentan |
 |---|---|
