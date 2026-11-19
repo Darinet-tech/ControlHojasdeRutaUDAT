@@ -276,3 +276,31 @@ class CentroEnLaImportacionTests(BaseOperacion):
         fuera = Centro.objects.create(codigo="YY", nombre="Ajeno")
         r = importar_acciones(hoja, leer_filas("a.csv", f"servicio;centro\n46 3;{fuera.codigo}\n".encode()), usuario)
         self.assertIn("no es uno de los centros de la hoja", r["errores"][0]["mensaje"])
+
+
+class PlanificacionConCentrosPorLaApiTests(BaseOperacion):
+    def test_excel_de_planificacion_con_columna_centro_y_hoja_de_varios_centros(self):
+        from catalogos.models import Centro
+        otro, _ = Centro.objects.get_or_create(codigo="JM", defaults={"nombre": "José Martí"})
+        hoja_x = self.hoja(fecha=date(2026, 10, 5))
+        hoja_x.centros.add(otro)
+        probador = get_user_model().objects.create_user("probador_plan")
+        probador.groups.add(Group.objects.get(name="Probador"))
+        api = APIClient()
+        api.force_authenticate(probador)
+        libro = Workbook()
+        ws = libro.active
+        ws.append([None, "RED PRIMARIA", None, None, None, "NE"])
+        ws.merge_cells("B1:D1")
+        ws.append(["SERVICIO", "CABLE", "PAR", "TERM", "CENTRO", "NE"])
+        ws.append(["46 328758", "24", 140, "NG ED448802", self.centro.codigo, "003-06-187"])
+        ws.append(["11:00 – 02:00 PM"])
+        ws.append(["NG\nED190069", "Ger2A", 64, None, "JM", "002-10-232"])
+        memoria = io.BytesIO()
+        libro.save(memoria)
+        archivo = SimpleUploadedFile("plan.xlsx", memoria.getvalue(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        r = api.post(f"/api/hojas/{hoja_x.pk}/importar/", {"archivo": archivo}, format="multipart")
+        self.assertEqual((r.status_code, r.data["errores"], r.data["importadas"]), (200, [], 2))
+        self.assertEqual(set(r.data["columnas"]), {"servicio", "centro"})
+        self.assertEqual({a.orden.numero_servicio: a.centro.codigo for a in Accion.objects.filter(hoja=hoja_x)},
+                         {"46328758": self.centro.codigo, "NGED190069": "JM"})
