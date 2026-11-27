@@ -7,7 +7,7 @@ from rest_framework import serializers
 from catalogos.models import (Brigada, CausaIncidencia, Centro, Clave, NormaTrabajo, Operario, TipoMantenimiento, TipoOrden,
                               TipoTrabajo, Vehiculo)
 from operacion.models import Accion, HojaDeRuta, Incidencia, OrdenServicio
-from operacion.services import (momento_del_corte, norma_accion, resumen_hoja, sugerir_ok, validar_claves_de_la_accion,
+from operacion.services import (momento_del_corte, norma_accion, norma_de_tipo, resumen_hoja, sugerir_ok, validar_claves_de_la_accion,
                                 validar_operarios_libres)
 
 
@@ -122,6 +122,9 @@ class AccionSerializer(serializers.ModelSerializer):
     claves = ClaveSerializer(many=True, read_only=True)
     pasada_a_nombre = serializers.CharField(source="pasada_a.nombre", read_only=True, default=None)
     norma_min = serializers.SerializerMethodField(help_text="Norma de la clave mayor (minutos).")
+    es_gabinete = serializers.BooleanField(read_only=True)
+    regletas = serializers.IntegerField(read_only=True)
+    norma_por_regleta = serializers.SerializerMethodField()
     sugerencia_ok = serializers.SerializerMethodField()
     estado = serializers.SerializerMethodField()
     posterior_al_corte = serializers.SerializerMethodField(help_text="Se cerró después del corte de las 16:00: va en el complemento del parte siguiente.")
@@ -135,7 +138,11 @@ class AccionSerializer(serializers.ModelSerializer):
                   "tipo_orden", "numero_orden", "trabajos", "centro", "centro_codigo", "estado_orden", "claves",
                   "descripcion_trabajo", "observaciones", "estado", "ok", "cliente_contactado", "pasada_a",
                   "pasada_a_nombre", "hora_fin", "tiempo_real_min", "norma_min", "sugerencia_ok", "posterior_al_corte", "agregada_despues",
-                  "visita_anterior"]
+                  "visita_anterior", "es_gabinete", "regletas", "regletas_mantenidas", "regletas_reparadas", "regletas_sustituidas",
+                  "norma_por_regleta"]
+
+    def get_norma_por_regleta(self, accion):
+        return norma_de_tipo(accion.orden, accion.hoja.fecha) if accion.es_gabinete else None
 
     def get_agregada_despues(self, accion):
         generada = accion.hoja.generada_en
@@ -173,7 +180,9 @@ class ActualizarAccionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Accion
-        fields = ["claves", "trabajos", "descripcion_trabajo", "observaciones", "centro"]
+        fields = ["claves", "trabajos", "descripcion_trabajo", "observaciones", "centro",
+                  "regletas_mantenidas", "regletas_reparadas", "regletas_sustituidas"]
+        extra_kwargs = {c: {"max_value": 500} for c in ("regletas_mantenidas", "regletas_reparadas", "regletas_sustituidas")}
 
     def validate_claves(self, claves):
         try:

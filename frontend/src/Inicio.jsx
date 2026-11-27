@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, fechaLarga, minutosATexto, porcentaje, puede } from './api.js';
-import { Aviso, Chip, Estadistica } from './componentes.jsx';
+import { Aviso, Chip, Estadistica, Productividad, nivelProductividad } from './componentes.jsx';
 
 const saludo = () => { const h = new Date().getHours(); return h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches'; };
 const mayuscula = (t) => t.charAt(0).toUpperCase() + t.slice(1);
@@ -33,7 +33,7 @@ function Analisis() {
   }, [periodo]);
   const mejores = (primera) => [
     { titulo: primera, valor: (f) => f.nombre },
-    { titulo: 'Productividad', valor: (f) => porcentaje(f.productividad_pct) },
+    { titulo: 'Productividad', valor: (f) => <Productividad valor={f.productividad_pct} texto={porcentaje(f.productividad_pct)} /> },
     { titulo: 'Efectividad', valor: (f) => porcentaje(f.efectividad_pct) },
     { titulo: 'Servicios', valor: (f) => f.acciones },
   ];
@@ -180,7 +180,7 @@ export default function Inicio({ usuario, irA, abrirHoja }) {
             <Estadistica etiqueta="Hojas de ruta" valor={t.hojas} />
             <Estadistica etiqueta="Servicios" valor={t.acciones} />
             <Estadistica etiqueta="Efectividad" valor={porcentaje(t.efectividad_pct)} ayuda="Con OK entre atendidas" />
-            <Estadistica etiqueta="Productividad" valor={porcentaje(t.productividad_pct)} />
+            <Estadistica etiqueta="Productividad" valor={porcentaje(t.productividad_pct)} nivel={nivelProductividad(t.productividad_pct)} />
           </section>
           <div className="fila fila-chips">
             <Chip tipo="ok">{t.ok} con OK</Chip>

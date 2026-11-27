@@ -4,13 +4,14 @@ from datetime import date, datetime, time, timedelta
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from catalogos.models import Clave, TipoMantenimiento, TipoOrden, TipoTrabajo
+from catalogos.models import Clave, NormaMantenimiento, TipoMantenimiento, TipoOrden, TipoTrabajo
 
 from .informes import generar_informe, generar_parte
 from .models import Accion, HojaDeRuta, OrdenServicio
 from .parte import CLAVES_DE_FILAS, parte_diario
-from .services import (anular_orden, asignar_orden, cerrar_hoja, cerrar_sin_ok, certificar_ok, obtener_orden, pasar_a_brigada,
+from .services import (norma_accion, anular_orden, asignar_orden, cerrar_hoja, cerrar_sin_ok, certificar_ok, obtener_orden, pasar_a_brigada,
                        resumen_hoja)
+from .reportes import resumen_periodo
 from .tests import BaseOperacion, crear_hoja
 
 try:
@@ -44,6 +45,9 @@ class ParteBase(BaseOperacion):
             numero_orden=f"{n}" if categoria in ("ORDEN_SERVICIO", "ORDEN_TRABAJO") else "",
             trabajos=trabajos, variante=variante)
         accion = asignar_orden(hoja, orden, self.user, trabajos=trabajos)
+        if accion.es_gabinete:  # sin regletas anotadas no se puede dar el OK
+            accion.regletas_sustituidas = 1
+            accion.save()
         if categoria != "ORDEN_TRABAJO":
             accion.claves.set(Clave.objects.filter(codigo__in=claves))
         return accion
@@ -321,3 +325,75 @@ class NormasPorTipoTests(ParteBase):
         api.force_authenticate(get_user_model().objects.create_superuser("adm2", "a@a.cu", "x"))
         self.assertEqual(api.get("/api/inicio/").data["catalogos"]["tipos_sin_norma"], ["CMONT", "GAB"])
 
+
+class GabinetesPorRegletaTests(ParteBase):
+    """Cada regleta trabajada (mantenimiento, reparación o sustitución) se norma igual; el parte cuenta regletas, la visita es una."""
+
+    def setUp(self):
+        super().setUp()
+        gab = TipoMantenimiento.objects.get(codigo="GAB")
+        NormaMantenimiento.objects.create(tipo_mantenimiento=gab, minutos=50, vigente_desde=date(2000, 1, 1))
+
+    def gabinete(self, nombre, mantenidas=0, reparadas=0, sustituidas=0):
+        orden = obtener_orden("PREVENTIVO", self.user, numero_servicio=nombre, tipo_mantenimiento=TipoMantenimiento.objects.get(codigo="GAB"))
+        accion = asignar_orden(self.hoja_x, orden, self.user)
+        accion.regletas_mantenidas, accion.regletas_reparadas, accion.regletas_sustituidas = mantenidas, reparadas, sustituidas
+        accion.save()
+        accion.claves.set(Clave.objects.filter(codigo="25-R"))
+        return accion
+
+    def test_se_norma_por_regleta_sea_cual_sea_el_trabajo(self):
+        a = self.gabinete("Ger3G", mantenidas=3, reparadas=1, sustituidas=2)
+        self.assertEqual((a.regletas, norma_accion(a)), (6, 300))
+        self.assertIsNone(norma_accion(self.gabinete("SH1B")))  # sin regletas anotadas no hay tiempo normado (ni se usa el de la clave)
+
+    def test_no_se_da_ok_sin_anotar_las_regletas(self):
+        a = self.gabinete("Ger4A")
+        with self.assertRaisesMessage(ValidationError, "regletas"):
+            certificar_ok(a, self.user, "", ahora=self.ahora())
+
+    def test_el_parte_cuenta_regletas_y_una_sola_visita_por_gabinete(self):
+        self.ok(self.gabinete("Ger3G", mantenidas=4, sustituidas=2))
+        self.ok(self.gabinete("SI1A", reparadas=1))
+        self.ok(self.nuevo("CORRECTIVO", 9901))
+        t = self.totales()
+        self.assertEqual((t["gabinetes"], t["visitadas"]), (7, 3))
+        p = parte_diario(DIA)
+        self.assertEqual((p["visitadas"]["valores"], p["visitadas"]["mes"], p["visitadas"]["anio"]), ([3], 3, 3))
+
+    def test_el_resumen_suma_el_tiempo_normado_por_regleta(self):
+        self.ok(self.gabinete("Ger2C", sustituidas=4))
+        self.assertEqual(resumen_hoja(self.hoja_x)["tiempo_normado_efectivo_min"], 200)
+        self.assertEqual(resumen_periodo("mes", DIA)["totales"]["tiempo_normado_min"], 200)
+
+    def test_el_nombre_del_gabinete_es_obligatorio(self):
+        with self.assertRaisesMessage(ValidationError, "el nombre del gabinete"):
+            obtener_orden("PREVENTIVO", self.user, tipo_mantenimiento=TipoMantenimiento.objects.get(codigo="GAB"))
+
+    def test_por_la_api_las_regletas_solo_van_en_gabinetes(self):
+        from django.contrib.auth import get_user_model
+        from rest_framework.test import APIClient
+        api = APIClient()
+        api.force_authenticate(get_user_model().objects.create_superuser("adm_gab", "a@a.cu", "x"))
+        a = self.gabinete("Ger5B")
+        r = api.patch(f"/api/acciones/{a.pk}/", {"regletas_mantenidas": 5}, format="json")
+        self.assertEqual((r.status_code, r.data["es_gabinete"], r.data["regletas"], r.data["norma_min"]), (200, True, 5, 250))
+        self.assertEqual(api.patch(f"/api/acciones/{a.pk}/", {"regletas_mantenidas": 900}, format="json").status_code, 400)
+        correctivo = self.nuevo("CORRECTIVO", 9902)
+        r = api.patch(f"/api/acciones/{correctivo.pk}/", {"regletas_reparadas": 2}, format="json")
+        self.assertEqual(r.status_code, 400)
+
+
+class PuntoDeEvaluacionTests(ParteBase):
+    def test_se_cumple_desde_el_90_por_ciento(self):
+        from .informes import cumple_meta
+        self.assertEqual([cumple_meta(v) for v in (None, 89.9, 90, 130)], [None, False, True, True])
+
+    def test_el_informe_marca_la_productividad(self):
+        from openpyxl import load_workbook
+        self.ok(self.nuevo("CORRECTIVO", 9910))
+        ws = load_workbook(io.BytesIO(generar_informe(DIA, "xlsx")[0]))["Resumen"]
+        self.assertIn("punto de evaluación 90 %", ws.cell(3, 8).value)
+        colores = {c.fill.fgColor.rgb[-6:] for fila in ws.iter_rows() for c in fila if str(c.value).endswith("%") and c.fill.fgColor.rgb}
+        self.assertTrue(colores & {"DDF3E4", "FBE0E0"}, colores)
+        self.assertTrue(generar_informe(DIA, "pdf")[0].startswith(b"%PDF"))

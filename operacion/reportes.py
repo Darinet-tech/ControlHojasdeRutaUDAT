@@ -134,7 +134,8 @@ def _estadisticas_por_hoja(base, ahora):
 
     filas = list(Accion.objects.filter(hoja__in=base).values(
         "id", "hoja_id", "orden_id", "orden__numero_servicio", "orden__categoria", "orden__numero_orden", "orden__tipo_orden__codigo",
-        "orden__tipo_mantenimiento__codigo", "orden__tipo_orden_id", "orden__tipo_mantenimiento_id", "orden__estado", "centro__codigo", "ok", "anulada",
+        "orden__tipo_mantenimiento__codigo", "orden__tipo_orden_id", "orden__tipo_mantenimiento_id", "orden__tipo_mantenimiento__fila_parte", "regletas_mantenidas", "regletas_reparadas",
+        "regletas_sustituidas", "orden__estado", "centro__codigo", "ok", "anulada",
         "no_visitada", "pasada_a_id", "pasada_a__nombre", "hora_fin", "tiempo_real_min"))
     contador = {"OK": "ok", "SIN_OK": "sin_ok", "PASADA_A_BRIGADA": "pasadas", "NO_VISITADA": "no_visitadas", "EN_CURSO": "en_curso", "ANULADA": "anuladas"}
     for f in filas:
@@ -155,6 +156,9 @@ def _estadisticas_por_hoja(base, ahora):
                 por_tipo = normas.minutos_de_tipo(f["orden__categoria"], f["orden__tipo_orden_id"], f["orden__tipo_mantenimiento_id"], e["fecha"])
                 minutos = [por_tipo] if por_tipo is not None else [normas.minutos(c, f["orden__tipo_orden_id"], e["fecha"]) for c in claves_de[f["id"]]]
             f["normado"] = max([m for m in minutos if m is not None], default=0)
+            if f["orden__categoria"] == "PREVENTIVO" and f["orden__tipo_mantenimiento__fila_parte"] == "GABINETES":  # por regleta
+                por_regleta = normas.minutos_de_tipo("PREVENTIVO", None, f["orden__tipo_mantenimiento_id"], e["fecha"])
+                f["normado"] = (por_regleta or 0) * (f["regletas_mantenidas"] + f["regletas_reparadas"] + f["regletas_sustituidas"])
             e["normado"] += f["normado"]
 
     por_causa = defaultdict(lambda: {"minutos": 0, "hojas": set()})

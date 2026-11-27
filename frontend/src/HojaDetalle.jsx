@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, fechaLarga, formatearHora, minutosATexto, normaATexto, porcentaje, puede } from './api.js';
-import { Aviso, Chip, Estadistica, Modal, tipoDeClasificacion } from './componentes.jsx';
+import { Aviso, Chip, Estadistica, Modal, nivelProductividad, tipoDeClasificacion } from './componentes.jsx';
 
 // ---------------------------------------------------------------- selector de claves
 
@@ -124,6 +124,7 @@ function FormularioAsignar({ catalogos, hoja, centrosDeLaHoja, ejecutar, verHist
   // el check «Nauta Hogar» solo existe cuando la orden de servicio es un alta
   const esAlta = categoria === 'ORDEN_SERVICIO' && catalogos.tiposOrden.find((t) => String(t.id) === String(tipoOrden))?.fila_parte === 'ALTAS';
 
+  const eligioGabinete = categoria === 'PREVENTIVO' && catalogos.tiposMantenimiento.find((t) => t.id === Number(mantenimiento))?.fila_parte === 'GABINETES';
   const completo = {
     CORRECTIVO: servicio.trim(),
     PREVENTIVO: mantenimiento && servicio.trim(),
@@ -178,8 +179,8 @@ function FormularioAsignar({ catalogos, hoja, centrosDeLaHoja, ejecutar, verHist
           </label>
         )}
         {categoria !== 'ORDEN_TRABAJO' && (
-          <label>Número de servicio
-            <input value={servicio} onChange={(e) => setServicio(e.target.value)} placeholder="Ej.: 46-326407" required />
+          <label>{eligioGabinete ? 'Nombre del gabinete' : 'Número de servicio'}
+            <input value={servicio} onChange={(e) => setServicio(e.target.value)} placeholder={eligioGabinete ? 'Ej.: Ger3G, SH1B, SI1A' : 'Ej.: 46-326407'} required />
           </label>
         )}
         {categoria === 'CORRECTIVO' && (
@@ -238,6 +239,36 @@ function FormularioAsignar({ catalogos, hoja, centrosDeLaHoja, ejecutar, verHist
 
 const ETIQUETA_ESTADO = { EN_CURSO: ['info', 'En curso'], OK: ['ok', 'OK'], SIN_OK: ['mal', 'Cerrada sin OK'], NO_VISITADA: ['aviso', 'No visitada'], ANULADA: ['aviso', 'Anulada (NULA)'] };
 
+// Regletas trabajadas en un gabinete: cada una tiene la misma norma, sea mantenimiento, reparación o sustitución.
+const CAMPOS_REGLETAS = [['regletas_mantenidas', 'Mantenimiento'], ['regletas_reparadas', 'Reparadas'], ['regletas_sustituidas', 'Sustituidas']];
+
+function Regletas({ accion, editable, ejecutar }) {
+  const actuales = () => Object.fromEntries(CAMPOS_REGLETAS.map(([c]) => [c, String(accion[c])]));
+  const [valores, setValores] = useState(actuales);
+  useEffect(() => { setValores(actuales()); }, [accion.regletas_mantenidas, accion.regletas_reparadas, accion.regletas_sustituidas]);
+  const guardar = (campo, escrito) => {
+    const n = Math.max(0, Math.min(500, Math.trunc(Number(escrito) || 0)));
+    setValores((v) => ({ ...v, [campo]: String(n) }));
+    if (n !== accion[campo]) ejecutar(() => api.patch(`/acciones/${accion.id}/`, { [campo]: n }));
+  };
+  if (!editable) {
+    return <p className="suave"><strong>Regletas trabajadas: {accion.regletas}</strong> (mantenimiento {accion.regletas_mantenidas}, reparadas {accion.regletas_reparadas}, sustituidas {accion.regletas_sustituidas})</p>;
+  }
+  return (
+    <fieldset>
+      <legend>Regletas trabajadas: {accion.regletas}</legend>
+      <div className="fila">
+        {CAMPOS_REGLETAS.map(([campo, texto]) => (
+          <label key={campo}>{texto}
+            <input type="number" min="0" max="500" inputMode="numeric" value={valores[campo]}
+              onChange={(e) => setValores({ ...valores, [campo]: e.target.value })} onBlur={(e) => guardar(campo, e.target.value)} />
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
 function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistorial, enModal = false }) {
   const [modo, setModo] = useState(null); // 'ok' | 'pasar' | 'sinok'
   const [cliente, setCliente] = useState('');
@@ -247,6 +278,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
   const abierta = accion.estado === 'EN_CURSO';
   const esOT = accion.categoria === 'ORDEN_TRABAJO';
   const esOS = accion.categoria === 'ORDEN_SERVICIO'; // sus claves (1 a 19) son los motivos de NO ejecutarla; el OK no lleva clave
+  const sinRegletas = accion.es_gabinete && accion.regletas === 0;
   const sinClaves = esOT ? accion.trabajos.length === 0 : accion.claves.length === 0; // nada registrado todavía
   const otrasBrigadas = catalogos.brigadas.filter((b) => b.id !== hoja.brigada);
   const [tipo, texto] = accion.estado === 'PASADA_A_BRIGADA'
@@ -314,9 +346,12 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
         accion.observaciones && <p className="suave"><strong>Observaciones:</strong> {accion.observaciones}</p>
       )}
 
+      {accion.es_gabinete && <Regletas accion={accion} editable={editable && abierta} ejecutar={ejecutar} />}
+
       {abierta && accion.norma_min !== null && (
         <p className="suave">
-          Norma de tiempo: <strong>{normaATexto(accion.norma_min)} min</strong> ({esOT ? 'trabajo de mayor norma' : 'clave mayor'})
+          Norma de tiempo: <strong>{normaATexto(accion.norma_min)} min</strong> ({accion.es_gabinete ? `${accion.regletas} regleta(s) × ${normaATexto(accion.norma_por_regleta)} min`
+            : esOT ? 'trabajo de mayor norma' : ['PREVENTIVO', 'ORDEN_SERVICIO'].includes(accion.categoria) ? 'norma del tipo' : 'clave mayor'})
           {accion.sugerencia_ok && !esOT && ' · Sugerencia: las claves son compatibles con OK'}
         </p>
       )}
@@ -336,7 +371,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
 
       {editable && abierta && modo === null && (
         <div className="fila botones-accion">
-          <button className="boton boton-ok" disabled={sinClaves && !esOS} onClick={() => setModo('ok')}>✔ Dar OK</button>
+          <button className="boton boton-ok" disabled={(sinClaves && !esOS) || sinRegletas} onClick={() => setModo('ok')}>✔ Dar OK</button>
           <button className="boton" disabled={sinClaves || otrasBrigadas.length === 0} onClick={() => { setBrigada(otrasBrigadas[0]?.id ?? ''); setModo('pasar'); }}>
             ➜ Pasar a otra brigada
           </button>
@@ -348,6 +383,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
             <button className="boton" onClick={() => setModo('tipo')} title="Cambiar el servicio entre correctivo y preventivo">Cambiar tipo</button>
           )}
           <button className="boton boton-peligro empujar" onClick={() => setModo('quitar')} title="Quitar de la hoja un servicio asignado por error">Quitar de la hoja</button>
+          {sinRegletas && <span className="suave">En un gabinete, anote las regletas trabajadas para dar OK.</span>}
           {sinClaves && !esOS && <span className="suave">{esOT ? 'Seleccione al menos un trabajo para dar OK o pasar a otra brigada.' : 'Seleccione al menos una clave para dar OK o pasar a otra brigada.'} Para cerrar sin OK basta con una observación.</span>}
           {sinClaves && esOS && <span className="suave">Dar OK no lleva clave. Si la orden no se ejecutó, seleccione su clave (1 a 19) o escriba una observación y cierre sin OK; también puede anularla (NULA).</span>}
         </div>
@@ -897,7 +933,7 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
         <Estadistica etiqueta="Acciones" valor={r.acciones} />
         <Estadistica etiqueta="Efectivas (con OK)" valor={r.efectivas} />
         <Estadistica etiqueta="Efectividad" valor={porcentaje(r.efectividad_pct)} ayuda="Acciones con OK entre el total de acciones" />
-        <Estadistica etiqueta="Productividad" valor={porcentaje(r.productividad_pct)} ayuda="Tiempo normado de las acciones efectivas entre el tiempo real" />
+        <Estadistica etiqueta="Productividad" valor={porcentaje(r.productividad_pct)} nivel={nivelProductividad(r.productividad_pct)} ayuda="Tiempo normado de las acciones efectivas entre el tiempo real" />
         <Estadistica etiqueta="Tiempo real" valor={minutosATexto(r.tiempo_real_min)} />
         <Estadistica etiqueta="Incidencias" valor={minutosATexto(r.incidencias_min)} ayuda="Se descuentan del tiempo disponible" />
         <Estadistica etiqueta="Tiempo disponible" valor={minutosATexto(r.tiempo_disponible_min)} ayuda="(420 min − incidencias) × operarios" />

@@ -238,6 +238,10 @@ class Accion(Auditable):
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", editable=False
     )
     certificada_en = models.DateTimeField(null=True, blank=True, editable=False)
+    # Solo gabinetes: regletas trabajadas (de 8, 10 o 20 pares). Cada una, sea cual sea el trabajo, tiene la misma norma.
+    regletas_mantenidas = models.PositiveSmallIntegerField("regletas con mantenimiento", default=0)
+    regletas_reparadas = models.PositiveSmallIntegerField("regletas reparadas", default=0)
+    regletas_sustituidas = models.PositiveSmallIntegerField("regletas sustituidas", default=0)
     observaciones = models.TextField(blank=True)
 
     class Meta:
@@ -251,6 +255,16 @@ class Accion(Auditable):
     @property
     def estado(self):
         return estado_de_accion(self.ok, self.pasada_a_id, self.no_visitada, self.hora_fin, self.anulada)
+
+    @property
+    def es_gabinete(self):
+        """Mantenimiento de gabinete: se norma y se cuenta por regletas trabajadas, y el «número de servicio» es el nombre del gabinete."""
+        orden = self.orden
+        return bool(orden.categoria == "PREVENTIVO" and orden.tipo_mantenimiento_id and orden.tipo_mantenimiento.fila_parte == "GABINETES")
+
+    @property
+    def regletas(self):
+        return self.regletas_mantenidas + self.regletas_reparadas + self.regletas_sustituidas
 
 
 class DestinatarioInforme(models.Model):

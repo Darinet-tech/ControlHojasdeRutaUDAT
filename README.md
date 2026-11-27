@@ -83,7 +83,13 @@ Las normas vigentes son las de la **Instrucción de Normas de Tiempo de Red de A
 - Son el **total** (intervención + documentación) y **no se redondean**: se muestran como minutos:segundos (`48:34`). En `/admin` se escriben como `24`, `48:34` o `0,42`.
 - Las órdenes de servicio y los preventivos se norman por su **tipo**; los correctivos, por su **clave de mayor tiempo**. Las claves que no están en la instrucción conservan su norma anterior.
 - Decisiones sobre el documento: AS y REC 31:58, 22-G 24:27 y 26-M 24:00 (sumas mal hechas); 07-ZC y 07-EC 16:18; CTS y CD 24; CMIS y CA como CMONT. CPU cuenta en la fila de CVIV y CTS del parte; BS, en la de Bajas.
-- Pendiente: GAB (se mide por regletas) y las actividades de Cable, Línea y demás especialidades.
+- Pendiente: las actividades de Cable, Línea y demás especialidades.
+
+### Gabinetes (GAB)
+El preventivo GAB se identifica por el **nombre del gabinete** (Ger3G, SH1B…) y en la ventana de la acción se anotan las **regletas trabajadas** (mantenimiento, reparadas y sustituidas). Cada regleta se norma en **50 min** (norma del tipo GAB en `/admin`, por regleta); sin regletas anotadas no se puede dar el OK. La fila **Gabinetes (regletas)** del parte cuenta regletas y «Visitadas en el día» cuenta cada gabinete una sola vez.
+
+### Productividad: punto de evaluación
+La productividad (tiempo normado de lo efectivo entre tiempo real) se evalúa contra el **90 %** (`META_PRODUCTIVIDAD`): pantalla, PDF, Excel y correo marcan si lo cumple (90 % o más) o queda por debajo.
 
 ### Inicio de la jornada
 La jornada comienza a las **08:00**: la primera acción de una hoja cuenta desde esa hora y cada una de las siguientes desde el cierre de la anterior (descontando incidencias). Si la hoja se crea **después de las 08:00**, el probador debe **justificarlo** y la jornada cuenta desde la hora de creación. La justificación sale en la hoja y en su informe.

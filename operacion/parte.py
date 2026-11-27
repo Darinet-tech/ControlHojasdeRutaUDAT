@@ -22,12 +22,13 @@ GRUPOS = [
     ("Correctivo", [("rep_red", "Reparadas Red de Abonados"), ("rep_tp", "Reparadas Telefonía Pública"),
                     ("rep_nhp", "Reparadas Nauta Hogar Plus (NH+)"), ("pend_par", "Pendiente de Par"), ("otras_c", "Otras causas")]),
     ("Preventivo", [("mant_red", "Mantenimiento Red de Abonados"), ("mant_tp", "Mantenimiento Telefonía Pública (MTP)"),
-                    ("gabinetes", "Gabinetes"), ("otras_p", "Otras causas")]),
+                    ("gabinetes", "Gabinetes (regletas)"), ("otras_p", "Otras causas")]),
     ("Órdenes de Servicio", [("altas", "Altas ejecutadas (A)"), ("traslados", "Traslados Altas (TA)"), ("bajas", "Bajas (B, BS)"),
                              ("nauta_hogar", "Nauta Hogar (NH)"), ("te_ti", "TE – TI"), ("misc", "Misceláneas"), ("nula", "NULA"),
                              ("txd", "TxD"), ("otras_os", "Otras causas")]),
     ("Órdenes de Trabajo", [("ot_ok", "Ejecutadas (OK)"), ("ot_curso", "En ejecución"), ("ot_pend", "Pendientes de ejecución")]),
 ]
+SOBRAN_VISITAS = "_regletas_de_mas"
 NO_VISITADAS = {"ot_curso", "ot_pend"}  # no suman en «Visitadas en el día»
 CLAVES_DE_FILAS = [clave for _, filas in GRUPOS for clave, _ in filas]
 
@@ -69,16 +70,22 @@ def contar(hojas):
     por_hoja, total = defaultdict(Counter), Counter()
     for f in Accion.objects.filter(hoja__in=hojas).values(
             "id", "hoja_id", "orden__categoria", "orden__variante", "orden__tipo_orden__fila_parte",
-            "orden__tipo_mantenimiento__fila_parte", "ok", "anulada", "no_visitada", "pasada_a_id", "hora_fin"):
+            "orden__tipo_mantenimiento__fila_parte", "regletas_mantenidas", "regletas_reparadas", "regletas_sustituidas", "ok", "anulada", "no_visitada", "pasada_a_id", "hora_fin"):
         fila = fila_de(f, claves[f["id"]])
         if fila:
-            por_hoja[f["hoja_id"]][fila] += 1
-            total[fila] += 1
+            cantidad = 1
+            if fila == "gabinetes":
+                cantidad = f["regletas_mantenidas"] + f["regletas_reparadas"] + f["regletas_sustituidas"]
+                por_hoja[f["hoja_id"]][SOBRAN_VISITAS] += cantidad - 1
+                total[SOBRAN_VISITAS] += cantidad - 1
+            por_hoja[f["hoja_id"]][fila] += cantidad
+            total[fila] += cantidad
     return por_hoja, total
 
 
 def _visitadas(contador):
-    return sum(n for fila, n in contador.items() if fila not in NO_VISITADAS)
+    # La fila de gabinetes suma regletas, pero cada gabinete atendido es una sola visita: se descuenta la diferencia.
+    return sum(n for fila, n in contador.items() if fila not in NO_VISITADAS and fila != SOBRAN_VISITAS) - contador[SOBRAN_VISITAS]
 
 
 def _notas(hojas, etiquetas):

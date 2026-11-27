@@ -171,6 +171,7 @@ JORNADA_EFECTIVA_MIN = 420
 
 # Hora de inicio de la jornada: base del tiempo real de la primera acción de cada hoja.
 HORA_INICIO_JORNADA = datetime.time(8, 0)
+META_PRODUCTIVIDAD = 90  # % — punto de evaluación de la productividad: se cumple desde este valor
 
 REST_FRAMEWORK = {
     # Misma sesión que la administración: quien entró al admin ya puede usar la API desde el navegador.

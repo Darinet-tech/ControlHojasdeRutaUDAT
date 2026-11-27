@@ -25,7 +25,8 @@ def _cuerpo(datos, corte, parte=None):
         f"Hojas de ruta: {t['hojas']} ({t['hojas'] - len(abiertas)} cerradas y {len(abiertas)} abiertas al corte)",
         f"Servicios: {t['acciones']} · con OK: {t['ok']} · sin OK: {t['sin_ok']} · pasadas a otra brigada: {t['pasadas']} · "
         f"no visitadas: {t['no_visitadas']} · en curso: {t['en_curso']}",
-        f"Efectividad: {pct(t['efectividad_pct'])} · Productividad: {pct(t['productividad_pct'])} · "
+        f"Efectividad: {pct(t['efectividad_pct'])} · Productividad: {pct(t['productividad_pct'])}"
+        f"{'' if t['productividad_pct'] is None else f' (punto de evaluación {settings.META_PRODUCTIVIDAD} %: ' + ('cumple' if t['productividad_pct'] >= settings.META_PRODUCTIVIDAD else 'por debajo') + ')'} · "
         f"Tiempo real: {minutos_a_texto(t['tiempo_real_min'])} · Incidencias: {minutos_a_texto(t['incidencias_min'])}",
     ]
     if abiertas:

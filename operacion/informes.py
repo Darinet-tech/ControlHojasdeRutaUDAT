@@ -54,6 +54,15 @@ def pct(v):
     return "—" if v is None else f"{v} %"
 
 
+def cumple_meta(v):
+    """True/False según el punto de evaluación de la productividad; None si no hay dato."""
+    return None if v is None else v >= settings.META_PRODUCTIVIDAD
+
+
+def nota_meta():
+    return f"Punto de evaluación de la productividad: {settings.META_PRODUCTIVIDAD} %. En rojo y con * los valores por debajo."
+
+
 def nombre_de(usuario):
     return (usuario.get_full_name() or usuario.username) if usuario else ""
 
@@ -114,6 +123,9 @@ def reunir_datos(fecha, brigada=None, centro=None, solo_hoja=None, usuario=None,
             por_tipo = normas.minutos_de_tipo(orden.categoria, orden.tipo_orden_id, orden.tipo_mantenimiento_id, a.hoja.fecha)
             minutos = [por_tipo] if por_tipo is not None else [normas.minutos(c.pk, orden.tipo_orden_id, a.hoja.fecha) for c in claves]
             descripcion = " ".join([orden.etiqueta] + [c.codigo for c in claves])
+            if a.es_gabinete:
+                minutos = [round(por_tipo * a.regletas, 4)] if por_tipo is not None and a.regletas else []
+                descripcion += f" · {a.regletas} regleta(s)"
         estado = a.estado
         por_hoja[a.hoja_id].append({
             "numero": a.numero, "servicio": orden.numero_servicio, "etiqueta": orden.etiqueta, "categoria": orden.get_categoria_display(),
@@ -195,6 +207,13 @@ def _pdf(datos):
 
     modo = datos.get("modo", "informe")  # «parte»: documento propio del parte diario (apaisado)
     story = []
+    def marca_pdf(v):
+        texto = esc(pct(v))
+        return f'<font color="#a61b1b">{texto} *</font>' if cumple_meta(v) is False else texto
+
+    def P_meta(v):
+        return Paragraph(marca_pdf(v), chico)
+
     if modo != "parte":
         # ---------- primera página: resumen del día
         r, t = datos["resumen"], datos["resumen"]["totales"]
@@ -202,7 +221,7 @@ def _pdf(datos):
                  Paragraph(esc(fecha_larga(datos["fecha"]).capitalize()), base), Spacer(1, 5)]
         kpi = [[P("Hojas de ruta"), P("Servicios"), P("Efectividad"), P("Productividad")],
                [Paragraph(f"<b>{t['hojas']}</b>", titulo), Paragraph(f"<b>{t['acciones']}</b>", titulo),
-                Paragraph(f"<b>{esc(pct(t['efectividad_pct']))}</b>", titulo), Paragraph(f"<b>{esc(pct(t['productividad_pct']))}</b>", titulo)],
+                Paragraph(f"<b>{esc(pct(t['efectividad_pct']))}</b>", titulo), Paragraph(f"<b>{marca_pdf(t['productividad_pct'])}</b>", titulo)],
                [P("Tiempo real"), P("Incidencias"), P("Tiempo disponible"), P("Ocupación")],
                [Paragraph(f"<b>{esc(minutos_a_texto(t['tiempo_real_min']))}</b>", titulo), Paragraph(f"<b>{esc(minutos_a_texto(t['incidencias_min']))}</b>", titulo),
                 Paragraph(f"<b>{esc(minutos_a_texto(t['tiempo_disponible_min']))}</b>", titulo), Paragraph(f"<b>{esc(pct(t['ocupacion_pct']))}</b>", titulo)]]
@@ -212,25 +231,26 @@ def _pdf(datos):
         story.append(Paragraph(esc(f"Con OK: {t['ok']}  ·  Sin OK: {t['sin_ok']}  ·  Pasadas a otra brigada: {t['pasadas']}  ·  "
                                    f"No visitadas: {t['no_visitadas']}  ·  En curso: {t['en_curso']}"), base))
         story.append(Paragraph(esc("Efectividad = con OK entre atendidas (las no visitadas no cuentan). Productividad = tiempo normado de lo efectivo entre tiempo real."), chico))
+        story.append(Paragraph(esc(nota_meta()), chico))
 
         if r["hojas"]:
             story.append(Paragraph("Hojas de ruta del día", h2))
             filas = [["Hoja", "Operarios", "Serv.", "OK / sin OK / pasadas / no visitadas", "Efect.", "Prod."]]
             for h in r["hojas"]:
                 filas.append([P(f"{h['centro']} · {h['brigada']}"), P(", ".join(h["operarios"])), h["acciones"],
-                              f"{h['ok']} / {h['sin_ok']} / {h['pasadas']} / {h['no_visitadas']}", pct(h["efectividad_pct"]), pct(h["productividad_pct"])])
+                              f"{h['ok']} / {h['sin_ok']} / {h['pasadas']} / {h['no_visitadas']}", pct(h["efectividad_pct"]), P_meta(h["productividad_pct"])])
             story.append(tabla(filas, [44 * mm, 52 * mm, 12 * mm, 40 * mm, 16 * mm, 16 * mm]))
 
             story.append(Paragraph("Productividad individual", h2))
             story.append(Paragraph(esc("La productividad es de la hoja completa: cada operario recibe la de las hojas en que participó."), chico))
             filas = [["Operario", "Hojas", "Servicios", "Con OK", "Efectividad", "Productividad"]]
-            filas += [[P(o["nombre"]), o["hojas"], o["acciones"], o["ok"], pct(o["efectividad_pct"]), pct(o["productividad_pct"])] for o in r["por_operario"]]
+            filas += [[P(o["nombre"]), o["hojas"], o["acciones"], o["ok"], pct(o["efectividad_pct"]), P_meta(o["productividad_pct"])] for o in r["por_operario"]]
             story.append(tabla(filas, [60 * mm, 16 * mm, 20 * mm, 20 * mm, 30 * mm, 34 * mm]))
 
             if r["por_centro"]:
                 story.append(Paragraph("Por centro (según el centro de cada servicio)", h2))
                 filas = [["Centro", "Servicios", "Con OK", "Efectividad", "Productividad"]]
-                filas += [[c["nombre"], c["acciones"], c["ok"], pct(c["efectividad_pct"]), pct(c["productividad_pct"])] for c in r["por_centro"]]
+                filas += [[c["nombre"], c["acciones"], c["ok"], pct(c["efectividad_pct"]), P_meta(c["productividad_pct"])] for c in r["por_centro"]]
                 story.append(tabla(filas, [40 * mm, 30 * mm, 30 * mm, 40 * mm, 40 * mm]))
 
             def listado(titulo_, filas_, cab, anchos, vacio):
@@ -345,7 +365,7 @@ def _pdf(datos):
             ind = h["indicadores"]
             if ind:
                 story.append(Paragraph(esc(f"Servicios: {ind['acciones']} · Con OK: {ind['ok']} · Efectividad: {pct(ind['efectividad_pct'])} · Productividad: "
-                                           f"{pct(ind['productividad_pct'])} · Tiempo real: {minutos_a_texto(ind['tiempo_real_min'])} · Incidencias: "
+                                           f"{pct(ind['productividad_pct'])}{'' if cumple_meta(ind['productividad_pct']) is not False else f' (por debajo del {settings.META_PRODUCTIVIDAD} %)'} · Tiempo real: {minutos_a_texto(ind['tiempo_real_min'])} · Incidencias: "
                                            f"{minutos_a_texto(ind['incidencias_min'])}"), base))
             if h["incidencias"]:
                 story.append(Paragraph("Incidencias", h2))
@@ -454,6 +474,27 @@ def _excel(datos):
                 ws.cell(i, col + j, v).border = borde
         return fila + 2 + len(filas) + 1
 
+    def marcar_meta(ws, desde, hasta):
+        """Colorea las celdas de las columnas «Productividad»: verde si alcanza el punto de evaluación, rojo si no."""
+        columnas = set()
+        for fila_ in ws.iter_rows(min_row=desde, max_row=hasta):
+            for c in fila_:
+                if c.value == "Productividad":
+                    columnas.add((c.row, c.column))
+        for fila_titulo, columna in columnas:
+            r_ = fila_titulo + 1
+            while ws.cell(r_, columna).border.left.style:
+                celda = ws.cell(r_, columna)
+                try:
+                    valor = float(str(celda.value).replace("%", "").strip())
+                except ValueError:
+                    valor = None
+                if valor is not None:
+                    bien = cumple_meta(valor)
+                    celda.fill = PatternFill("solid", fgColor="DDF3E4" if bien else "FBE0E0")
+                    celda.font = Font(bold=True, color="1B6E3A" if bien else "A61B1B")
+                r_ += 1
+
     # ----- Resumen
     ws = wb.active
     ws.title = "Resumen"
@@ -477,6 +518,8 @@ def _excel(datos):
                  [[p["servicio"], f"{p['centro']} · {p['desde']}", p["hacia"], p["estado_actual"]] for p in r["pasadas_a_brigada"]["lista"]])
     fila = tabla(ws, fila, f"No visitadas ({r['no_visitadas']['total']})", ["Servicio", "Brigada", "Situación"],
                  [[n["servicio"], f"{n['centro']} · {n['brigada']}", "Sigue sin visitar" if n["sigue_sin_visitar"] else "Ya atendida"] for n in r["no_visitadas"]["lista"]])
+    marcar_meta(ws, 1, fila)
+    ws.cell(3, 8, f"Productividad: punto de evaluación {settings.META_PRODUCTIVIDAD} % (verde: lo alcanza; rojo: por debajo)").font = Font(italic=True, color="555555")
     fila = tabla(ws, fila, f"Reincidencias ({r['reincidencias']['total']})", ["Servicio", "Órdenes", "Operarios que lo trabajaron"],
                  [[x["servicio"], x["ordenes"], ", ".join(x["operarios"])] for x in r["reincidencias"]["lista"]])
     fila = tabla(ws, fila, "Incidencias por causa", ["Causa", "Tiempo (min)", "Hojas"], [[f"{i['codigo']} · {i['nombre']}", i["minutos"], i["hojas"]] for i in r["incidencias"]])

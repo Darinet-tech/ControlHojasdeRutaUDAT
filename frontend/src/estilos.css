@@ -227,3 +227,7 @@ a.boton { text-decoration: none; color: var(--texto); display: inline-block; }
 .fila-accion-sin_ok td:first-child, .fila-accion-pasada_a_brigada td:first-child, .fila-accion-anulada td:first-child { border-left: 4px solid var(--aviso); }
 .accion-en-modal { border: 0; border-left: 0; padding: 0; margin: 0; background: transparent; }
 .boton-desactivado { opacity: .45; cursor: not-allowed; user-select: none; }
+/* Productividad frente al punto de evaluación (90 %): el color se acompaña de texto y símbolo. */
+.estadistica-nivel { font-size: .78rem; font-weight: 600; }
+.estadistica-cumple { border-color: var(--ok); } .estadistica-cumple .estadistica-nivel { color: var(--ok); }
+.estadistica-bajo { border-color: var(--mal); } .estadistica-bajo .estadistica-nivel { color: var(--mal); }

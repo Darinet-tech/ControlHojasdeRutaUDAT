@@ -150,6 +150,10 @@ class Command(BaseCommand):
                 tipo = modelo.objects.filter(codigo=codigo).first()
                 if tipo and not normas.objects.filter(**{campo: tipo}).exists():
                     normas.objects.create(minutos=normas_2026.minutos(tiempo), vigente_desde=normas_2026.INICIO, nota=normas_2026.NOTA, **{campo: tipo})
+        gabinete = TipoMantenimiento.objects.filter(codigo="GAB").first()
+        if gabinete and not NormaMantenimiento.objects.filter(tipo_mantenimiento=gabinete).exists():
+            NormaMantenimiento.objects.create(tipo_mantenimiento=gabinete, minutos=normas_2026.minutos(normas_2026.GAB_POR_REGLETA),
+                                              vigente_desde=normas_2026.INICIO, nota=normas_2026.NOTA_GAB)
         self._roles()
         self.stdout.write(self.style.SUCCESS(
             f"Claves creadas: {creadas}; total en catálogo: {Clave.objects.count()}; "

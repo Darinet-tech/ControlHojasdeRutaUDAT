@@ -27,6 +27,9 @@ def norma_accion(accion):
     """Minutos normados de una acción. Si es una orden de trabajo, el de su trabajo de mayor norma; en las demás,
     el de su clave MAYOR (regla del negocio). None si ninguno tiene norma."""
     fecha = accion.hoja.fecha
+    if accion.es_gabinete:  # norma por regleta trabajada; sin regletas registradas todavía no hay tiempo normado
+        por_regleta = norma_de_tipo(accion.orden, fecha)
+        return round(por_regleta * accion.regletas, 4) if por_regleta is not None and accion.regletas else None
     por_tipo = norma_de_tipo(accion.orden, fecha)  # órdenes de servicio y preventivos: la norma es la de su tipo (A 50, MPPE 30...)
     if por_tipo is not None:
         return por_tipo
@@ -243,6 +246,8 @@ def certificar_ok(accion, usuario, cliente_contactado, ahora=None):
     En una orden de servicio el OK es el propio resultado (ejecutada): no lleva clave; las claves de orden (1 a 19) son los motivos de NO ejecutarla."""
     if accion.orden.categoria != OrdenServicio.Categoria.ORDEN_SERVICIO:
         _exigir_trabajo_registrado(accion, "dar el OK")
+    if accion.es_gabinete and not accion.regletas:
+        raise ValidationError("Indique cuántas regletas se trabajaron antes de dar el OK.")
     cliente_contactado = (cliente_contactado or "").strip()
     if not cliente_contactado and accion.orden.categoria == OrdenServicio.Categoria.CORRECTIVO:
         raise ValidationError("Indique el cliente con quien se certificó el servicio.")  # el cliente es obligatorio solo en correctivos
@@ -371,6 +376,8 @@ def obtener_orden(categoria, usuario, numero_servicio="", tipo_mantenimiento=Non
     requeridos = CAMPOS_POR_CATEGORIA[categoria]
     faltan = [NOMBRES_DE_CAMPOS[c] for c in sorted(requeridos) if not datos[c]]
     if faltan:
+        if tipo_mantenimiento is not None and tipo_mantenimiento.fila_parte == "GABINETES":
+            faltan = ["el nombre del gabinete" if f == NOMBRES_DE_CAMPOS["numero_servicio"] else f for f in faltan]
         raise ValidationError(f"En {etiquetas[categoria].lower()} hay que indicar: {', '.join(faltan)}.")
     sobran = [NOMBRES_DE_CAMPOS[c] for c in datos if c not in requeridos and datos[c]]
     if sobran:
@@ -532,6 +539,8 @@ def cambiar_tipo_de_accion(accion, usuario, categoria, tipo_mantenimiento=None, 
             nueva.estado, nueva.brigada_pendiente = OrdenServicio.Estado.ABIERTA, None
             nueva.save(update_fields=["estado", "brigada_pendiente", "modificado_en"])
         accion.orden, accion.modificado_por = nueva, usuario
+        if not accion.es_gabinete:
+            accion.regletas_mantenidas = accion.regletas_reparadas = accion.regletas_sustituidas = 0
         accion.save()
         _restaurar_estado_orden(orden)  # la orden anterior vuelve a su estado (o se borra si se creó solo para esta acción)
     return accion

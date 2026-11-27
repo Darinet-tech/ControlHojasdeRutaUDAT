@@ -47,8 +47,8 @@ class NormasOficialesTests(TestCase):
 
     def test_preventivos_y_claves(self):
         mant = {t.codigo: NormaMantenimiento.vigente(t, HOY) for t in TipoMantenimiento.objects.all()}
+        self.assertEqual(texto_norma(mant.pop("GAB").minutos), "50")  # por regleta trabajada
         self.assertEqual({c: texto_norma(n.minutos) for c, n in mant.items() if n}, {"MPI": "40", "MPPI": "24:02", "MPPE": "27:48", "MTP": "22:47"})
-        self.assertIsNone(mant["GAB"])  # pendiente de definir: se mide por regletas
         self.assertEqual([self.clave(c) for c in ("23", "24", "07-ZC", "07-EC", "21-R", "21-C", "22-G", "26-M")],
                          ["15:46", "15:46", "16:18", "16:18", "22:37", "9:25", "24:27", "24"])
 

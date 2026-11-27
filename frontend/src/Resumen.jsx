@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from 'react';
 import { api, fechaLarga, hoy, minutosATexto, porcentaje } from './api.js';
-import { Aviso, Chip, Estadistica } from './componentes.jsx';
+import { Aviso, Chip, Estadistica, META_PRODUCTIVIDAD, Productividad, nivelProductividad } from './componentes.jsx';
 
 const PERIODOS = [['dia', 'Día'], ['mes', 'Mes'], ['anio', 'Año']];
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -34,7 +34,7 @@ const columnasDeIndicadores = [
   { titulo: 'Servicios', valor: (f) => f.acciones },
   { titulo: 'Con OK', valor: (f) => f.ok },
   { titulo: 'Efectividad', valor: (f) => porcentaje(f.efectividad_pct) },
-  { titulo: 'Productividad', valor: (f) => porcentaje(f.productividad_pct) },
+  { titulo: 'Productividad', valor: (f) => <Productividad valor={f.productividad_pct} texto={porcentaje(f.productividad_pct)} /> },
   { titulo: 'Ocupación', valor: (f) => porcentaje(f.ocupacion_pct) },
 ];
 
@@ -57,6 +57,7 @@ function Barras({ datos, etiqueta }) {
       <div className="fila fila-chips leyenda">
         <span className="leyenda-efectividad">■ Efectividad</span>
         <span className="leyenda-productividad">■ Productividad</span>
+        <span className="suave">Punto de evaluación de la productividad: {META_PRODUCTIVIDAD} %</span>
         <span className="suave">{etiqueta}</span>
       </div>
     </>
@@ -208,7 +209,7 @@ export default function Resumen({ catalogos, abrirHoja }) {
             <Estadistica etiqueta="Servicios" valor={t.acciones} ayuda="Servicios asignados, incluidos los no visitados" />
             <Estadistica etiqueta="Efectivas (con OK)" valor={t.ok} />
             <Estadistica etiqueta="Efectividad" valor={porcentaje(t.efectividad_pct)} ayuda="Con OK entre atendidas (las no visitadas no cuentan)" />
-            <Estadistica etiqueta="Productividad" valor={porcentaje(t.productividad_pct)} ayuda="Tiempo normado de las acciones efectivas entre el tiempo real" />
+            <Estadistica etiqueta="Productividad" valor={porcentaje(t.productividad_pct)} nivel={nivelProductividad(t.productividad_pct)} ayuda="Tiempo normado de las acciones efectivas entre el tiempo real" />
             <Estadistica etiqueta="Tiempo real" valor={minutosATexto(t.tiempo_real_min)} />
             <Estadistica etiqueta="Incidencias" valor={minutosATexto(t.incidencias_min)} ayuda="Suma por hoja de ruta" />
             <Estadistica etiqueta="Ocupación" valor={porcentaje(t.ocupacion_pct)} ayuda="Tiempo real entre tiempo disponible (420 min − incidencias) × operarios" />
@@ -237,7 +238,7 @@ export default function Resumen({ catalogos, abrirHoja }) {
                 { titulo: 'Servicios', valor: (h) => h.acciones },
                 { titulo: 'OK / sin OK / pasadas / no visit.', valor: (h) => `${h.ok} / ${h.sin_ok} / ${h.pasadas} / ${h.no_visitadas}` },
                 { titulo: 'Efectividad', valor: (h) => porcentaje(h.efectividad_pct) },
-                { titulo: 'Productividad', valor: (h) => porcentaje(h.productividad_pct) },
+                { titulo: 'Productividad', valor: (h) => <Productividad valor={h.productividad_pct} texto={porcentaje(h.productividad_pct)} /> },
                 { titulo: 'Estado', valor: (h) => (h.cerrada ? 'Cerrada' : 'Abierta') },
               ]} />
             </section>

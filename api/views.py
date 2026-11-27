@@ -370,6 +370,9 @@ class AccionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Upd
         es_ot = accion.orden.categoria == OrdenServicio.Categoria.ORDEN_TRABAJO
         if es_ot and request.data.get("claves"):
             raise ErrorDjango("Una orden de trabajo no lleva claves de cierre: seleccione sus trabajos.")
+        if not accion.es_gabinete and any(str(request.data.get(c, "0")) not in ("", "0") for c in
+                                          ("regletas_mantenidas", "regletas_reparadas", "regletas_sustituidas")):
+            raise ErrorDjango("Las regletas solo se registran en un mantenimiento de gabinete.")
         if not es_ot and request.data.get("trabajos"):
             raise ErrorDjango("Los trabajos solo corresponden a las órdenes de trabajo.")
         datos = s.ActualizarAccionSerializer(accion, data=request.data, partial=True)

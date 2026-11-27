@@ -16,7 +16,10 @@ TIPOS_ORDEN = {
     "CL": "29:19", "CMONT": "29:19", "CMIS": "29:19", "CA": "29:19", "CVIV": "23:42", "CTS": "24:00", "CD": "24:00",
     "AS": "31:58", "REC": "31:58",
 }
-MANTENIMIENTOS = {"MPI": "40:00", "MPPI": "24:02", "MPPE": "27:48", "MTP": "22:47"}  # GAB: pendiente de definir (se mide por regletas)
+MANTENIMIENTOS = {"MPI": "40:00", "MPPI": "24:02", "MPPE": "27:48", "MTP": "22:47"}
+# Gabinetes: no vienen en la instrucción. Acordado con la Mesa de Prueba: 50 min por cada regleta trabajada (mantenimiento, reparación o sustitución).
+GAB_POR_REGLETA = "50:00"
+NOTA_GAB = "Por regleta trabajada"
 
 CLAVES = {
     "01-C": "16:00", "02-C": "16:00", "01-R": "18:29", "02-R": "18:29", "16-Z": "18:29", "24": "15:46",
