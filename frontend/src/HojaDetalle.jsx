@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, fechaLarga, formatearHora, minutosATexto, porcentaje, puede } from './api.js';
+import { api, fechaLarga, formatearHora, minutosATexto, normaATexto, porcentaje, puede } from './api.js';
 import { Aviso, Chip, Estadistica, Modal, tipoDeClasificacion } from './componentes.jsx';
 
 // ---------------------------------------------------------------- selector de claves
@@ -31,7 +31,7 @@ function SelectorDeClaves({ catalogo, seleccionadas, alCambiar, deshabilitado })
         {seleccionadas.length === 0 && <span className="suave">Sin claves registradas</span>}
         {seleccionadas.map((c) => (
           <Chip key={c.id} tipo={tipoDeClasificacion[c.clasificacion]} titulo={c.descripcion}>
-            {c.codigo} · {c.norma_min ?? '?'} min
+            {c.codigo} · {normaATexto(c.norma_min)} min
             {!deshabilitado && (
               <button className="chip-quitar" aria-label={`Quitar clave ${c.codigo}`} onClick={() => alCambiar(ids.filter((i) => i !== c.id))}>×</button>
             )}
@@ -56,7 +56,7 @@ function SelectorDeClaves({ catalogo, seleccionadas, alCambiar, deshabilitado })
                     <input type="checkbox" checked={marcadas.has(c.id)} onChange={() => alternar(c.id)} />
                     <Chip tipo={tipoDeClasificacion[c.clasificacion]}>{c.codigo}</Chip>
                     <span>{c.descripcion || <em>(sin descripción)</em>}</span>
-                    <small className="suave">{c.norma_min ?? '?'} min</small>
+                    <small className="suave">{normaATexto(c.norma_min)} min</small>
                   </label>
                 ))}
               </div>
@@ -84,7 +84,7 @@ function SelectorDeTrabajos({ catalogo, seleccionados, alCambiar, deshabilitado 
         {seleccionados.length === 0 && <span className="suave">Sin trabajos seleccionados</span>}
         {seleccionados.map((t) => (
           <Chip key={t.id} tipo="info">
-            {t.nombre}{t.norma_min ? ` · ${t.norma_min} min` : ' · sin norma'}
+            {t.nombre}{t.norma_min ? ` · ${normaATexto(t.norma_min)} min` : ' · sin norma'}
             {!deshabilitado && <button className="chip-quitar" aria-label={`Quitar trabajo ${t.nombre}`} onClick={() => alCambiar(ids.filter((i) => i !== t.id))}>×</button>}
           </Chip>
         ))}
@@ -316,7 +316,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
 
       {abierta && accion.norma_min !== null && (
         <p className="suave">
-          Norma de tiempo: <strong>{accion.norma_min} min</strong> ({esOT ? 'trabajo de mayor norma' : 'clave mayor'})
+          Norma de tiempo: <strong>{normaATexto(accion.norma_min)} min</strong> ({esOT ? 'trabajo de mayor norma' : 'clave mayor'})
           {accion.sugerencia_ok && !esOT && ' · Sugerencia: las claves son compatibles con OK'}
         </p>
       )}
@@ -328,7 +328,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
       {!abierta && accion.estado !== 'NO_VISITADA' && (
         <p className="suave">
           Cerrada a las {formatearHora(accion.hora_fin)} · tiempo real {minutosATexto(accion.tiempo_real_min)}
-          {accion.norma_min !== null && ` · norma ${accion.norma_min} min`}
+          {accion.norma_min !== null && ` · norma ${normaATexto(accion.norma_min)} min`}
           {accion.ok && accion.cliente_contactado && ` · certificada con: ${accion.cliente_contactado}`}
           {accion.posterior_al_corte && ' · posterior al corte de las 16:00 (va en el complemento del parte siguiente)'}
         </p>
@@ -861,6 +861,7 @@ export default function HojaDetalle({ id, usuario, catalogos, volver }) {
       </div>
       <p className="suave capitalizar">
         {fechaLarga(hoja.fecha)} · {hoja.operarios_nombres.join(', ')}{hoja.vehiculo_chapa && ` · vehículo ${hoja.vehiculo_chapa}`} · jornada desde las {hoja.hora_inicio?.slice(0, 5)}
+        {hoja.justificacion_inicio && ` (inicio justificado: ${hoja.justificacion_inicio})`}
       </p>
 
       <Aviso alCerrar={() => setError('')}>{error}</Aviso>

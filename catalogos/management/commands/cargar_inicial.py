@@ -13,7 +13,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from catalogos.claves_orden import crear as crear_claves_de_orden
-from catalogos.normas_tipo import crear as crear_normas_por_tipo
+from catalogos import normas_2026
 from catalogos.parte_datos import completar as completar_filas_parte
 from catalogos.models import (Brigada, CausaIncidencia, Centro, Clave, GrupoClave, NormaMantenimiento, NormaTiempo, NormaTipoOrden,
                               TipoMantenimiento, TipoOrden,
@@ -135,12 +135,21 @@ class Command(BaseCommand):
                 clave = Clave.objects.create(
                     codigo=codigo, grupo=grupo, descripcion=fila["descripcion"], clasificacion=clas, revisar=revisar
                 )
-                NormaTiempo.objects.create(clave=clave, minutos=int(fila["tiempo_min"]), vigente_desde=INICIO_NORMAS)
+                nueva = normas_2026.CLAVES.get(codigo)  # las de la instrucción vigente; las demás claves, las del catálogo anterior
+                NormaTiempo.objects.create(clave=clave, vigente_desde=INICIO_NORMAS,
+                                           minutos=normas_2026.minutos(nueva) if nueva else int(fila["tiempo_min"]),
+                                           nota=normas_2026.NOTA if nueva else "")
                 creadas += 1
 
         crear_claves_de_orden(Clave, GrupoClave)  # claves de cierre de las órdenes de servicio (1 a 19)
         completar_filas_parte(Clave, TipoOrden, TipoMantenimiento)  # tipos del parte (MTP, GAB, CMIS) y fila de cada clave/tipo
-        crear_normas_por_tipo(TipoOrden, TipoMantenimiento, NormaTipoOrden, NormaMantenimiento)  # normas de las órdenes y de los preventivos
+        normas_2026.crear_tipos_nuevos(TipoOrden)  # CPU y BS
+        for modelo, normas, campo, tabla in ((TipoOrden, NormaTipoOrden, "tipo_orden", normas_2026.TIPOS_ORDEN),
+                                             (TipoMantenimiento, NormaMantenimiento, "tipo_mantenimiento", normas_2026.MANTENIMIENTOS)):
+            for codigo, tiempo in tabla.items():  # solo donde no hay ninguna norma: no se pisan los cambios del administrador
+                tipo = modelo.objects.filter(codigo=codigo).first()
+                if tipo and not normas.objects.filter(**{campo: tipo}).exists():
+                    normas.objects.create(minutos=normas_2026.minutos(tiempo), vigente_desde=normas_2026.INICIO, nota=normas_2026.NOTA, **{campo: tipo})
         self._roles()
         self.stdout.write(self.style.SUCCESS(
             f"Claves creadas: {creadas}; total en catálogo: {Clave.objects.count()}; "

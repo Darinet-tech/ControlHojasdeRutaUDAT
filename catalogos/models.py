@@ -1,6 +1,8 @@
 from django.db import models
 from django.db.models import Q
 
+from .campos import MinutosNorma, texto_norma
+
 
 class Brigada(models.Model):
     nombre = models.CharField(max_length=60, unique=True)
@@ -86,7 +88,7 @@ class TipoOrden(models.Model):
     class FilaParte(models.TextChoices):
         ALTAS = "ALTAS", "Altas ejecutadas (A)"
         TRASLADOS = "TRASLADOS", "Traslados altas (TA)"
-        BAJAS = "BAJAS", "Bajas (B)"
+        BAJAS = "BAJAS", "Bajas (B, BS)"
         TE_TI = "TE_TI", "TE – TI"
         MISC = "MISC", "Misceláneas"
         TXD = "TXD", "TxD"
@@ -189,9 +191,10 @@ class NormaTiempo(models.Model):
         TipoOrden, null=True, blank=True, on_delete=models.CASCADE, related_name="normas",
         help_text="Vacío = norma general para cualquier tipo de orden.",
     )
-    minutos = models.PositiveSmallIntegerField()
+    minutos = MinutosNorma()
     vigente_desde = models.DateField()
     vigente_hasta = models.DateField(null=True, blank=True)
+    nota = models.CharField("situación", max_length=60, blank=True, help_text="Ej.: En proceso de firma.")
 
     class Meta:
         verbose_name = "norma de tiempo"
@@ -204,7 +207,7 @@ class NormaTiempo(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.clave} = {self.minutos} min"
+        return f"{self.clave} = {texto_norma(self.minutos)} min"
 
     @classmethod
     def vigente(cls, clave, tipo_orden, fecha):
@@ -265,9 +268,10 @@ class NormaTipoOrden(models.Model):
     Es el tiempo que se norma a una orden ejecutada (con OK): las órdenes de servicio no se normas por claves de reparación."""
 
     tipo_orden = models.ForeignKey(TipoOrden, on_delete=models.CASCADE, related_name="normas_del_tipo")
-    minutos = models.PositiveSmallIntegerField()
+    minutos = MinutosNorma()
     vigente_desde = models.DateField()
     vigente_hasta = models.DateField(null=True, blank=True)
+    nota = models.CharField("situación", max_length=60, blank=True, help_text="Ej.: En proceso de firma.")
 
     class Meta:
         verbose_name = "norma de tiempo de un tipo de orden"
@@ -276,7 +280,7 @@ class NormaTipoOrden(models.Model):
         constraints = [models.UniqueConstraint(fields=["tipo_orden", "vigente_desde"], name="norma_tipo_orden_unica_por_inicio")]
 
     def __str__(self):
-        return f"{self.tipo_orden} = {self.minutos} min"
+        return f"{self.tipo_orden} = {texto_norma(self.minutos)} min"
 
     @classmethod
     def vigente(cls, tipo_orden, fecha):
@@ -288,9 +292,10 @@ class NormaMantenimiento(models.Model):
     """Norma de tiempo (minutos) de un tipo de mantenimiento preventivo (MPI 55, MPPE 30...), con vigencia."""
 
     tipo_mantenimiento = models.ForeignKey(TipoMantenimiento, on_delete=models.CASCADE, related_name="normas")
-    minutos = models.PositiveSmallIntegerField()
+    minutos = MinutosNorma()
     vigente_desde = models.DateField()
     vigente_hasta = models.DateField(null=True, blank=True)
+    nota = models.CharField("situación", max_length=60, blank=True, help_text="Ej.: En proceso de firma.")
 
     class Meta:
         verbose_name = "norma de tiempo de un mantenimiento"
@@ -299,7 +304,7 @@ class NormaMantenimiento(models.Model):
         constraints = [models.UniqueConstraint(fields=["tipo_mantenimiento", "vigente_desde"], name="norma_mantenimiento_unica_por_inicio")]
 
     def __str__(self):
-        return f"{self.tipo_mantenimiento} = {self.minutos} min"
+        return f"{self.tipo_mantenimiento} = {texto_norma(self.minutos)} min"
 
     @classmethod
     def vigente(cls, tipo_mantenimiento, fecha):
@@ -311,9 +316,10 @@ class NormaTrabajo(models.Model):
     """Norma de tiempo (minutos) de un tipo de trabajo, con vigencia: igual que las normas de las claves."""
 
     tipo_trabajo = models.ForeignKey(TipoTrabajo, on_delete=models.CASCADE, related_name="normas")
-    minutos = models.PositiveSmallIntegerField()
+    minutos = MinutosNorma()
     vigente_desde = models.DateField()
     vigente_hasta = models.DateField(null=True, blank=True)
+    nota = models.CharField("situación", max_length=60, blank=True, help_text="Ej.: En proceso de firma.")
 
     class Meta:
         verbose_name = "norma de tiempo de un trabajo"
@@ -322,7 +328,7 @@ class NormaTrabajo(models.Model):
         constraints = [models.UniqueConstraint(fields=["tipo_trabajo", "vigente_desde"], name="norma_trabajo_unica_por_inicio")]
 
     def __str__(self):
-        return f"{self.tipo_trabajo} = {self.minutos} min"
+        return f"{self.tipo_trabajo} = {texto_norma(self.minutos)} min"
 
     @classmethod
     def vigente(cls, tipo_trabajo, fecha):

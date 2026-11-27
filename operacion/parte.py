@@ -23,7 +23,7 @@ GRUPOS = [
                     ("rep_nhp", "Reparadas Nauta Hogar Plus (NH+)"), ("pend_par", "Pendiente de Par"), ("otras_c", "Otras causas")]),
     ("Preventivo", [("mant_red", "Mantenimiento Red de Abonados"), ("mant_tp", "Mantenimiento Telefonía Pública (MTP)"),
                     ("gabinetes", "Gabinetes"), ("otras_p", "Otras causas")]),
-    ("Órdenes de Servicio", [("altas", "Altas ejecutadas (A)"), ("traslados", "Traslados Altas (TA)"), ("bajas", "Bajas (B)"),
+    ("Órdenes de Servicio", [("altas", "Altas ejecutadas (A)"), ("traslados", "Traslados Altas (TA)"), ("bajas", "Bajas (B, BS)"),
                              ("nauta_hogar", "Nauta Hogar (NH)"), ("te_ti", "TE – TI"), ("misc", "Misceláneas"), ("nula", "NULA"),
                              ("txd", "TxD"), ("otras_os", "Otras causas")]),
     ("Órdenes de Trabajo", [("ot_ok", "Ejecutadas (OK)"), ("ot_curso", "En ejecución"), ("ot_pend", "Pendientes de ejecución")]),

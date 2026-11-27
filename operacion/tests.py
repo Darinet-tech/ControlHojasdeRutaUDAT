@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from io import StringIO
 
+from catalogos import normas_de_prueba
 from catalogos.models import Brigada, CausaIncidencia, Centro, Clave, Operario
 
 from .models import Accion, HojaDeRuta, Incidencia, OrdenServicio
@@ -34,6 +35,7 @@ class BaseOperacion(TestCase):
     @classmethod
     def setUpTestData(cls):
         call_command("cargar_inicial", verbosity=0)
+        normas_de_prueba.fijar()
         cls.user = get_user_model().objects.create_user("probador1")
         cls.rep = Brigada.objects.get(nombre="Red de Abonados")
         cls.cable = Brigada.objects.get(nombre="Cable")

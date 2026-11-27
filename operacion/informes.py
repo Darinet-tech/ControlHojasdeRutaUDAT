@@ -13,6 +13,7 @@ from django.conf import settings
 from django.db.models import Prefetch
 from django.utils import timezone
 
+from catalogos.campos import texto_norma
 from catalogos.models import Clave
 
 from .models import Accion, HojaDeRuta
@@ -132,7 +133,7 @@ def reunir_datos(fecha, brigada=None, centro=None, solo_hoja=None, usuario=None,
             "id": h.pk, "fecha": h.fecha, "brigada": h.brigada.nombre, "centros": h.etiqueta_centros,
             "centros_claves": "-".join(sorted(c.codigo for c in h.centros.all())), "operarios_claves": "-".join(c for c, _ in operarios),
             "pareja": " ".join(c for c, _ in operarios), "operarios": operarios, "vehiculo": h.vehiculo.chapa if h.vehiculo else "",
-            "hora_inicio": h.hora_inicio, "observaciones": h.observaciones, "trabajos_realizados": h.trabajos_realizados, "cerrada": h.cerrada,
+            "hora_inicio": h.hora_inicio, "justificacion_inicio": h.justificacion_inicio, "observaciones": h.observaciones, "trabajos_realizados": h.trabajos_realizados, "cerrada": h.cerrada,
             "cerrada_en": h.cerrada_en, "cerrada_por": nombre_de(h.cerrada_por), "creada_por": nombre_de(h.creado_por),
             "acciones": por_hoja[h.pk], "indicadores": indicadores.get(h.pk, {}),
             "incidencias": [{"causa": str(i.causa), "inicio": hora_corta(i.inicio), "fin": hora_corta(i.fin) if i.fin else "en curso",
@@ -328,7 +329,7 @@ def _pdf(datos):
             estilos = []
             for n, a in _filas(h):
                 filas.append([str(n), P(a["descripcion"] + (f" · Obs.: {a['observaciones']}" if a["observaciones"] else "")), a["hora"], P(a["cliente"]), P(a["resultado"]),
-                              "" if a["tiempo_real"] is None else str(a["tiempo_real"]), "" if a["norma"] is None else str(a["norma"])])
+                              "" if a["tiempo_real"] is None else str(a["tiempo_real"]), texto_norma(a["norma"])])
                 color = {"OK": verde, "SIN_OK": colors.HexColor("#b42318"), "PASADA_A_BRIGADA": colors.HexColor("#8a5a00"),
                          "NO_VISITADA": colors.HexColor("#4b5666"), "EN_CURSO": azul, "ANULADA": colors.HexColor("#4b5666")}[a["estado"]]
                 estilos.append(("TEXTCOLOR", (4, len(filas) - 1), (4, len(filas) - 1), color))
@@ -350,6 +351,9 @@ def _pdf(datos):
                 story.append(Paragraph("Incidencias", h2))
                 story.append(tabla([["Causa", "Desde", "Hasta", "Tiempo"]] + [[P(i["causa"]), i["inicio"], i["fin"], minutos_a_texto(i["minutos"])] for i in h["incidencias"]],
                                    [90 * mm, 28 * mm, 28 * mm, 34 * mm]))
+            if h["justificacion_inicio"]:
+                story.append(Paragraph("Inicio de jornada después de las 08:00", h2))
+                story.append(Paragraph(esc(f"Desde las {h['hora_inicio']:%H:%M}. Justificación: {h['justificacion_inicio']}"), base))
             if h["trabajos_realizados"]:
                 story.append(Paragraph("Trabajos realizados", h2))
                 story.append(Paragraph(esc(h["trabajos_realizados"]).replace("\n", "<br/>"), base))

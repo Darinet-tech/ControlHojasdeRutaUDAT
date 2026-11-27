@@ -8,6 +8,7 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from catalogos import normas_de_prueba
 from catalogos.models import Brigada, CausaIncidencia, Centro, Clave, Operario, TipoMantenimiento, TipoOrden, TipoTrabajo
 from operacion.models import HojaDeRuta
 from operacion.tests import BaseOperacion, crear_hoja
@@ -19,6 +20,7 @@ class BaseAPI(TestCase):
     @classmethod
     def setUpTestData(cls):
         call_command("cargar_inicial", verbosity=0)
+        normas_de_prueba.fijar()
         User = get_user_model()
         cls.probador = User.objects.create_user("probador", password="clave123")
         cls.probador.groups.add(Group.objects.get(name="Probador"))
@@ -40,7 +42,7 @@ class BaseAPI(TestCase):
         return Clave.objects.get(codigo=codigo).pk
 
     def crear_hoja(self, brigada=None, operarios=None, fecha=None):
-        r = self.api.post("/api/hojas/", {"brigada": (brigada or self.rep).pk,
+        r = self.api.post("/api/hojas/", {"justificacion_inicio": "prueba", "brigada": (brigada or self.rep).pk,
                                           "centros": [self.ng.pk], "operarios": operarios or [self.op1.pk, self.op2.pk]},
                           format="json")
         self.assertEqual(r.status_code, 201, r.data)
@@ -74,7 +76,7 @@ class SesionYPermisosTests(BaseAPI):
         api = APIClient(enforce_csrf_checks=True)
         api.post("/api/auth/login/", {"username": "probador", "password": "clave123"})
         token = api.get("/api/auth/me/").cookies["mesa_csrftoken"].value
-        datos = {"fecha": "2026-10-01", "brigada": self.rep.pk, "centros": [self.ng.pk], "operarios": [self.op1.pk]}
+        datos = {"justificacion_inicio": "prueba", "fecha": "2026-10-01", "brigada": self.rep.pk, "centros": [self.ng.pk], "operarios": [self.op1.pk]}
         self.assertEqual(api.post("/api/hojas/", datos, format="json").status_code, 403)  # sin token
         self.assertEqual(api.post("/api/hojas/", datos, format="json", HTTP_X_CSRFTOKEN=token).status_code, 201)
 
@@ -82,7 +84,7 @@ class SesionYPermisosTests(BaseAPI):
         self.crear_hoja()
         self.api.force_authenticate(self.jefe)
         self.assertEqual(self.api.get("/api/hojas/").status_code, 200)
-        r = self.api.post("/api/hojas/", {"fecha": "2026-10-01", "brigada": self.rep.pk, "centros": [self.ng.pk],
+        r = self.api.post("/api/hojas/", {"justificacion_inicio": "prueba", "fecha": "2026-10-01", "brigada": self.rep.pk, "centros": [self.ng.pk],
                                           "operarios": [self.op1.pk]}, format="json")
         self.assertEqual(r.status_code, 403)
 
@@ -154,7 +156,7 @@ class FlujoDelProbadorTests(BaseAPI):
 
     def test_la_fecha_y_la_hora_de_inicio_las_pone_el_servidor(self):
         antes = timezone.localtime().replace(microsecond=0)
-        r = self.api.post("/api/hojas/", {"fecha": "2026-01-01", "hora_inicio": "03:00", "brigada": self.rep.pk,
+        r = self.api.post("/api/hojas/", {"justificacion_inicio": "prueba", "fecha": "2026-01-01", "hora_inicio": "03:00", "brigada": self.rep.pk,
                                           "centros": [self.ng.pk], "operarios": [self.op1.pk]}, format="json")
         despues = timezone.localtime()
         self.assertEqual(r.status_code, 201, r.data)
@@ -164,7 +166,7 @@ class FlujoDelProbadorTests(BaseAPI):
     def test_no_se_crean_hojas_despues_de_la_hora_de_cierre(self):
         tarde = timezone.make_aware(datetime.combine(timezone.localdate(), time(21, 5)))
         with mock.patch("django.utils.timezone.now", return_value=tarde), self.settings(HORA_CIERRE_AUTOMATICO=time(21, 0)):
-            r = self.api.post("/api/hojas/", {"brigada": self.rep.pk, "centros": [self.ng.pk], "operarios": [self.op3.pk]}, format="json")
+            r = self.api.post("/api/hojas/", {"justificacion_inicio": "prueba", "brigada": self.rep.pk, "centros": [self.ng.pk], "operarios": [self.op3.pk]}, format="json")
         self.assertEqual(r.status_code, 400)
         self.assertIn("21:00", str(r.data))
 
@@ -233,7 +235,7 @@ class FlujoDelProbadorTests(BaseAPI):
         self.assertEqual(self.api.post(f"/api/acciones/{a}/ok/", {"cliente_contactado": "C"}, format="json").status_code, 400)
 
     def test_la_hoja_necesita_operarios(self):
-        r = self.api.post("/api/hojas/", {"fecha": "2026-10-01", "brigada": self.rep.pk, "centros": [self.ng.pk],
+        r = self.api.post("/api/hojas/", {"justificacion_inicio": "prueba", "fecha": "2026-10-01", "brigada": self.rep.pk, "centros": [self.ng.pk],
                                           "operarios": []}, format="json")
         self.assertEqual(r.status_code, 400)
 
@@ -324,7 +326,7 @@ class ApiNavegableTests(BaseAPI):
 class OperarioUnaHojaPorDiaAPITests(BaseAPI):
     def test_no_se_puede_crear_otra_hoja_con_un_operario_ocupado(self):
         primera = self.crear_hoja(operarios=[self.op1.pk])
-        r = self.api.post("/api/hojas/", {"brigada": self.cable.pk, "centros": [self.ng.pk],
+        r = self.api.post("/api/hojas/", {"justificacion_inicio": "prueba", "brigada": self.cable.pk, "centros": [self.ng.pk],
                                           "operarios": [self.op1.pk, self.op2.pk]}, format="json")
         self.assertEqual(r.status_code, 400)
         self.assertIn("Operario Uno ya está en la hoja NG · Red de Abonados", r.data["operarios"][0])
@@ -431,7 +433,7 @@ class VariosCentrosAPITests(BaseAPI):
         self.fo = Centro.objects.get(codigo="FO")
 
     def hoja_con(self, centros, operarios=None, fecha="2026-10-05"):
-        r = self.api.post("/api/hojas/", {"brigada": self.rep.pk, "centros": [c.pk for c in centros],
+        r = self.api.post("/api/hojas/", {"justificacion_inicio": "prueba", "brigada": self.rep.pk, "centros": [c.pk for c in centros],
                                           "operarios": operarios or [self.op1.pk]}, format="json")
         self.assertEqual(r.status_code, 201, r.data)
         HojaDeRuta.objects.filter(pk=r.data["id"]).update(fecha=fecha)  # simula un día pasado (la API siempre crea la hoja con la fecha de hoy)
@@ -445,7 +447,7 @@ class VariosCentrosAPITests(BaseAPI):
         self.assertEqual(self.api.get(f"/api/hojas/?fecha=2026-10-05&centro={self.fo.pk}").data["count"], 0)
 
     def test_la_hoja_necesita_al_menos_un_centro(self):
-        r = self.api.post("/api/hojas/", {"fecha": "2026-10-05", "brigada": self.rep.pk, "centros": [],
+        r = self.api.post("/api/hojas/", {"justificacion_inicio": "prueba", "fecha": "2026-10-05", "brigada": self.rep.pk, "centros": [],
                                           "operarios": [self.op1.pk]}, format="json")
         self.assertEqual(r.status_code, 400)
         self.assertIn("centro", r.data["centros"][0].lower())
@@ -644,7 +646,7 @@ class CategoriasAPITests(BaseAPI):
         fi = Centro.objects.get(codigo="FI")
         HojaDeRuta.objects.filter(pk=self.hoja).update(fecha="2026-10-04")  # la hoja del setUp (de hoy) libera a los operarios
         for numero, centro in (("46-6201", self.ng), ("46-6202", fi)):
-            r = self.api.post("/api/hojas/", {"brigada": self.rep.pk, "centros": [centro.pk],
+            r = self.api.post("/api/hojas/", {"justificacion_inicio": "prueba", "brigada": self.rep.pk, "centros": [centro.pk],
                                                  "operarios": [self.op1.pk if centro == self.ng else self.op2.pk]}, format="json"); hoja = r.data["id"]
             HojaDeRuta.objects.filter(pk=hoja).update(fecha="2026-10-05")
             a = self.api.post(f"/api/hojas/{hoja}/acciones/", {"numero_servicio": numero}, format="json").data["id"]
@@ -653,7 +655,7 @@ class CategoriasAPITests(BaseAPI):
         base = f"/api/ordenes/pendientes/?brigada={self.cable.pk}"
         self.assertEqual(len(self.api.get(base).data), 2)
         self.assertEqual([o["etiqueta"] for o in self.api.get(f"{base}&centro={self.ng.pk}").data], ["46-6201"])
-        hoja_cable = self.api.post("/api/hojas/", {"brigada": self.cable.pk, "centros": [self.ng.pk],
+        hoja_cable = self.api.post("/api/hojas/", {"justificacion_inicio": "prueba", "brigada": self.cable.pk, "centros": [self.ng.pk],
                                                    "operarios": [self.cab1.pk]}, format="json").data["id"]
         r = self.api.post(f"/api/hojas/{hoja_cable}/asignar-pendientes/")
         self.assertEqual((r.status_code, [a["etiqueta"] for a in r.data], [a["centro_codigo"] for a in r.data]), (201, ["46-6201"], ["NG"]))

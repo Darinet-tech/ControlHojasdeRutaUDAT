@@ -9,6 +9,8 @@ function NuevaHoja({ catalogos, fecha, hojasDelDia, alCrear, alCancelar }) {
   const [vehiculo, setVehiculo] = useState('');
   const [elegidos, setElegidos] = useState(new Set());
   const [filtro, setFiltro] = useState('');
+  const [justificacion, setJustificacion] = useState('');
+  const [pideJustificacion, setPideJustificacion] = useState(() => { const a = new Date(); return a.getHours() * 60 + a.getMinutes() > 8 * 60; });
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [noVisitadas, setNoVisitadas] = useState([]);
@@ -61,6 +63,7 @@ function NuevaHoja({ catalogos, fecha, hojasDelDia, alCrear, alCancelar }) {
       const hoja = await api.post('/hojas/', {
         brigada: Number(brigada), centros: [...centrosElegidos], vehiculo: vehiculo ? Number(vehiculo) : null,
         operarios: [...elegidos], // la fecha y la hora de inicio las pone el servidor al crear la hoja
+        justificacion_inicio: justificacion.trim(),
       });
       if (traer && noVisitadas.length > 0) {
         try { await api.post(`/hojas/${hoja.id}/asignar-no-visitadas/`); } catch { /* la hoja ya existe: se pueden traer desde ella */ }
@@ -73,6 +76,7 @@ function NuevaHoja({ catalogos, fecha, hojasDelDia, alCrear, alCancelar }) {
       }
       alCrear(hoja.id);
     } catch (err) {
+      if (/jornada comienza/i.test(err.message)) setPideJustificacion(true); // manda la hora del servidor
       setError(err.message);
     } finally {
       setEnviando(false);
@@ -82,7 +86,7 @@ function NuevaHoja({ catalogos, fecha, hojasDelDia, alCrear, alCancelar }) {
   return (
     <form className="tarjeta" onSubmit={enviar} aria-label="Nueva hoja de ruta">
       <h2>Nueva hoja de ruta · {fechaLarga(fecha)}</h2>
-      <p className="suave">La fecha y la hora de inicio son las del momento en que se crea la hoja.</p>
+      <p className="suave">La fecha es la de hoy. La jornada cuenta desde las 08:00; si la hoja se crea más tarde, cuenta desde ese momento y hay que justificarlo.</p>
       <Aviso>{error}</Aviso>
       <div className="rejilla-formulario">
         <label>Brigada
@@ -97,6 +101,12 @@ function NuevaHoja({ catalogos, fecha, hojasDelDia, alCrear, alCancelar }) {
           </select>
         </label>
       </div>
+
+      {pideJustificacion && (
+        <label className="observaciones">¿Por qué la hoja se crea después de las 08:00? (obligatorio)
+          <textarea rows={2} maxLength={300} value={justificacion} onChange={(e) => setJustificacion(e.target.value)} required />
+        </label>
+      )}
 
       <fieldset>
         <legend>Centros donde trabajará la hoja ({centrosElegidos.size} seleccionado{centrosElegidos.size === 1 ? '' : 's'})</legend>

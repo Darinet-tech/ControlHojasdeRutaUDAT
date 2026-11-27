@@ -82,6 +82,17 @@ export function hoy() {
 export const formatearHora = (iso) =>
   iso ? new Date(iso).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', hour12: false }) : '—';
 
+// Norma de tiempo sin redondear: 49 → «49», 48.5667 → «48:34» (minutos:segundos), 0.42 → «0,42».
+export function normaATexto(min) {
+  if (min === null || min === undefined) return '?';
+  const segundos = min * 60;
+  if (Math.abs(segundos - Math.round(segundos)) < 0.01) {
+    const s = Math.round(segundos) % 60;
+    return s ? `${Math.floor(Math.round(segundos) / 60)}:${String(s).padStart(2, '0')}` : String(Math.round(segundos) / 60);
+  }
+  return String(Number(min.toFixed(4))).replace('.', ',');
+}
+
 export function minutosATexto(min) {
   if (min === null || min === undefined) return '—';
   const m = Math.round(min);

@@ -12,7 +12,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import ValidationError, PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
@@ -193,12 +193,22 @@ class HojaViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Creat
         ahora = timezone.localtime()
         if ahora.time() >= settings.HORA_CIERRE_AUTOMATICO:
             raise ErrorDjango(f"Después de las {settings.HORA_CIERRE_AUTOMATICO:%H:%M} no se crean hojas de ruta: ya terminó la jornada.")
-        serializer.save(fecha=ahora.date(), hora_inicio=ahora.time().replace(microsecond=0),
+        # La jornada empieza a las 08:00. Si la hoja se crea después, hay que justificarlo y cuenta desde la hora de creación.
+        hora, comienzo = ahora.time().replace(microsecond=0), settings.HORA_INICIO_JORNADA
+        justificacion = serializer.validated_data.get("justificacion_inicio", "").strip()
+        if hora.replace(second=0) <= comienzo:
+            hora, justificacion = comienzo, ""
+        elif not justificacion:
+            raise ValidationError({"justificacion_inicio": [
+                f"La jornada comienza a las {comienzo:%H:%M}: explique por qué la hoja se crea a las {hora:%H:%M}. "
+                "El tiempo de la primera acción contará desde ahora."]})
+        serializer.save(fecha=ahora.date(), hora_inicio=hora, justificacion_inicio=justificacion,
                         creado_por=self.request.user, modificado_por=self.request.user)
 
     def perform_update(self, serializer):
         if serializer.instance.cerrada:
             raise ErrorDjango("La hoja de ruta está cerrada y no se puede modificar.")
+        serializer.validated_data.pop("justificacion_inicio", None)  # solo se escribe al crear la hoja
         serializer.save(modificado_por=self.request.user)
 
     @action(detail=True, methods=["get"])

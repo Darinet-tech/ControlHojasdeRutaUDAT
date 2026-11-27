@@ -79,10 +79,14 @@ preventivo solo ofrece las de reparación; el sistema rechaza mezclarlas). Son l
 Se cargan con `migrate` / `cargar_inicial` (no se pisan los cambios del administrador). Las claves ya usadas no se eliminan: se desmarca «activa».
 
 ## Normas de tiempo por tipo
-Una **orden de servicio** ejecutada y un **preventivo** se normas por su **tipo**, no por claves: A 50, AS 25, CL 25, B 35, TA 50, TE 50, TI 50, REC 25, CMIS 25, AE 50,
-CA 30, CVIV 30, CTS 30, CD 30 (órdenes) y MPI 55, MPPI 25, MPPE 30, MTP 25 (mantenimientos), según el documento «Normas de Tiempo». **CMONT** y **GAB** no vienen en el
-documento: quedan sin norma (Inicio avisa al administrador) hasta que la definan en `/admin` → Tipos de orden / Tipos de mantenimiento. Cada norma tiene vigencia: para cambiarla
-sin alterar el pasado se pone fecha fin a la vigente y se crea otra. Correctivos (por claves) y órdenes de trabajo (por trabajos) no cambian.
+Las normas vigentes son las de la **Instrucción de Normas de Tiempo de Red de Acceso (V2, 2026), en proceso de firma** (`catalogos/normas_2026.py`): llevan la nota «En proceso de firma» y no una fecha de vigencia oficial. Cuando se firme, el especialista puede cambiar la nota y las fechas en `/admin`.
+- Son el **total** (intervención + documentación) y **no se redondean**: se muestran como minutos:segundos (`48:34`). En `/admin` se escriben como `24`, `48:34` o `0,42`.
+- Las órdenes de servicio y los preventivos se norman por su **tipo**; los correctivos, por su **clave de mayor tiempo**. Las claves que no están en la instrucción conservan su norma anterior.
+- Decisiones sobre el documento: AS y REC 31:58, 22-G 24:27 y 26-M 24:00 (sumas mal hechas); 07-ZC y 07-EC 16:18; CTS y CD 24; CMIS y CA como CMONT. CPU cuenta en la fila de CVIV y CTS del parte; BS, en la de Bajas.
+- Pendiente: GAB (se mide por regletas) y las actividades de Cable, Línea y demás especialidades.
+
+### Inicio de la jornada
+La jornada comienza a las **08:00**: la primera acción de una hoja cuenta desde esa hora y cada una de las siguientes desde el cierre de la anterior (descontando incidencias). Si la hoja se crea **después de las 08:00**, el probador debe **justificarlo** y la jornada cuenta desde la hora de creación. La justificación sale en la hoja y en su informe.
 
 ## Lista de acciones y ventana de trabajo
 Las acciones de la hoja se muestran en una **tabla compacta** (N.º, servicio, estado, claves, hora de cierre) con filtro **Todas / En curso / Cerradas** y buscador. Con clic en una fila

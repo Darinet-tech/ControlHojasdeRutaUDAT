@@ -1,7 +1,6 @@
-"""Normas de tiempo por tipo de orden de servicio y por tipo de mantenimiento (documento «Normas de Tiempo», revisión Morales, 4 marzo 2015).
+"""Normas de tiempo por tipo de orden de servicio y por tipo de mantenimiento de la primera versión (revisión Morales, 4 marzo 2015).
 
-Faltan en el documento: CMONT (orden) y GAB (mantenimiento): quedan sin norma hasta que el administrador la defina en /admin.
-Solo se crean donde no hay ninguna norma: no se pisan los cambios del administrador."""
+Las usa la migración 0012 (histórica). Las vigentes están en `normas_2026`, que las sustituyó en una migración posterior."""
 from datetime import date
 
 INICIO = date(2000, 1, 1)  # cubre cualquier fecha histórica, como las normas de las claves

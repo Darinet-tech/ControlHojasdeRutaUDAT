@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from .campos import texto_norma
 from .models import (Brigada, CausaIncidencia, Centro, Clave, ClaveOrdenServicio, GrupoClave, NormaMantenimiento, NormaTiempo,
                      NormaTipoOrden, NormaTrabajo, Operario,
                      TipoMantenimiento, TipoOrden, TipoTrabajo, Vehiculo)
@@ -74,10 +75,14 @@ class ClaveOrdenServicioAdmin(admin.ModelAdmin):
 class NormaTiempoAdmin(admin.ModelAdmin):
     """Para cambiar una norma sin alterar el pasado: ponga fecha fin a la anterior y cree otra con su fecha de inicio."""
 
-    list_display = ("clave", "tipo_orden", "minutos", "vigente_desde", "vigente_hasta")
-    list_filter = ("tipo_orden", "clave__grupo")
+    list_display = ("clave", "tipo_orden", "tiempo", "nota", "vigente_desde", "vigente_hasta")
+    list_filter = ("nota", "tipo_orden", "clave__grupo")
     search_fields = ("clave__codigo",)
     autocomplete_fields = ("clave",)
+
+    @admin.display(description="Minutos", ordering="minutos")
+    def tiempo(self, norma):
+        return texto_norma(norma.minutos)
 
 
 @admin.register(Operario)
@@ -123,7 +128,7 @@ class TipoOrdenAdmin(admin.ModelAdmin):
     def norma_actual(self, tipo):
         from django.utils import timezone
         norma = NormaTipoOrden.vigente(tipo, timezone.localdate())
-        return norma.minutos if norma else "— sin norma —"
+        return f"{texto_norma(norma.minutos)}{f' · {norma.nota}' if norma.nota else ''}" if norma else "— sin norma —"
 
 
 class NormaTrabajoInline(admin.TabularInline):
@@ -144,7 +149,7 @@ class TipoTrabajoAdmin(admin.ModelAdmin):
     def norma_actual(self, tipo):
         from django.utils import timezone
         norma = NormaTrabajo.vigente(tipo, timezone.localdate())
-        return norma.minutos if norma else "— sin norma —"
+        return f"{texto_norma(norma.minutos)}{f' · {norma.nota}' if norma.nota else ''}" if norma else "— sin norma —"
 
 
 class NormaMantenimientoInline(admin.TabularInline):
@@ -162,7 +167,7 @@ class TipoMantenimientoAdmin(admin.ModelAdmin):
     def norma_actual(self, tipo):
         from django.utils import timezone
         norma = NormaMantenimiento.vigente(tipo, timezone.localdate())
-        return norma.minutos if norma else "— sin norma —"
+        return f"{texto_norma(norma.minutos)}{f' · {norma.nota}' if norma.nota else ''}" if norma else "— sin norma —"
 
 
 for modelo in (Brigada, GrupoClave):

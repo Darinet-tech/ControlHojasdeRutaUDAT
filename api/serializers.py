@@ -247,7 +247,7 @@ class HojaSerializer(serializers.ModelSerializer):
     class Meta:
         model = HojaDeRuta
         fields = ["id", "fecha", "brigada", "brigada_nombre", "centros", "centros_codigos", "centros_etiqueta", "vehiculo",
-                  "vehiculo_chapa", "operarios", "operarios_nombres", "hora_inicio", "observaciones", "trabajos_realizados",
+                  "vehiculo_chapa", "operarios", "operarios_nombres", "hora_inicio", "justificacion_inicio", "observaciones", "trabajos_realizados",
                   "informa_con_texto", "cerrada", "cerrada_en", "reabierta_en", "generada", "generada_en", "cantidad_acciones", "resultados", "incidencia_activa"]
         read_only_fields = ["fecha", "hora_inicio", "cerrada", "cerrada_en", "reabierta_en", "generada_en"]  # fecha y hora de inicio las pone el servidor al crear
         extra_kwargs = {

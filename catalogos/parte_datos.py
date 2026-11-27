@@ -6,7 +6,7 @@ CLAVES_PENDIENTE_PAR = {"23", "24"}
 CLAVES_OTRAS_CAUSAS = {"01", "02", "14-P", "21", "22", "25", "27", "29", "36", "36-V", "36D-TXD", "37", "38", "39"}
 
 TIPO_ORDEN_FILA = {
-    "A": "ALTAS", "AE": "ALTAS", "TA": "TRASLADOS", "B": "BAJAS", "TE": "TE_TI", "TI": "TE_TI",
+    "A": "ALTAS", "AE": "ALTAS", "TA": "TRASLADOS", "B": "BAJAS", "BS": "BAJAS", "CPU": "TXD", "TE": "TE_TI", "TI": "TE_TI",
     "AS": "MISC", "CL": "MISC", "CMONT": "MISC", "CMIS": "MISC", "REC": "MISC",
     "CTS": "TXD", "CVIV": "TXD", "CD": "TXD", "CA": "TXD",
 }

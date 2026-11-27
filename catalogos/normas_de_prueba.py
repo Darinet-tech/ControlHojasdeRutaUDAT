@@ -1,0 +1,23 @@
+"""Solo para las pruebas: normas con números redondos y fijos.
+
+Las pruebas de cálculo (productividad, resúmenes, informes) no deben depender de los tiempos oficiales, que cambian cuando se firma o se
+actualiza una instrucción. Los valores oficiales se comprueban aparte (catalogos/tests_normas.py)."""
+import csv
+from pathlib import Path
+
+from django.conf import settings
+
+from .models import NormaMantenimiento, NormaTiempo, NormaTipoOrden, TipoMantenimiento, TipoOrden
+from .normas_tipo import INICIO, crear
+
+
+def fijar():
+    with open(Path(settings.BASE_DIR) / "data" / "claves_cierre.csv", newline="", encoding="utf-8") as f:
+        minutos = {fila["codigo"].strip(): int(fila["tiempo_min"]) for fila in csv.DictReader(f) if fila["tiempo_min"].strip()}
+    for norma in NormaTiempo.objects.select_related("clave"):
+        if norma.clave.codigo in minutos:
+            NormaTiempo.objects.filter(pk=norma.pk).update(minutos=minutos[norma.clave.codigo], vigente_desde=INICIO, nota="")
+    TipoOrden.objects.filter(codigo__in=["CPU", "BS"]).delete()  # tipos posteriores: no están en los números de prueba
+    NormaTipoOrden.objects.all().delete()
+    NormaMantenimiento.objects.all().delete()
+    crear(TipoOrden, TipoMantenimiento, NormaTipoOrden, NormaMantenimiento)

@@ -68,6 +68,10 @@ class HojaDeRuta(Auditable):
         help_text="Inicio de la jornada (08:00 por defecto): base del tiempo real de la primera acción.",
     )
     observaciones = models.TextField(blank=True)
+    justificacion_inicio = models.CharField(
+        "justificación del inicio tardío", max_length=300, blank=True,
+        help_text="Obligatoria si la hoja se crea después de las 08:00: entonces la jornada cuenta desde la hora de creación.",
+    )
     trabajos_realizados = models.TextField(
         blank=True, help_text="Solo brigadas que informan con texto (Línea): lo que hizo la brigada, sale bajo la tabla del parte diario."
     )
