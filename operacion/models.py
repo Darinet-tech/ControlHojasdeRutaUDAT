@@ -267,6 +267,21 @@ class Accion(Auditable):
         return self.regletas_mantenidas + self.regletas_reparadas + self.regletas_sustituidas
 
 
+class CantidadDeTrabajo(models.Model):
+    """Dato que el probador anota de un trabajo de una orden de trabajo: la cantidad (postes, metros) o el tipo (caja terminal)."""
+
+    accion = models.ForeignKey(Accion, on_delete=models.CASCADE, related_name="cantidades")
+    trabajo = models.ForeignKey(TipoTrabajo, on_delete=models.CASCADE, related_name="+")
+    cantidad = models.FloatField(null=True, blank=True)
+    opcion = models.ForeignKey("catalogos.OpcionDeTrabajo", null=True, blank=True, on_delete=models.PROTECT, related_name="+")
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["accion", "trabajo"], name="cantidad_unica_por_trabajo")]
+
+    def __str__(self):
+        return f"{self.trabajo}: {self.opcion or self.cantidad}"
+
+
 class DestinatarioInforme(models.Model):
     """Persona que recibe el informe diario automático. La lista la define el administrador."""
 

@@ -44,6 +44,15 @@ class BaseOperacion(TestCase):
         cls.op2 = Operario.objects.create(clave="A2", nombre="Operario Dos", brigada=cls.rep)
         cls.op3 = Operario.objects.create(clave="A3", nombre="Operario Tres", brigada=cls.rep)
 
+    def anotar(self, accion, cantidad=1):
+        """Anota lo que pide cada trabajo de una orden de trabajo: la cantidad (postes, metros) o el tipo (caja terminal)."""
+        from .models import CantidadDeTrabajo
+        for t in accion.trabajos.all():
+            if t.medida in ("UNIDADES", "METROS"):
+                CantidadDeTrabajo.objects.update_or_create(accion=accion, trabajo=t, defaults={"cantidad": cantidad})
+            elif t.medida == "TIPO":
+                CantidadDeTrabajo.objects.update_or_create(accion=accion, trabajo=t, defaults={"opcion": t.opciones.order_by("pk").first()})
+
     def hoja(self, fecha=DIA, operarios=None, inicio=time(8, 0)):
         h = crear_hoja(fecha=fecha, brigada=self.rep, centro=self.centro, hora_inicio=inicio)
         h.operarios.set(operarios or [self.op1, self.op2])

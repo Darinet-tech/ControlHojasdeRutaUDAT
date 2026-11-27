@@ -15,6 +15,7 @@ La fila «Visitadas en el día» suma las filas de las acciones visitadas (no in
 from collections import Counter, defaultdict
 from datetime import date
 
+from .services import datos_de_trabajos, texto_trabajo
 from .models import Accion, estado_de_accion
 from .reportes import hojas_del_periodo
 
@@ -100,10 +101,10 @@ def _notas(hojas, etiquetas):
             lineas[h.pk].append(h.trabajos_realizados.strip())
         if h.observaciones.strip():
             lineas[h.pk].append(h.observaciones.strip())
-    acciones = (Accion.objects.filter(hoja_id__in=ids).select_related("orden").prefetch_related("trabajos").order_by("hoja_id", "numero"))
+    acciones = (Accion.objects.filter(hoja_id__in=ids).select_related("orden").prefetch_related("trabajos", "cantidades__opcion").order_by("hoja_id", "numero"))
     for a in acciones:
         if a.orden.categoria == "ORDEN_TRABAJO":
-            partes = [", ".join(sorted(t.nombre for t in a.trabajos.all())), a.descripcion_trabajo.strip(), a.observaciones.strip()]
+            partes = [", ".join(sorted(texto_trabajo(t, c, o) for t, c, o in datos_de_trabajos(a))), a.descripcion_trabajo.strip(), a.observaciones.strip()]
             lineas[a.hoja_id].append(f"OT {a.orden.numero_orden}: " + " · ".join(p for p in partes if p))
         elif a.observaciones.strip() and a.estado in ("SIN_OK", "PASADA_A_BRIGADA"):
             lineas[a.hoja_id].append(f"{a.orden.etiqueta}: {a.observaciones.strip()}")

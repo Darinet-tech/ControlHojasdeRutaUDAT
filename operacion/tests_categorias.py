@@ -97,17 +97,29 @@ class TiposDeAccionTests(BaseCategorias):
         with self.assertRaises(ValidationError):
             pasar_a_brigada(ot, self.cable, self.user, ahora=hora(9))
         ot.trabajos.set([self.poste])
+        with self.assertRaisesMessage(ValidationError, "la cantidad de sustitución de poste(s)"):
+            certificar_ok(ot, self.user, "", ahora=hora(10))  # falta cuántos postes
+        self.anotar(ot, 2)
         certificar_ok(ot, self.user, "", ahora=hora(10))  # sin cliente
         ot.refresh_from_db(); ot.orden.refresh_from_db()
         self.assertEqual((ot.ok, ot.orden.estado), (True, OrdenServicio.Estado.RESTABLECIDA))
 
-    def test_la_norma_de_una_orden_de_trabajo_es_la_del_trabajo_mayor(self):
-        NormaTrabajo.objects.create(tipo_trabajo=self.poste, minutos=120, vigente_desde=date(2026, 10, 1))
-        NormaTrabajo.objects.create(tipo_trabajo=self.caja, minutos=90, vigente_desde=date(2026, 10, 1))
+    def test_la_norma_de_una_orden_de_trabajo_suma_sus_trabajos_por_su_cantidad_o_su_tipo(self):
+        from catalogos.models import OpcionDeTrabajo
+        from .models import CantidadDeTrabajo
+        NormaTrabajo.objects.create(tipo_trabajo=self.poste, minutos=120, vigente_desde=date(2026, 10, 1))  # por poste
         ot = asignar_orden(self.h, self.orden_trabajo(trabajos=[self.poste, self.caja]), self.user, trabajos=[self.poste, self.caja])
-        self.assertEqual(norma_accion(ot), 120)
+        self.assertIsNone(norma_accion(ot))  # sin la cantidad ni el tipo no hay norma
+        CantidadDeTrabajo.objects.create(accion=ot, trabajo=self.poste, cantidad=2)
+        self.assertEqual(norma_accion(ot), 240)
+        con_cola = OpcionDeTrabajo.objects.get(tipo_trabajo=self.caja, nombre="Con cola")
+        CantidadDeTrabajo.objects.create(accion=ot, trabajo=self.caja, opcion=con_cola)
+        self.assertEqual(norma_accion(ot), 240 + 100)  # suma: 2 postes + caja con cola
+        CantidadDeTrabajo.objects.filter(trabajo=self.caja).update(opcion=OpcionDeTrabajo.objects.get(tipo_trabajo=self.caja, nombre="Multiservicios"))
+        ot = type(ot).objects.get(pk=ot.pk)
+        self.assertEqual(norma_accion(ot), 240 + 70)  # el tipo de caja define la norma
         ot.trabajos.set([self.caja])
-        self.assertEqual(norma_accion(ot), 90)
+        self.assertEqual(norma_accion(ot), 70)
         antes = crear_hoja(fecha=date(2026, 9, 1), brigada=self.rep, centro=self.centro); antes.operarios.set([self.op2])
         previo = asignar_orden(antes, self.orden_trabajo("8002", [self.poste]), self.user, trabajos=[self.poste])
         self.assertIsNone(norma_accion(previo))  # la norma empieza el 1/10: antes no había
@@ -143,6 +155,8 @@ class ResumenesPorTipoTests(BaseCategorias):
                  (self.orden_servicio("46 6003"), "07-IC", hora(11)), (self.orden_trabajo("8001"), None, hora(12))]
         for orden, clave, cuando in casos:
             a = asignar_orden(self.h, orden, self.user, trabajos=[self.poste] if clave is None else None)
+            if clave is None:
+                self.anotar(a, 1)  # un poste
             if clave:
                 a.claves.set(Clave.objects.filter(codigo=clave))
             certificar_ok(a, self.user, "Cliente", ahora=cuando)
@@ -184,10 +198,11 @@ class InformesPorTipoTests(BaseCategorias):
         for n, (orden, claves) in enumerate(casos):
             a = asignar_orden(h, orden, self.user, centro=self.centro if n % 2 == 0 else fi)
             a.claves.set(Clave.objects.filter(codigo__in=claves))
+            self.anotar(a, 1)
         wb = openpyxl.load_workbook(io.BytesIO(generar_informe(date(2026, 10, 7), "xlsx")[0]))
         ws = wb["Hojas de ruta"]
         self.assertEqual([ws.cell(r, 2).value for r in range(5, 9)],
-                         ["46 6001 25-R", "MPPE 46 6002 21-R", "TA 7001 46 6003 07-IC", "OT 8001 · Sustitución de poste(s)"])
+                         ["46 6001 25-R", "MPPE 46 6002 21-R", "TA 7001 46 6003 07-IC", "OT 8001 · Sustitución de poste(s): 1"])
         self.assertEqual((ws.cell(2, 1).value, ws.cell(3, 1).value), ("Centro: FI-NG", "Operarios: A2-A3"))
         aud = wb["Auditoría"]
         cab = [c.value for c in aud[1]]
@@ -195,4 +210,4 @@ class InformesPorTipoTests(BaseCategorias):
         self.assertEqual([f["Tipo de acción"] for f in filas], ["Correctivo", "Preventivo", "Orden de servicio", "Orden de trabajo"])
         self.assertEqual((filas[1]["Tipo de mantenimiento"], filas[2]["Tipo de orden"], filas[2]["N.º de orden"]), ("MPPE", "TA", "7001"))
         self.assertEqual((filas[3]["Trabajos (orden de trabajo)"], filas[3]["N.º de orden"], filas[3]["Servicio telefónico"], filas[3]["Norma (min)"]),
-                         ("Sustitución de poste(s)", "8001", None, 120))  # la norma sale del trabajo, aunque la acción siga abierta
+                         ("Sustitución de poste(s): 1", "8001", None, 120))  # la norma sale del trabajo, aunque la acción siga abierta

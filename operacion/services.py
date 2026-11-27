@@ -23,10 +23,49 @@ def norma_de_tipo(orden, fecha):
     return norma.minutos if norma else None
 
 
+def norma_de_trabajo(trabajo, cantidad, opcion_id, fecha):
+    """Minutos de un trabajo de una orden de trabajo, según cómo se norma. None si falta la norma o el dato (cantidad, tipo)."""
+    if trabajo.medida == "TIPO":
+        norma = NormaTrabajo.vigente(trabajo, fecha, opcion_id) if opcion_id else None
+        return norma.minutos if norma else None
+    norma = NormaTrabajo.vigente(trabajo, fecha)
+    if norma is None:
+        return None
+    if trabajo.medida in ("UNIDADES", "METROS"):
+        return round(norma.minutos * cantidad, 4) if cantidad else None
+    return norma.minutos
+
+
+def texto_trabajo(trabajo, cantidad, opcion):
+    """«Sustitución de poste(s): 3», «…: 12,5 m», «…: Con cola»."""
+    if trabajo.medida == "TIPO" and opcion:
+        return f"{trabajo.nombre}: {opcion.nombre}"
+    if trabajo.medida in ("UNIDADES", "METROS") and cantidad:
+        n = f"{cantidad:g}".replace(".", ",")
+        return f"{trabajo.nombre}: {n} m" if trabajo.medida == "METROS" else f"{trabajo.nombre}: {n}"
+    return trabajo.nombre
+
+
+def datos_de_trabajos(accion):
+    """[(trabajo, cantidad, opcion)] de una orden de trabajo, con lo que el probador anotó."""
+    anotado = {c.trabajo_id: c for c in accion.cantidades.all()}
+    return [(t, getattr(anotado.get(t.pk), "cantidad", None), getattr(anotado.get(t.pk), "opcion", None)) for t in accion.trabajos.all()]
+
+
+def trabajos_incompletos(accion):
+    """Trabajos de la orden de trabajo a los que falta la cantidad o el tipo."""
+    return [t for t, cantidad, opcion in datos_de_trabajos(accion)
+            if (t.medida in ("UNIDADES", "METROS") and not cantidad) or (t.medida == "TIPO" and opcion is None)]
+
+
 def norma_accion(accion):
-    """Minutos normados de una acción. Si es una orden de trabajo, el de su trabajo de mayor norma; en las demás,
+    """Minutos normados de una acción. Una orden de trabajo suma sus trabajos (cada uno por su cantidad o su tipo); en las demás,
     el de su clave MAYOR (regla del negocio). None si ninguno tiene norma."""
     fecha = accion.hoja.fecha
+    if accion.orden.categoria == OrdenServicio.Categoria.ORDEN_TRABAJO:
+        partes = [norma_de_trabajo(t, cantidad, opcion.pk if opcion else None, fecha) for t, cantidad, opcion in datos_de_trabajos(accion)]
+        partes = [m for m in partes if m is not None]
+        return round(sum(partes), 4) if partes else None
     if accion.es_gabinete:  # norma por regleta trabajada; sin regletas registradas todavía no hay tiempo normado
         por_regleta = norma_de_tipo(accion.orden, fecha)
         return round(por_regleta * accion.regletas, 4) if por_regleta is not None and accion.regletas else None
@@ -34,17 +73,11 @@ def norma_accion(accion):
     if por_tipo is not None:
         return por_tipo
     minutos = []
-    if accion.orden.categoria == OrdenServicio.Categoria.ORDEN_TRABAJO:
-        for trabajo in accion.trabajos.all():
-            norma = NormaTrabajo.vigente(trabajo, fecha)
-            if norma:
-                minutos.append(norma.minutos)
-    else:
-        tipo = accion.orden.tipo_orden
-        for clave in accion.claves.all():
-            norma = NormaTiempo.vigente(clave, tipo, fecha)
-            if norma:
-                minutos.append(norma.minutos)
+    tipo = accion.orden.tipo_orden
+    for clave in accion.claves.all():
+        norma = NormaTiempo.vigente(clave, tipo, fecha)
+        if norma:
+            minutos.append(norma.minutos)
     return max(minutos) if minutos else None
 
 
@@ -278,6 +311,11 @@ def certificar_ok(accion, usuario, cliente_contactado, ahora=None):
     En una orden de servicio el OK es el propio resultado (ejecutada): no lleva clave; las claves de orden (1 a 19) son los motivos de NO ejecutarla."""
     if accion.orden.categoria != OrdenServicio.Categoria.ORDEN_SERVICIO:
         _exigir_trabajo_registrado(accion, "dar el OK")
+    if es_orden_de_trabajo(accion):
+        faltan = trabajos_incompletos(accion)
+        if faltan:
+            raise ValidationError("Antes de dar el OK, indique " + "; ".join(
+                f"{'el tipo de' if t.medida == 'TIPO' else 'la cantidad de'} {t.nombre.lower()}" for t in faltan) + ".")
     if accion.es_gabinete and not accion.regletas:
         raise ValidationError("Indique cuántas regletas se trabajaron antes de dar el OK.")
     cliente_contactado = (cliente_contactado or "").strip()

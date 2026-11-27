@@ -45,6 +45,8 @@ class ParteBase(BaseOperacion):
             numero_orden=f"{n}" if categoria in ("ORDEN_SERVICIO", "ORDEN_TRABAJO") else "",
             trabajos=trabajos, variante=variante)
         accion = asignar_orden(hoja, orden, self.user, trabajos=trabajos)
+        if categoria == "ORDEN_TRABAJO":
+            self.anotar(accion)  # cantidad o tipo de cada trabajo: sin ellos no se puede dar el OK
         if accion.es_gabinete:  # sin regletas anotadas no se puede dar el OK
             accion.regletas_sustituidas = 1
             accion.save()

@@ -18,7 +18,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from catalogos.models import (Gabinete, Brigada, CausaIncidencia, Centro, Clave, Operario, TipoMantenimiento, TipoOrden, TipoTrabajo,
+from catalogos.models import (OpcionDeTrabajo, Gabinete, Brigada, CausaIncidencia, Centro, Clave, Operario, TipoMantenimiento, TipoOrden, TipoTrabajo,
                               Vehiculo)
 from operacion.models import Accion, DestinatarioInforme, HojaDeRuta, Incidencia, InformeEnviado, OrdenServicio
 from operacion.informes import generar_informe
@@ -134,7 +134,7 @@ class GabineteViewSet(CatalogoViewSet):
 
 
 class TipoTrabajoViewSet(CatalogoViewSet):
-    queryset = TipoTrabajo.objects.filter(activo=True).prefetch_related("normas")
+    queryset = TipoTrabajo.objects.filter(activo=True).prefetch_related("normas", "opciones")
     serializer_class = s.TipoTrabajoSerializer
 
 
@@ -171,7 +171,7 @@ class HojaViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Creat
     """Filtros: ?fecha=AAAA-MM-DD  ?desde= ?hasta=  ?brigada=  ?centro=  ?cerrada=true|false"""
 
     queryset = HojaDeRuta.objects.select_related("brigada", "vehiculo").prefetch_related(
-        "operarios", "centros", "acciones", "incidencias__causa")
+        "operarios", "centros", "acciones__trabajos", "acciones__cantidades__opcion", "incidencias__causa")
     http_method_names = ["get", "post", "patch", "head", "options"]
 
     def get_serializer_class(self):
@@ -347,7 +347,7 @@ class HojaViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Creat
 class AccionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
     """Filtros: ?hoja=  ?orden=  ?fecha=AAAA-MM-DD"""
 
-    queryset = Accion.objects.select_related("hoja", "orden__tipo_orden", "pasada_a").prefetch_related("claves__grupo")
+    queryset = Accion.objects.select_related("hoja", "orden__tipo_orden", "pasada_a").prefetch_related("claves__grupo", "trabajos", "cantidades__opcion")
     serializer_class = s.AccionSerializer
     http_method_names = ["get", "post", "patch", "head", "options"]
 
@@ -622,8 +622,9 @@ class InicioView(APIView):
                 "claves_por_revisar": Clave.objects.filter(revisar=True, activa=True).count(),
                 "claves_sin_norma": Clave.objects.filter(activa=True).exclude(ambito="ORDEN").exclude(
                     pk__in=NormaTiempo.objects.values("clave_id")).count(),
-                "trabajos_sin_norma": TipoTrabajo.objects.filter(activo=True).exclude(
-                    pk__in=NormaTrabajo.objects.values("tipo_trabajo_id")).count(),
+                "trabajos_sin_norma": (TipoTrabajo.objects.filter(activo=True).exclude(medida="TIPO").exclude(
+                    pk__in=NormaTrabajo.objects.filter(opcion__isnull=True).values("tipo_trabajo_id")).count()
+                    + OpcionDeTrabajo.objects.filter(activa=True, tipo_trabajo__activo=True).exclude(pk__in=NormaTrabajo.objects.values("opcion_id")).count()),
                 "tipos_sin_norma": sorted([t.codigo for t in TipoOrden.objects.all() if not NormaTipoOrden.vigente(t, hoy)]
                                           + [t.codigo for t in TipoMantenimiento.objects.filter(activo=True)
                                              if not NormaMantenimiento.vigente(t, hoy)]),

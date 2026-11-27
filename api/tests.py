@@ -625,6 +625,12 @@ class CategoriasAPITests(BaseAPI):
         r = self.api.patch(f"/api/acciones/{a}/", {"trabajos": [self.caja.pk]}, format="json")
         self.assertEqual((r.status_code, [t["nombre"] for t in r.data["trabajos"]]), (200, [self.caja.nombre]))
         r = self.api.post(f"/api/acciones/{a}/ok/", {}, format="json")
+        self.assertEqual(r.status_code, 400)  # la caja terminal pide su tipo, que define la norma
+        self.assertIn("el tipo de sustitución de caja", str(r.data))
+        opcion = next(o for o in next(t for t in self.api.get("/api/tipos-trabajo/").data if t["id"] == self.caja.pk)["opciones"] if o["nombre"] == "Con cola")
+        r = self.api.patch(f"/api/acciones/{a}/", {"cantidades": [{"trabajo": self.caja.pk, "opcion": opcion["id"]}]}, format="json")
+        self.assertEqual((r.status_code, r.data["detalle_trabajos"][0]["opcion_nombre"], r.data["norma_min"], r.data["trabajos_incompletos"]), (200, "Con cola", 100, []))
+        r = self.api.post(f"/api/acciones/{a}/ok/", {}, format="json")  # y sin pedir nada a un cliente
         self.assertEqual((r.status_code, r.data["estado"], r.data["estado_orden"]), (200, "OK", "RESTABLECIDA"))
 
     def test_el_correctivo_pide_el_cliente_y_el_preventivo_no(self):
@@ -640,7 +646,7 @@ class CategoriasAPITests(BaseAPI):
         self.assertEqual([t["codigo"] for t in self.api.get("/api/tipos-mantenimiento/").data], ["GAB", "MPI", "MPPE", "MPPI", "MTP"])
         trabajos = self.api.get("/api/tipos-trabajo/").data
         self.assertEqual([(t["nombre"], t["norma_min"]) for t in trabajos],
-                         [("Sustitución de caja(s) terminal(es)", None), ("Sustitución de poste(s)", None)])  # los especialistas definen las normas
+                         [("Sustitución de cable de cobre", None), ("Sustitución de caja(s) terminal(es)", None), ("Sustitución de poste(s)", None)])  # las normas por cantidad las define el especialista
 
     def test_traer_los_pendientes_a_la_hoja_de_la_brigada(self):
         fi = Centro.objects.get(codigo="FI")

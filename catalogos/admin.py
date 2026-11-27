@@ -7,7 +7,7 @@ from django.urls import path
 from . import gabinetes_excel
 from .campos import texto_norma
 from .models import (Gabinete, RegletasDeGabinete, Brigada, CausaIncidencia, Centro, Clave, ClaveOrdenServicio, GrupoClave, NormaMantenimiento, NormaTiempo,
-                     NormaTipoOrden, NormaTrabajo, Operario,
+                     NormaTipoOrden, NormaTrabajo, OpcionDeTrabajo, Operario,
                      TipoMantenimiento, TipoOrden, TipoTrabajo, Vehiculo)
 
 
@@ -141,20 +141,32 @@ class NormaTrabajoInline(admin.TabularInline):
     extra = 0
 
 
+class OpcionDeTrabajoInline(admin.TabularInline):
+    model = OpcionDeTrabajo
+    extra = 0
+
+
 @admin.register(TipoTrabajo)
 class TipoTrabajoAdmin(admin.ModelAdmin):
     """Trabajos de las órdenes de trabajo. Cada uno lleva su norma de tiempo (para cambiarla sin alterar el pasado,
     ponga fecha fin a la vigente y cree otra con su fecha de inicio)."""
 
-    list_display = ("nombre", "norma_actual", "activo")
+    list_display = ("nombre", "medida", "norma_actual", "activo")
     list_editable = ("activo",)
-    inlines = [NormaTrabajoInline]
+    inlines = [OpcionDeTrabajoInline, NormaTrabajoInline]
 
     @admin.display(description="Norma vigente (min)")
     def norma_actual(self, tipo):
         from django.utils import timezone
-        norma = NormaTrabajo.vigente(tipo, timezone.localdate())
-        return f"{texto_norma(norma.minutos)}{f' · {norma.nota}' if norma.nota else ''}" if norma else "— sin norma —"
+        hoy = timezone.localdate()
+        if tipo.medida == "TIPO":
+            partes = [f"{o.nombre}: {texto_norma(n.minutos) if (n := NormaTrabajo.vigente(tipo, hoy, o.pk)) else 'sin norma'}" for o in tipo.opciones.filter(activa=True)]
+            return " · ".join(partes) or "— sin opciones —"
+        norma = NormaTrabajo.vigente(tipo, hoy)
+        if not norma:
+            return "— sin norma —"
+        por = {"UNIDADES": f" por {tipo.unidad or 'unidad'}", "METROS": " por metro"}.get(tipo.medida, "")
+        return f"{texto_norma(norma.minutos)}{por}{f' · {norma.nota}' if norma.nota else ''}"
 
 
 class NormaMantenimientoInline(admin.TabularInline):

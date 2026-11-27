@@ -18,9 +18,9 @@ from datetime import date
 from django.conf import settings
 from django.utils import timezone
 
-from catalogos.models import NormaMantenimiento, NormaTiempo, NormaTipoOrden, NormaTrabajo
+from catalogos.models import NormaMantenimiento, NormaTiempo, NormaTipoOrden, NormaTrabajo, TipoTrabajo
 
-from .models import Accion, HojaDeRuta, Incidencia, OrdenServicio, estado_de_accion, etiqueta_orden
+from .models import Accion, CantidadDeTrabajo, HojaDeRuta, Incidencia, OrdenServicio, estado_de_accion, etiqueta_orden
 
 MAXIMO_LISTADO = 500
 
@@ -33,14 +33,28 @@ class Normas:
         for n in NormaTiempo.objects.values("clave_id", "tipo_orden_id", "minutos", "vigente_desde", "vigente_hasta"):
             self.por_clave[n["clave_id"]].append(n)
 
-    def minutos_trabajo(self, trabajo_id, fecha):
+    def minutos_trabajo(self, trabajo_id, fecha, opcion_id=None):
         if not hasattr(self, "_trabajos"):
             self._trabajos = defaultdict(list)
-            for n in NormaTrabajo.objects.values("tipo_trabajo_id", "minutos", "vigente_desde", "vigente_hasta"):
-                self._trabajos[n["tipo_trabajo_id"]].append(n)
-        vigentes = [n for n in self._trabajos.get(trabajo_id, [])
+            for n in NormaTrabajo.objects.values("tipo_trabajo_id", "opcion_id", "minutos", "vigente_desde", "vigente_hasta"):
+                self._trabajos[(n["tipo_trabajo_id"], n["opcion_id"])].append(n)
+        vigentes = [n for n in self._trabajos.get((trabajo_id, opcion_id), [])
                     if n["vigente_desde"] <= fecha and (n["vigente_hasta"] is None or n["vigente_hasta"] >= fecha)]
         return max(vigentes, key=lambda n: n["vigente_desde"])["minutos"] if vigentes else None
+
+    def minutos_de_trabajo(self, trabajo_id, cantidad, opcion_id, fecha):
+        """Igual que services.norma_de_trabajo, sin una consulta por trabajo."""
+        if not hasattr(self, "_medidas"):
+            self._medidas = dict(TipoTrabajo.objects.values_list("pk", "medida"))
+        medida = self._medidas.get(trabajo_id, "")
+        if medida == "TIPO":
+            return self.minutos_trabajo(trabajo_id, fecha, opcion_id) if opcion_id else None
+        base = self.minutos_trabajo(trabajo_id, fecha)
+        if base is None:
+            return None
+        if medida in ("UNIDADES", "METROS"):
+            return round(base * cantidad, 4) if cantidad else None
+        return base
 
     def minutos_de_tipo(self, categoria, tipo_orden_id, tipo_mantenimiento_id, fecha):
         """Norma del tipo de orden de servicio o de mantenimiento preventivo (None si no tiene)."""
@@ -131,6 +145,7 @@ def _estadisticas_por_hoja(base, ahora):
     trabajos_de = defaultdict(list)
     for accion_id, trabajo_id in Accion.trabajos.through.objects.filter(accion__hoja__in=base).values_list("accion_id", "tipotrabajo_id"):
         trabajos_de[accion_id].append(trabajo_id)
+    anotado = {(c["accion_id"], c["trabajo_id"]): c for c in CantidadDeTrabajo.objects.filter(accion__hoja__in=base).values("accion_id", "trabajo_id", "cantidad", "opcion_id")}
 
     filas = list(Accion.objects.filter(hoja__in=base).values(
         "id", "hoja_id", "orden_id", "orden__numero_servicio", "orden__categoria", "orden__numero_orden", "orden__tipo_orden__codigo",
@@ -153,7 +168,11 @@ def _estadisticas_por_hoja(base, ahora):
                              and f["tiempo_real_min"] is not None)  # sus regletas hechas son trabajo realizado
         if f["estado"] == "OK" or gabinete_a_medias:
             if f["orden__categoria"] == "ORDEN_TRABAJO":  # una orden de trabajo se norma por sus trabajos
-                minutos = [normas.minutos_trabajo(t, e["fecha"]) for t in trabajos_de[f["id"]]]
+                minutos = [normas.minutos_de_trabajo(t, anotado.get((f["id"], t), {}).get("cantidad"), anotado.get((f["id"], t), {}).get("opcion_id"), e["fecha"])
+                           for t in trabajos_de[f["id"]]]
+                f["normado"] = round(sum(m for m in minutos if m is not None), 4)  # una orden de trabajo suma sus trabajos
+                e["normado"] += f["normado"]
+                continue
             else:
                 por_tipo = normas.minutos_de_tipo(f["orden__categoria"], f["orden__tipo_orden_id"], f["orden__tipo_mantenimiento_id"], e["fecha"])
                 minutos = [por_tipo] if por_tipo is not None else [normas.minutos(c, f["orden__tipo_orden_id"], e["fecha"]) for c in claves_de[f["id"]]]

@@ -6,8 +6,8 @@ from rest_framework import serializers
 
 from catalogos.models import (Brigada, Gabinete, CausaIncidencia, Centro, Clave, NormaTrabajo, Operario, TipoMantenimiento, TipoOrden,
                               TipoTrabajo, Vehiculo)
-from operacion.models import Accion, HojaDeRuta, Incidencia, OrdenServicio
-from operacion.services import (avance_gabinete, momento_del_corte, norma_accion, norma_de_tipo, resumen_hoja, sugerir_ok, validar_claves_de_la_accion,
+from operacion.models import CantidadDeTrabajo, Accion, HojaDeRuta, Incidencia, OrdenServicio
+from operacion.services import (avance_gabinete, datos_de_trabajos, norma_de_trabajo, trabajos_incompletos, momento_del_corte, norma_accion, norma_de_tipo, resumen_hoja, sugerir_ok, validar_claves_de_la_accion,
                                 validar_operarios_libres)
 
 
@@ -61,16 +61,26 @@ class GabineteSerializer(serializers.ModelSerializer):
 
 
 class TipoTrabajoSerializer(serializers.ModelSerializer):
-    norma_min = serializers.SerializerMethodField(help_text="Norma vigente hoy (minutos).")
+    norma_min = serializers.SerializerMethodField(help_text="Norma vigente hoy (minutos); por unidad o por metro según el trabajo.")
+    opciones = serializers.SerializerMethodField()
 
     class Meta:
         model = TipoTrabajo
-        fields = ["id", "nombre", "norma_min", "activo"]
+        fields = ["id", "nombre", "medida", "unidad", "norma_min", "opciones", "activo"]
+
+    def _vigente(self, tipo, opcion_id):
+        hoy = timezone.localdate()
+        vigentes = [n for n in tipo.normas.all()
+                    if n.opcion_id == opcion_id and n.vigente_desde <= hoy and (n.vigente_hasta is None or n.vigente_hasta >= hoy)]
+        return max(vigentes, key=lambda n: n.vigente_desde).minutos if vigentes else None
 
     def get_norma_min(self, tipo):
-        hoy = timezone.localdate()
-        vigentes = [n for n in tipo.normas.all() if n.vigente_desde <= hoy and (n.vigente_hasta is None or n.vigente_hasta >= hoy)]
-        return max(vigentes, key=lambda n: n.vigente_desde).minutos if vigentes else None
+        return None if tipo.medida == "TIPO" else self._vigente(tipo, None)
+
+    def get_opciones(self, tipo):
+        if tipo.medida != "TIPO":
+            return []
+        return [{"id": o.pk, "nombre": o.nombre, "norma_min": self._vigente(tipo, o.pk)} for o in tipo.opciones.all() if o.activa]
 
 
 class CausaIncidenciaSerializer(serializers.ModelSerializer):
@@ -131,6 +141,8 @@ class AccionSerializer(serializers.ModelSerializer):
     claves = ClaveSerializer(many=True, read_only=True)
     pasada_a_nombre = serializers.CharField(source="pasada_a.nombre", read_only=True, default=None)
     norma_min = serializers.SerializerMethodField(help_text="Norma de la clave mayor (minutos).")
+    detalle_trabajos = serializers.SerializerMethodField(help_text="Orden de trabajo: la cantidad o el tipo anotado de cada trabajo y su norma.")
+    trabajos_incompletos = serializers.SerializerMethodField(help_text="Orden de trabajo: trabajos a los que falta la cantidad o el tipo.")
     es_gabinete = serializers.BooleanField(read_only=True)
     regletas = serializers.IntegerField(read_only=True)
     norma_por_regleta = serializers.SerializerMethodField()
@@ -149,7 +161,15 @@ class AccionSerializer(serializers.ModelSerializer):
                   "descripcion_trabajo", "observaciones", "estado", "ok", "cliente_contactado", "pasada_a",
                   "pasada_a_nombre", "hora_fin", "tiempo_real_min", "norma_min", "sugerencia_ok", "posterior_al_corte", "agregada_despues",
                   "visita_anterior", "es_gabinete", "regletas", "regletas_mantenidas", "regletas_reparadas", "regletas_sustituidas",
-                  "norma_por_regleta", "avance_gabinete"]
+                  "norma_por_regleta", "avance_gabinete", "detalle_trabajos", "trabajos_incompletos"]
+
+    def get_detalle_trabajos(self, accion):
+        fecha = accion.hoja.fecha
+        return [{"trabajo": t.pk, "cantidad": cantidad, "opcion": opcion.pk if opcion else None, "opcion_nombre": opcion.nombre if opcion else None,
+                 "norma_min": norma_de_trabajo(t, cantidad, opcion.pk if opcion else None, fecha)} for t, cantidad, opcion in datos_de_trabajos(accion)]
+
+    def get_trabajos_incompletos(self, accion):
+        return [t.pk for t in trabajos_incompletos(accion)]
 
     def get_avance_gabinete(self, accion):
         return avance_gabinete(accion)
@@ -191,10 +211,12 @@ class ActualizarAccionSerializer(serializers.ModelSerializer):
     claves = serializers.PrimaryKeyRelatedField(many=True, queryset=Clave.objects.filter(activa=True), required=False)
     trabajos = serializers.PrimaryKeyRelatedField(many=True, queryset=TipoTrabajo.objects.filter(activo=True), required=False)
     centro = serializers.PrimaryKeyRelatedField(queryset=Centro.objects.all(), required=False)
+    cantidades = serializers.ListField(child=serializers.DictField(), required=False, write_only=True,
+                                       help_text="Orden de trabajo: [{trabajo, cantidad}] o [{trabajo, opcion}] de los trabajos de la orden.")
 
     class Meta:
         model = Accion
-        fields = ["claves", "trabajos", "descripcion_trabajo", "observaciones", "centro",
+        fields = ["claves", "trabajos", "cantidades", "descripcion_trabajo", "observaciones", "centro",
                   "regletas_mantenidas", "regletas_reparadas", "regletas_sustituidas"]
         extra_kwargs = {c: {"max_value": 500} for c in ("regletas_mantenidas", "regletas_reparadas", "regletas_sustituidas")}
 
@@ -209,6 +231,41 @@ class ActualizarAccionSerializer(serializers.ModelSerializer):
         if centro.pk not in set(self.instance.hoja.centros.values_list("pk", flat=True)):
             raise serializers.ValidationError(f"El centro {centro.codigo} no es uno de los centros de la hoja.")
         return centro
+
+    def validate(self, datos):
+        trabajos = datos.get("trabajos")
+        permitidos = {t.pk: t for t in (trabajos if trabajos is not None else self.instance.trabajos.all())}
+        limpias = []
+        for c in datos.get("cantidades", []):
+            trabajo = permitidos.get(c.get("trabajo"))
+            if trabajo is None:
+                raise serializers.ValidationError({"cantidades": "Ese trabajo no es de esta orden."})
+            if trabajo.medida == "TIPO":
+                opcion = trabajo.opciones.filter(pk=c.get("opcion"), activa=True).first()
+                if opcion is None:
+                    raise serializers.ValidationError({"cantidades": f"Elija un tipo válido para {trabajo.nombre.lower()}."})
+                limpias.append((trabajo, None, opcion))
+            elif trabajo.medida in ("UNIDADES", "METROS"):
+                try:
+                    cantidad = float(str(c.get("cantidad")).replace(",", "."))
+                except (TypeError, ValueError):
+                    raise serializers.ValidationError({"cantidades": f"Escriba un número para {trabajo.nombre.lower()}."})
+                if not 0 < cantidad <= 100000 or (trabajo.medida == "UNIDADES" and cantidad != int(cantidad)):
+                    raise serializers.ValidationError({"cantidades": "La cantidad debe ser mayor que 0" + (" y entera." if trabajo.medida == "UNIDADES" else ".")})
+                limpias.append((trabajo, round(cantidad, 2), None))
+            else:
+                raise serializers.ValidationError({"cantidades": f"{trabajo.nombre} no lleva cantidad."})
+        datos["cantidades"] = limpias
+        return datos
+
+    def update(self, instance, validated_data):
+        limpias = validated_data.pop("cantidades", [])
+        instance = super().update(instance, validated_data)
+        if "trabajos" in validated_data:  # lo que se quita de la orden pierde su cantidad
+            instance.cantidades.exclude(trabajo__in=validated_data["trabajos"]).delete()
+        for trabajo, cantidad, opcion in limpias:
+            CantidadDeTrabajo.objects.update_or_create(accion=instance, trabajo=trabajo, defaults={"cantidad": cantidad, "opcion": opcion})
+        return instance
 
 
 class CrearAccionSerializer(serializers.Serializer):

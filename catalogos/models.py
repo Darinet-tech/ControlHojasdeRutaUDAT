@@ -253,6 +253,18 @@ class TipoTrabajo(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
     activo = models.BooleanField(default=True)
 
+    class Medida(models.TextChoices):
+        FIJA = "", "Tiempo fijo por trabajo"
+        UNIDADES = "UNIDADES", "Por unidad (postes, cajas…)"
+        METROS = "METROS", "Por metro"
+        TIPO = "TIPO", "Según el tipo (opciones)"
+
+    medida = models.CharField(
+        "cómo se norma", max_length=10, choices=Medida.choices, blank=True, default="",
+        help_text="Por unidad o por metro: el probador indica la cantidad y la norma es por cada una. Según el tipo: el probador elige una opción y cada opción tiene su norma.",
+    )
+    unidad = models.CharField(max_length=20, blank=True, help_text="Para «por unidad»: ej. poste(s), caja(s).")
+
     class Meta:
         verbose_name = "tipo de trabajo (orden de trabajo)"
         verbose_name_plural = "tipos de trabajo (órdenes de trabajo)"
@@ -316,6 +328,8 @@ class NormaTrabajo(models.Model):
     """Norma de tiempo (minutos) de un tipo de trabajo, con vigencia: igual que las normas de las claves."""
 
     tipo_trabajo = models.ForeignKey(TipoTrabajo, on_delete=models.CASCADE, related_name="normas")
+    opcion = models.ForeignKey("OpcionDeTrabajo", null=True, blank=True, on_delete=models.CASCADE, related_name="normas",
+                               help_text="Solo en los trabajos «según el tipo»: la opción a la que corresponde esta norma.")
     minutos = MinutosNorma()
     vigente_desde = models.DateField()
     vigente_hasta = models.DateField(null=True, blank=True)
@@ -325,14 +339,24 @@ class NormaTrabajo(models.Model):
         verbose_name = "norma de tiempo de un trabajo"
         verbose_name_plural = "normas de tiempo de los trabajos"
         ordering = ["tipo_trabajo__nombre", "-vigente_desde"]
-        constraints = [models.UniqueConstraint(fields=["tipo_trabajo", "vigente_desde"], name="norma_trabajo_unica_por_inicio")]
+        constraints = [
+            models.UniqueConstraint(fields=["tipo_trabajo", "vigente_desde"], condition=Q(opcion__isnull=True), name="norma_trabajo_unica_por_inicio"),
+            models.UniqueConstraint(fields=["tipo_trabajo", "opcion", "vigente_desde"], condition=Q(opcion__isnull=False),
+                                    name="norma_trabajo_opcion_unica_por_inicio"),
+        ]
 
     def __str__(self):
-        return f"{self.tipo_trabajo} = {texto_norma(self.minutos)} min"
+        return f"{self.tipo_trabajo}{f' ({self.opcion})' if self.opcion_id else ''} = {texto_norma(self.minutos)} min"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.opcion_id and self.opcion.tipo_trabajo_id != self.tipo_trabajo_id:
+            raise ValidationError({"opcion": "Esa opción no es de este trabajo."})
 
     @classmethod
-    def vigente(cls, tipo_trabajo, fecha):
-        return (cls.objects.filter(tipo_trabajo=tipo_trabajo, vigente_desde__lte=fecha)
+    def vigente(cls, tipo_trabajo, fecha, opcion=None):
+        """Norma vigente del trabajo; con `opcion` (id), la de esa opción."""
+        return (cls.objects.filter(tipo_trabajo=tipo_trabajo, opcion_id=opcion, vigente_desde__lte=fecha)
                 .filter(Q(vigente_hasta__isnull=True) | Q(vigente_hasta__gte=fecha)).order_by("-vigente_desde").first())
 
 
@@ -368,3 +392,20 @@ class RegletasDeGabinete(models.Model):
 
     def __str__(self):
         return f"{self.gabinete} · cable {self.cable or '—'}: {self.cantidad}"
+
+
+class OpcionDeTrabajo(models.Model):
+    """Opción de un trabajo «según el tipo» (ej.: sustitución de caja terminal: Multiservicios, Con cola). Cada una tiene su norma."""
+
+    tipo_trabajo = models.ForeignKey(TipoTrabajo, on_delete=models.CASCADE, related_name="opciones")
+    nombre = models.CharField(max_length=60)
+    activa = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "opción de un trabajo"
+        verbose_name_plural = "opciones de un trabajo"
+        ordering = ["tipo_trabajo__nombre", "nombre"]
+        constraints = [models.UniqueConstraint(fields=["tipo_trabajo", "nombre"], name="opcion_de_trabajo_unica")]
+
+    def __str__(self):
+        return self.nombre

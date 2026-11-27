@@ -95,6 +95,10 @@ El preventivo GAB se identifica por el **nombre del gabinete** (Ger3G, SH1B…) 
 ### Productividad: punto de evaluación
 La productividad (tiempo normado de lo efectivo entre tiempo real) se evalúa contra el **90 %** (`META_PRODUCTIVIDAD`): pantalla, PDF, Excel y correo marcan si lo cumple (90 % o más) o queda por debajo.
 
+### Órdenes de trabajo: cantidad o tipo de cada trabajo
+Cada trabajo (`/admin` → *Tipos de trabajo*) tiene una forma de normarse: **tiempo fijo**, **por unidad** (ej. postes), **por metro** o **según el tipo** (opciones, ej. caja terminal Multiservicios / Con cola). Al seleccionar el trabajo en la orden, el probador anota la **cantidad** (postes, metros) o elige el **tipo**; hasta entonces no se puede dar el OK. La norma de la orden es la **suma** de sus trabajos (cada uno por su cantidad o su tipo). La orden de trabajo se da por buena **sin confirmación de un cliente**.
+La norma de un trabajo por unidad o por metro es la de **una** unidad (el especialista la define; las de cables y postes de la instrucción están por revisar). Las de la caja terminal (Multiservicios 70 min; Con cola 100 min: caja más módulo de empalme) son provisionales. Los pares que se empalmen en el módulo se pueden normar agregando un trabajo por unidad.
+
 ### Inicio de la jornada
 La jornada comienza a las **08:00**: la primera acción de una hoja cuenta desde esa hora y cada una de las siguientes desde el cierre de la anterior (descontando incidencias). Si la hoja se crea **después de las 08:00**, el probador debe **justificarlo** y la jornada cuenta desde la hora de creación. La justificación sale en la hoja y en su informe.
 

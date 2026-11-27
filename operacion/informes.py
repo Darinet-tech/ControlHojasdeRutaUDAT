@@ -19,7 +19,7 @@ from catalogos.models import Clave
 from .models import Accion, HojaDeRuta
 from .parte import parte_diario
 from .reportes import MAXIMO_LISTADO, Normas, hojas_del_periodo, resumen_periodo
-from .services import momento_del_corte
+from .services import datos_de_trabajos, texto_trabajo, momento_del_corte
 
 LOGO = Path(settings.BASE_DIR) / "frontend" / "public" / "logo-etecsa.png"
 LOGO_UDAT = Path(settings.BASE_DIR) / "frontend" / "public" / "logo-udat.png"
@@ -108,16 +108,17 @@ def reunir_datos(fecha, brigada=None, centro=None, solo_hoja=None, usuario=None,
                  .prefetch_related("operarios", "centros", "incidencias__causa").order_by("brigada__nombre", "pk"))
     acciones = (Accion.objects.filter(hoja__in=base)
                 .select_related("orden__tipo_orden", "orden__tipo_mantenimiento", "centro", "pasada_a", "creado_por", "certificada_por", "hoja")
-                .prefetch_related(Prefetch("claves", queryset=Clave.objects.order_by("codigo")), "trabajos").order_by("hoja_id", "numero"))
+                .prefetch_related(Prefetch("claves", queryset=Clave.objects.order_by("codigo")), "trabajos", "cantidades__opcion").order_by("hoja_id", "numero"))
     normas = Normas()
     indicadores = {h["id"]: h for h in resumen["hojas"]}
     por_hoja = {h.pk: [] for h in hojas}
     for a in acciones:
         claves, orden = list(a.claves.all()), a.orden
-        trabajos = sorted(t.nombre for t in a.trabajos.all())
+        datos_ot = datos_de_trabajos(a)
+        trabajos = sorted(texto_trabajo(t, cantidad, opcion) for t, cantidad, opcion in datos_ot)
         es_ot = orden.categoria == "ORDEN_TRABAJO"
-        if es_ot:  # una orden de trabajo se norma por sus trabajos
-            minutos = [normas.minutos_trabajo(t.pk, a.hoja.fecha) for t in a.trabajos.all()]
+        if es_ot:  # una orden de trabajo suma sus trabajos, cada uno por su cantidad o su tipo
+            minutos = [normas.minutos_de_trabajo(t.pk, cantidad, opcion.pk if opcion else None, a.hoja.fecha) for t, cantidad, opcion in datos_ot]
             descripcion = f"{orden.etiqueta} · " + ", ".join(trabajos) if trabajos else orden.etiqueta
         else:
             por_tipo = normas.minutos_de_tipo(orden.categoria, orden.tipo_orden_id, orden.tipo_mantenimiento_id, a.hoja.fecha)
@@ -134,7 +135,9 @@ def reunir_datos(fecha, brigada=None, centro=None, solo_hoja=None, usuario=None,
             "centro": a.centro.codigo if a.centro else "", "claves": [c.codigo for c in claves], "descripcion": descripcion,
             "hora": hora_corta(a.hora_fin), "cliente": a.cliente_contactado, "estado": estado,
             "resultado": f"Pasada a {a.pasada_a.nombre}" if estado == "PASADA_A_BRIGADA" else RESULTADO[estado],
-            "tiempo_real": a.tiempo_real_min, "norma": max([m for m in minutos if m is not None], default=None),
+            "tiempo_real": a.tiempo_real_min,
+            "norma": (round(sum(m for m in minutos if m is not None), 4) if any(m is not None for m in minutos) else None) if es_ot
+            else max([m for m in minutos if m is not None], default=None),
             "descripcion_trabajo": a.descripcion_trabajo, "observaciones": a.observaciones, "certificada_por": nombre_de(a.certificada_por),
             "creada_por": nombre_de(a.creado_por),
         })

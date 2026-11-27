@@ -75,20 +75,53 @@ function SelectorDeClaves({ catalogo, seleccionadas, alCambiar, deshabilitado })
 
 // ---------------------------------------------------------------- trabajos de una orden de trabajo
 
-function SelectorDeTrabajos({ catalogo, seleccionados, alCambiar, deshabilitado }) {
+// Lo que se anota de cada trabajo: la cantidad (postes, metros) o el tipo (caja terminal), que es lo que define su norma.
+function DatoDeTrabajo({ trabajo, detalle, deshabilitado, alGuardar }) {
+  const [texto, setTexto] = useState(detalle?.cantidad ?? '');
+  useEffect(() => { setTexto(detalle?.cantidad ?? ''); }, [detalle?.cantidad]);
+  if (trabajo.medida === 'TIPO') {
+    return (
+      <label className="en-linea">Tipo de caja terminal
+        <select value={detalle?.opcion ?? ''} disabled={deshabilitado} onChange={(e) => e.target.value && alGuardar({ trabajo: trabajo.id, opcion: Number(e.target.value) })}>
+          <option value="">Seleccione…</option>
+          {trabajo.opciones.map((o) => <option key={o.id} value={o.id}>{o.nombre}{o.norma_min ? ` · ${normaATexto(o.norma_min)} min` : ''}</option>)}
+        </select>
+      </label>
+    );
+  }
+  const metros = trabajo.medida === 'METROS';
+  return (
+    <label className="en-linea">{metros ? 'Metros sustituidos' : `Cantidad de ${trabajo.unidad || 'unidades'}`}
+      <input type="number" min={metros ? '0.1' : '1'} step={metros ? '0.1' : '1'} inputMode="decimal" value={texto} disabled={deshabilitado}
+        onChange={(e) => setTexto(e.target.value)}
+        onBlur={(e) => { const v = e.target.value.trim(); if (v !== '' && Number(v) !== detalle?.cantidad) alGuardar({ trabajo: trabajo.id, cantidad: v }); }} />
+    </label>
+  );
+}
+
+function SelectorDeTrabajos({ catalogo, seleccionados, detalle = [], alCambiar, alAnotar, deshabilitado }) {
   const ids = seleccionados.map((t) => t.id);
   const faltan = catalogo.filter((t) => !ids.includes(t.id));
+  const dato = (id) => detalle.find((d) => d.trabajo === id);
   return (
     <div className="claves">
       <div className="fila fila-chips">
         {seleccionados.length === 0 && <span className="suave">Sin trabajos seleccionados</span>}
-        {seleccionados.map((t) => (
-          <Chip key={t.id} tipo="info">
-            {t.nombre}{t.norma_min ? ` · ${normaATexto(t.norma_min)} min` : ' · sin norma'}
-            {!deshabilitado && <button className="chip-quitar" aria-label={`Quitar trabajo ${t.nombre}`} onClick={() => alCambiar(ids.filter((i) => i !== t.id))}>×</button>}
-          </Chip>
-        ))}
+        {seleccionados.map((t) => {
+          const d = dato(t.id);
+          const completo = t.medida === 'TIPO' ? d?.opcion != null : !['UNIDADES', 'METROS'].includes(t.medida) || d?.cantidad > 0;
+          return (
+            <Chip key={t.id} tipo={completo ? 'info' : 'aviso'}>
+              {t.nombre}
+              {d?.norma_min != null ? ` · ${normaATexto(d.norma_min)} min` : completo ? ' · sin norma' : ' · falta el dato'}
+              {!deshabilitado && <button className="chip-quitar" aria-label={`Quitar trabajo ${t.nombre}`} onClick={() => alCambiar(ids.filter((i) => i !== t.id))}>×</button>}
+            </Chip>
+          );
+        })}
       </div>
+      {seleccionados.filter((t) => t.medida).map((t) => (
+        <DatoDeTrabajo key={t.id} trabajo={t} detalle={dato(t.id)} deshabilitado={deshabilitado} alGuardar={alAnotar} />
+      ))}
       {!deshabilitado && faltan.length > 0 && (
         <select aria-label="Agregar trabajo" value="" onChange={(e) => e.target.value && alCambiar([...ids, Number(e.target.value)])}>
           <option value="">Agregar trabajo de la orden…</option>
@@ -299,6 +332,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
   const esOT = accion.categoria === 'ORDEN_TRABAJO';
   const esOS = accion.categoria === 'ORDEN_SERVICIO'; // sus claves (1 a 19) son los motivos de NO ejecutarla; el OK no lleva clave
   const sinRegletas = accion.es_gabinete && accion.regletas === 0;
+  const faltaDato = esOT && (accion.trabajos_incompletos?.length ?? 0) > 0; // cantidad o tipo de algún trabajo
   const sinClaves = esOT ? accion.trabajos.length === 0 : accion.claves.length === 0; // nada registrado todavía
   const otrasBrigadas = catalogos.brigadas.filter((b) => b.id !== hoja.brigada);
   const [tipo, texto] = accion.estado === 'PASADA_A_BRIGADA'
@@ -350,8 +384,9 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
       )}
 
       {esOT ? (
-        <SelectorDeTrabajos catalogo={catalogos.tiposTrabajo} seleccionados={accion.trabajos} deshabilitado={!editable || !abierta}
-          alCambiar={(ids) => ejecutar(() => api.patch(`/acciones/${accion.id}/`, { trabajos: ids }))} />
+        <SelectorDeTrabajos catalogo={catalogos.tiposTrabajo} seleccionados={accion.trabajos} detalle={accion.detalle_trabajos} deshabilitado={!editable || !abierta}
+          alCambiar={(ids) => ejecutar(() => api.patch(`/acciones/${accion.id}/`, { trabajos: ids }))}
+          alAnotar={(dato) => ejecutar(() => api.patch(`/acciones/${accion.id}/`, { cantidades: [dato] }))} />
       ) : (
         <SelectorDeClaves catalogo={catalogos.claves.filter((c) => (c.ambito === 'ORDEN') === esOS)} seleccionadas={accion.claves}
           deshabilitado={!editable || !abierta}
@@ -380,7 +415,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
       {abierta && accion.norma_min !== null && (
         <p className="suave">
           Norma de tiempo: <strong>{normaATexto(accion.norma_min)} min</strong> ({accion.es_gabinete ? `${accion.regletas} regleta(s) × ${normaATexto(accion.norma_por_regleta)} min`
-            : esOT ? 'trabajo de mayor norma' : ['PREVENTIVO', 'ORDEN_SERVICIO'].includes(accion.categoria) ? 'norma del tipo' : 'clave mayor'})
+            : esOT ? 'suma de los trabajos' : ['PREVENTIVO', 'ORDEN_SERVICIO'].includes(accion.categoria) ? 'norma del tipo' : 'clave mayor'})
           {accion.sugerencia_ok && !esOT && ' · Sugerencia: las claves son compatibles con OK'}
         </p>
       )}
@@ -400,7 +435,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
 
       {editable && abierta && modo === null && (
         <div className="fila botones-accion">
-          <button className="boton boton-ok" disabled={(sinClaves && !esOS) || sinRegletas} onClick={() => setModo('ok')}>✔ Dar OK</button>
+          <button className="boton boton-ok" disabled={(sinClaves && !esOS) || sinRegletas || faltaDato} onClick={() => setModo('ok')}>✔ Dar OK</button>
           <button className="boton" disabled={sinClaves || otrasBrigadas.length === 0} onClick={() => { setBrigada(otrasBrigadas[0]?.id ?? ''); setModo('pasar'); }}>
             ➜ Pasar a otra brigada
           </button>
@@ -412,6 +447,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
             <button className="boton" onClick={() => setModo('tipo')} title="Cambiar el servicio entre correctivo y preventivo">Cambiar tipo</button>
           )}
           <button className="boton boton-peligro empujar" onClick={() => setModo('quitar')} title="Quitar de la hoja un servicio asignado por error">Quitar de la hoja</button>
+          {faltaDato && <span className="suave">Indique la cantidad o el tipo de cada trabajo para dar el OK.</span>}
           {sinRegletas && <span className="suave">En un gabinete, anote las regletas trabajadas para dar OK.</span>}
           {sinClaves && !esOS && <span className="suave">{esOT ? 'Seleccione al menos un trabajo para dar OK o pasar a otra brigada.' : 'Seleccione al menos una clave para dar OK o pasar a otra brigada.'} Para cerrar sin OK basta con una observación.</span>}
           {sinClaves && esOS && <span className="suave">Dar OK no lleva clave. Si la orden no se ejecutó, seleccione su clave (1 a 19) o escriba una observación y cierre sin OK; también puede anularla (NULA).</span>}
@@ -420,11 +456,13 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
 
       {modo === 'ok' && (
         <form className="confirmacion" onSubmit={(e) => { e.preventDefault(); confirmar(() => api.post(`/acciones/${accion.id}/ok/`, { cliente_contactado: cliente })); }}>
-          <label>{accion.categoria === 'CORRECTIVO' ? 'Cliente con quien se certificó el servicio' : 'Quién certificó (opcional)'}
-            <input value={cliente} onChange={(e) => setCliente(e.target.value)} autoFocus required={accion.categoria === 'CORRECTIVO'}
-              placeholder={accion.categoria === 'CORRECTIVO' ? 'Nombre del cliente' : 'Nombre (si corresponde)'} />
-          </label>
-          <button className="boton boton-ok">Confirmar OK</button>
+          {esOT ? <span>¿Dar OK a la orden de trabajo? No necesita la confirmación de un cliente.</span> : (
+            <label>{accion.categoria === 'CORRECTIVO' ? 'Cliente con quien se certificó el servicio' : 'Quién certificó (opcional)'}
+              <input value={cliente} onChange={(e) => setCliente(e.target.value)} autoFocus required={accion.categoria === 'CORRECTIVO'}
+                placeholder={accion.categoria === 'CORRECTIVO' ? 'Nombre del cliente' : 'Nombre (si corresponde)'} />
+            </label>
+          )}
+          <button className="boton boton-ok" autoFocus={esOT}>Confirmar OK</button>
           <button type="button" className="boton" onClick={() => setModo(null)}>Cancelar</button>
         </form>
       )}
