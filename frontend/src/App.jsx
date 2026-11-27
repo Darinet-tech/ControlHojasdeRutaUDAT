@@ -8,12 +8,12 @@ import Login from './Login.jsx';
 import Resumen from './Resumen.jsx';
 
 async function cargarCatalogos() {
-  const [brigadas, centros, vehiculos, operarios, tiposOrden, causas, claves, tiposMantenimiento, tiposTrabajo] = await Promise.all([
+  const [brigadas, centros, vehiculos, operarios, tiposOrden, causas, claves, tiposMantenimiento, tiposTrabajo, gabinetes] = await Promise.all([
     api.get('/brigadas/'), api.get('/centros/'), api.get('/vehiculos/'), api.get('/operarios/'),
     api.get('/tipos-orden/'), api.get('/causas-incidencia/'), api.get('/claves/'),
-    api.get('/tipos-mantenimiento/'), api.get('/tipos-trabajo/'),
+    api.get('/tipos-mantenimiento/'), api.get('/tipos-trabajo/'), api.get('/gabinetes/'),
   ]);
-  return { brigadas, centros, vehiculos, operarios, tiposOrden, causas, claves, tiposMantenimiento, tiposTrabajo };
+  return { brigadas, centros, vehiculos, operarios, tiposOrden, causas, claves, tiposMantenimiento, tiposTrabajo, gabinetes };
 }
 
 export default function App() {

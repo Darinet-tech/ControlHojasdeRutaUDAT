@@ -39,16 +39,16 @@ ROLES = {
     "Probador": {
         "operacion": (["hojaderuta", "ordenservicio", "accion", "incidencia"], ["add", "change", "view"]),
         "catalogos": (["brigada", "centro", "vehiculo", "operario", "clave", "claveordenservicio", "normatiempo", "tipoorden",
-                       "causaincidencia", "grupoclave", "tipomantenimiento", "tipotrabajo", "normatrabajo"], ["view"]),
+                       "causaincidencia", "grupoclave", "tipomantenimiento", "tipotrabajo", "normatrabajo", "gabinete", "regletasdegabinete"], ["view"]),
     },
     "Especialista": {
         "catalogos": (["brigada", "centro", "vehiculo", "operario", "clave", "claveordenservicio", "normatiempo", "tipoorden",
-                       "causaincidencia", "grupoclave", "tipomantenimiento", "tipotrabajo", "normatrabajo"], ["add", "change", "delete", "view"]),
+                       "causaincidencia", "grupoclave", "tipomantenimiento", "tipotrabajo", "normatrabajo", "gabinete", "regletasdegabinete"], ["add", "change", "delete", "view"]),
         "operacion": (["hojaderuta", "ordenservicio", "accion", "incidencia"], ["view"]),
     },
     "Jefe": {
         "catalogos": (["brigada", "centro", "vehiculo", "operario", "clave", "claveordenservicio", "normatiempo", "tipoorden",
-                       "causaincidencia", "grupoclave", "tipomantenimiento", "tipotrabajo", "normatrabajo"], ["view"]),
+                       "causaincidencia", "grupoclave", "tipomantenimiento", "tipotrabajo", "normatrabajo", "gabinete", "regletasdegabinete"], ["view"]),
         "operacion": (["hojaderuta", "ordenservicio", "accion", "incidencia"], ["view"]),
     },
 }

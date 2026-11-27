@@ -7,7 +7,7 @@ from django.db import transaction
 from django.db.models import Exists, Max, OuterRef
 from django.utils import timezone
 
-from catalogos.models import NormaMantenimiento, NormaTiempo, NormaTipoOrden, NormaTrabajo
+from catalogos.models import Gabinete, NormaMantenimiento, NormaTiempo, NormaTipoOrden, NormaTrabajo
 
 from .models import Accion, HojaDeRuta, Incidencia, OrdenServicio
 
@@ -165,7 +165,10 @@ def cerrar_hoja(hoja, usuario, ahora=None):
         raise ValidationError("La hoja de ruta ya está cerrada.")
     ahora = ahora or timezone.now()
     finalizar_incidencia(hoja, usuario, ahora=ahora)
-    for accion in hoja.acciones.filter(hora_fin__isnull=True, no_visitada=False).select_related("orden"):
+    for accion in hoja.acciones.filter(hora_fin__isnull=True, no_visitada=False).select_related("orden__tipo_mantenimiento"):
+        if accion.es_gabinete and accion.regletas:
+            _cerrar_gabinete_a_medias(accion, usuario, ahora)  # se trabajó: no es un «no visitado»
+            continue
         accion.no_visitada = True
         accion.modificado_por = usuario
         accion.save()
@@ -177,6 +180,35 @@ def cerrar_hoja(hoja, usuario, ahora=None):
     hoja.cerrada, hoja.cerrada_en, hoja.cerrada_por, hoja.modificado_por = True, ahora, usuario, usuario
     hoja.save()
     return hoja
+
+
+def _cerrar_gabinete_a_medias(accion, usuario, ahora):
+    """Al cerrar la hoja, un gabinete con regletas anotadas queda como visita sin OK y sigue en seguimiento.
+
+    En el cierre automático no se sabe cuándo se terminó de trabajar: se deja sin tiempo real (y no entra en la productividad)."""
+    _cerrar(accion, usuario, ahora)
+    if usuario is None:
+        accion.tiempo_real_min = None
+    accion.save()
+    orden = accion.orden
+    if orden.estado == OrdenServicio.Estado.ABIERTA:
+        orden.estado, orden.brigada_pendiente = OrdenServicio.Estado.SIN_SOLUCION, accion.hoja.brigada
+        orden.save(update_fields=["estado", "brigada_pendiente", "modificado_en"])
+
+
+def cuenta_en_la_productividad(accion):
+    """Suman tiempo normado las acciones con OK y los gabinetes a medias (con tiempo real): las regletas hechas son trabajo realizado."""
+    return bool(accion.ok or (accion.es_gabinete and accion.regletas and accion.hora_fin and accion.tiempo_real_min is not None))
+
+
+def avance_gabinete(accion):
+    """{"trabajadas", "total", "pct"} del gabinete: regletas hechas en esta orden hasta esta visita frente a las del catálogo."""
+    if not accion.es_gabinete:
+        return None
+    trabajadas = sum(a.regletas for a in Accion.objects.filter(orden_id=accion.orden_id, pk__lte=accion.pk))
+    gabinete = Gabinete.objects.filter(nombre__iexact=accion.orden.numero_servicio).first()
+    total = gabinete.total_regletas if gabinete else 0
+    return {"trabajadas": trabajadas, "total": total or None, "pct": min(100, round(100 * trabajadas / total)) if total else None}
 
 
 @transaction.atomic
@@ -382,6 +414,11 @@ def obtener_orden(categoria, usuario, numero_servicio="", tipo_mantenimiento=Non
     sobran = [NOMBRES_DE_CAMPOS[c] for c in datos if c not in requeridos and datos[c]]
     if sobran:
         raise ValidationError(f"En {etiquetas[categoria].lower()} no corresponde indicar: {', '.join(sobran)}.")
+    if tipo_mantenimiento is not None and tipo_mantenimiento.fila_parte == "GABINETES" and Gabinete.objects.filter(activo=True).exists():
+        gabinete = Gabinete.objects.filter(activo=True, nombre__iexact=numero_servicio).first()
+        if gabinete is None:
+            raise ValidationError(f"El gabinete «{numero_servicio}» no está en el catálogo: selecciónelo de la lista o pida que lo agreguen.")
+        numero_servicio = gabinete.nombre
     variante = (variante or "").strip()
     permitidas = {"CORRECTIVO": {"", "TP", "NHP"}, "ORDEN_SERVICIO": {"", "NH"}}.get(categoria, {""})
     if variante not in permitidas:
@@ -577,7 +614,7 @@ def resumen_hoja(hoja, ahora=None):
     atendidas = [a for a in acciones if not a.no_visitada and not a.anulada]  # una orden anulada (NULA) no cuenta a favor ni en contra
     real = sum(a.tiempo_real_min or 0 for a in acciones)
     normas = {a.pk: norma_accion(a) for a in acciones}
-    normado_efectivo = sum(normas[a.pk] or 0 for a in efectivas)
+    normado_efectivo = round(sum(normas[a.pk] or 0 for a in acciones if cuenta_en_la_productividad(a)), 4)
 
     por_causa, incidencias_min = {}, 0
     for inc in hoja.incidencias.select_related("causa"):

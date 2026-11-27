@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<p>Use la <a href="{% url 'admin:catalogos_gabinete_plantilla' %}">plantilla Excel</a> (trae los gabinetes ya cargados, para actualizarlos).
+Los gabinetes del archivo se crean o se actualizan; los que no estén en el archivo no cambian. Si alguna fila tiene un error no se guarda nada.</p>
+{% if errores %}
+  <p class="errornote">No se importó nada. Corrija estas filas y vuelva a subir el archivo:</p>
+  <table>
+    <thead><tr><th>Fila</th><th>Error</th></tr></thead>
+    <tbody>{% for e in errores %}<tr><td>{{ e.fila }}</td><td>{{ e.mensaje }}</td></tr>{% endfor %}</tbody>
+  </table>
+{% endif %}
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <p><input type="file" name="archivo" accept=".xlsx" required></p>
+  <div class="submit-row"><input type="submit" value="Importar" class="default"></div>
+</form>
+<p><a href="{% url 'admin:catalogos_gabinete_changelist' %}">Volver a la lista de gabinetes</a></p>
+{% endblock %}

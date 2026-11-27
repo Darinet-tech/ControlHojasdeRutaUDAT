@@ -1,0 +1,6 @@
+{% extends "admin/change_list.html" %}
+{% block object-tools-items %}
+  <li><a href="{% url 'admin:catalogos_gabinete_plantilla' %}">Descargar plantilla Excel</a></li>
+  {% if has_add_permission %}<li><a href="{% url 'admin:catalogos_gabinete_importar' %}">Importar desde Excel</a></li>{% endif %}
+  {{ block.super }}
+{% endblock %}

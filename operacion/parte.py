@@ -48,6 +48,9 @@ def fila_de(f, claves_del_parte):
             return {"TP": "rep_tp", "NHP": "rep_nhp"}.get(variante, "rep_red")
         return "pend_par" if "PENDIENTE_PAR" in claves_del_parte else "otras_c"
     if categoria == "PREVENTIVO":
+        if f["orden__tipo_mantenimiento__fila_parte"] == "GABINETES" and (
+                f["regletas_mantenidas"] + f["regletas_reparadas"] + f["regletas_sustituidas"]):
+            return "gabinetes"  # las regletas ya trabajadas cuentan aunque el gabinete quede pendiente
         if estado == "OK":
             return {"MANT_TP": "mant_tp", "GABINETES": "gabinetes"}.get(f["orden__tipo_mantenimiento__fila_parte"], "mant_red")
         return "otras_p"

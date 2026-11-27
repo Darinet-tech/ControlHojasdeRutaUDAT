@@ -334,3 +334,37 @@ class NormaTrabajo(models.Model):
     def vigente(cls, tipo_trabajo, fecha):
         return (cls.objects.filter(tipo_trabajo=tipo_trabajo, vigente_desde__lte=fecha)
                 .filter(Q(vigente_hasta__isnull=True) | Q(vigente_hasta__gte=fecha)).order_by("-vigente_desde").first())
+
+
+class Gabinete(models.Model):
+    """Gabinete de la red: el probador lo selecciona en los preventivos GAB. Se carga y actualiza desde Excel en la administración."""
+
+    nombre = models.CharField(max_length=30, unique=True, help_text="Ej.: Ger3G, Ger4A, SH1B, SI1A.")
+    centro = models.ForeignKey(Centro, null=True, blank=True, on_delete=models.PROTECT, related_name="gabinetes")
+    observaciones = models.CharField(max_length=200, blank=True)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["nombre"]
+
+    def __str__(self):
+        return self.nombre
+
+    @property
+    def total_regletas(self):
+        return sum(r.cantidad for r in self.regletas.all())
+
+
+class RegletasDeGabinete(models.Model):
+    gabinete = models.ForeignKey(Gabinete, on_delete=models.CASCADE, related_name="regletas")
+    cable = models.CharField(max_length=30, blank=True)
+    cantidad = models.PositiveSmallIntegerField("cantidad de regletas")
+    pares = models.PositiveSmallIntegerField("pares por regleta", null=True, blank=True, choices=[(8, "8"), (10, "10"), (20, "20")])
+
+    class Meta:
+        verbose_name = "regletas del gabinete"
+        verbose_name_plural = "regletas del gabinete"
+        ordering = ["cable", "pk"]
+
+    def __str__(self):
+        return f"{self.gabinete} · cable {self.cable or '—'}: {self.cantidad}"

@@ -88,6 +88,10 @@ Las normas vigentes son las de la **Instrucción de Normas de Tiempo de Red de A
 ### Gabinetes (GAB)
 El preventivo GAB se identifica por el **nombre del gabinete** (Ger3G, SH1B…) y en la ventana de la acción se anotan las **regletas trabajadas** (mantenimiento, reparadas y sustituidas). Cada regleta se norma en **50 min** (norma del tipo GAB en `/admin`, por regleta); sin regletas anotadas no se puede dar el OK. La fila **Gabinetes (regletas)** del parte cuenta regletas y «Visitadas en el día» cuenta cada gabinete una sola vez.
 
+**Catálogo de gabinetes.** En `/admin` → *Gabinetes*: **Descargar plantilla Excel** (trae lo ya cargado) e **Importar desde Excel** (una fila por gabinete y cable: Gabinete, Centro, Cable, Cantidad de regletas, Pares 8/10/20, Observaciones). Todo o nada; los gabinetes del archivo se crean o actualizan y los demás no cambian. Con el catálogo cargado, el probador **selecciona** el gabinete (sin catálogo, lo escribe). Tras actualizar el programa, ejecutar `python manage.py cargar_inicial` para dar los permisos del catálogo a los roles.
+
+**Gabinete a medias.** Las regletas ya trabajadas cuentan en el parte y dan tiempo normado aunque la acción se cierre sin OK o pase a otra brigada; el servicio sigue en seguimiento y la app muestra el **porcentaje de ejecución** acumulado (regletas hechas / total del catálogo). En la siguiente jornada se anotan solo las regletas nuevas. Al cerrar la hoja, un gabinete con regletas queda como sin OK (no como no visitado); en el cierre automático de las 21:00 queda sin tiempo real y no entra en la productividad.
+
 ### Productividad: punto de evaluación
 La productividad (tiempo normado de lo efectivo entre tiempo real) se evalúa contra el **90 %** (`META_PRODUCTIVIDAD`): pantalla, PDF, Excel y correo marcan si lo cumple (90 % o más) o queda por debajo.
 

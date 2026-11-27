@@ -209,7 +209,7 @@ a.boton { text-decoration: none; color: var(--texto); display: inline-block; }
 .tabla-parte .col-total { background: rgba(232, 240, 160, .35); font-weight: 600; }
 .tabla-parte .col-mes { background: rgba(120, 230, 120, .28); font-weight: 600; }
 .tabla-parte .col-anio { background: rgba(120, 180, 255, .28); font-weight: 600; }
-.tabla-parte thead .col-total, .tabla-parte thead .col-mes, .tabla-parte thead .col-anio { color: #1c2430; }
+.tabla-parte thead .col-total, .tabla-parte thead .col-mes, .tabla-parte thead .col-anio { color: var(--texto); }
 .tabla-parte .visitadas-parte td { font-weight: 700; background: rgba(232, 240, 160, .5); }
 .nota-parte { color: #c00000; margin: .25rem 0; }
 @media (prefers-color-scheme: dark) { :root[data-tema="oscuro"] .nota-parte { color: #ff8b80; } }

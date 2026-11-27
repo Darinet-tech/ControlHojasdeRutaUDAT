@@ -18,7 +18,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from catalogos.models import (Brigada, CausaIncidencia, Centro, Clave, Operario, TipoMantenimiento, TipoOrden, TipoTrabajo,
+from catalogos.models import (Gabinete, Brigada, CausaIncidencia, Centro, Clave, Operario, TipoMantenimiento, TipoOrden, TipoTrabajo,
                               Vehiculo)
 from operacion.models import Accion, DestinatarioInforme, HojaDeRuta, Incidencia, InformeEnviado, OrdenServicio
 from operacion.informes import generar_informe
@@ -126,6 +126,11 @@ class TipoOrdenViewSet(CatalogoViewSet):
 class TipoMantenimientoViewSet(CatalogoViewSet):
     queryset = TipoMantenimiento.objects.filter(activo=True)
     serializer_class = s.TipoMantenimientoSerializer
+
+
+class GabineteViewSet(CatalogoViewSet):
+    queryset = Gabinete.objects.filter(activo=True).select_related("centro").prefetch_related("regletas")
+    serializer_class = s.GabineteSerializer
 
 
 class TipoTrabajoViewSet(CatalogoViewSet):

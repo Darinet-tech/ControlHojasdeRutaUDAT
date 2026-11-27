@@ -4,10 +4,10 @@ from django.core.exceptions import ValidationError as ErrorDjango
 from django.utils import timezone
 from rest_framework import serializers
 
-from catalogos.models import (Brigada, CausaIncidencia, Centro, Clave, NormaTrabajo, Operario, TipoMantenimiento, TipoOrden,
+from catalogos.models import (Brigada, Gabinete, CausaIncidencia, Centro, Clave, NormaTrabajo, Operario, TipoMantenimiento, TipoOrden,
                               TipoTrabajo, Vehiculo)
 from operacion.models import Accion, HojaDeRuta, Incidencia, OrdenServicio
-from operacion.services import (momento_del_corte, norma_accion, norma_de_tipo, resumen_hoja, sugerir_ok, validar_claves_de_la_accion,
+from operacion.services import (avance_gabinete, momento_del_corte, norma_accion, norma_de_tipo, resumen_hoja, sugerir_ok, validar_claves_de_la_accion,
                                 validar_operarios_libres)
 
 
@@ -49,6 +49,15 @@ class TipoMantenimientoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TipoMantenimiento
         fields = ["id", "codigo", "nombre", "fila_parte"]
+
+
+class GabineteSerializer(serializers.ModelSerializer):
+    centro_codigo = serializers.CharField(source="centro.codigo", read_only=True, default=None)
+    total_regletas = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Gabinete
+        fields = ["id", "nombre", "centro", "centro_codigo", "total_regletas"]
 
 
 class TipoTrabajoSerializer(serializers.ModelSerializer):
@@ -125,6 +134,7 @@ class AccionSerializer(serializers.ModelSerializer):
     es_gabinete = serializers.BooleanField(read_only=True)
     regletas = serializers.IntegerField(read_only=True)
     norma_por_regleta = serializers.SerializerMethodField()
+    avance_gabinete = serializers.SerializerMethodField(help_text="Regletas hechas frente a las del gabinete.")
     sugerencia_ok = serializers.SerializerMethodField()
     estado = serializers.SerializerMethodField()
     posterior_al_corte = serializers.SerializerMethodField(help_text="Se cerró después del corte de las 16:00: va en el complemento del parte siguiente.")
@@ -139,7 +149,10 @@ class AccionSerializer(serializers.ModelSerializer):
                   "descripcion_trabajo", "observaciones", "estado", "ok", "cliente_contactado", "pasada_a",
                   "pasada_a_nombre", "hora_fin", "tiempo_real_min", "norma_min", "sugerencia_ok", "posterior_al_corte", "agregada_despues",
                   "visita_anterior", "es_gabinete", "regletas", "regletas_mantenidas", "regletas_reparadas", "regletas_sustituidas",
-                  "norma_por_regleta"]
+                  "norma_por_regleta", "avance_gabinete"]
+
+    def get_avance_gabinete(self, accion):
+        return avance_gabinete(accion)
 
     def get_norma_por_regleta(self, accion):
         return norma_de_tipo(accion.orden, accion.hoja.fecha) if accion.es_gabinete else None
@@ -154,9 +167,10 @@ class AccionSerializer(serializers.ModelSerializer):
         if previa is None:
             return None
         claves = [c.codigo for c in previa.claves.all()]
-        if not (claves or previa.observaciones):
+        regletas = previa.regletas if previa.es_gabinete else 0
+        if not (claves or previa.observaciones or regletas):
             return None
-        return {"fecha": previa.hoja.fecha, "estado": previa.estado, "claves": claves, "observaciones": previa.observaciones}
+        return {"fecha": previa.hoja.fecha, "estado": previa.estado, "claves": claves, "observaciones": previa.observaciones, "regletas": regletas}
 
     def get_posterior_al_corte(self, accion):
         return bool(accion.hora_fin and accion.hora_fin > momento_del_corte(accion.hoja.fecha))

@@ -149,7 +149,9 @@ def _estadisticas_por_hoja(base, ahora):
             e["atendidas"] += 1
         e["real"] += f["tiempo_real_min"] or 0
         f["normado"] = 0
-        if f["estado"] == "OK":
+        gabinete_a_medias = (f["orden__tipo_mantenimiento__fila_parte"] == "GABINETES" and f["estado"] in ("SIN_OK", "PASADA_A_BRIGADA")
+                             and f["tiempo_real_min"] is not None)  # sus regletas hechas son trabajo realizado
+        if f["estado"] == "OK" or gabinete_a_medias:
             if f["orden__categoria"] == "ORDEN_TRABAJO":  # una orden de trabajo se norma por sus trabajos
                 minutos = [normas.minutos_trabajo(t, e["fecha"]) for t in trabajos_de[f["id"]]]
             else:

@@ -115,6 +115,11 @@ function FormularioAsignar({ catalogos, hoja, centrosDeLaHoja, ejecutar, verHist
   const [variante, setVariante] = useState(''); // correctivo: TP o NHP; alta: NH
   const variosCentros = hoja.centros.length > 1;
   const centroElegido = centro || String(hoja.centros[0]);
+  const elegirGabinete = (nombre) => {
+    setServicio(nombre);
+    const g = catalogos.gabinetes.find((x) => x.nombre === nombre);
+    if (g?.centro && hoja.centros.includes(g.centro)) setCentro(String(g.centro)); // el centro del gabinete, si la hoja trabaja en él
+  };
 
   const cambiarCategoria = (nueva) => {
     setCategoria(nueva); setServicio(''); setMantenimiento(''); setTipoOrden(''); setNumeroOrden(''); setTrabajos(new Set()); setVariante('');
@@ -178,7 +183,22 @@ function FormularioAsignar({ catalogos, hoja, centrosDeLaHoja, ejecutar, verHist
             <input value={numeroOrden} onChange={(e) => setNumeroOrden(e.target.value)} required />
           </label>
         )}
-        {categoria !== 'ORDEN_TRABAJO' && (
+        {eligioGabinete && catalogos.gabinetes.length > 0 && (
+          <label>Gabinete
+            <select value={servicio} onChange={(e) => elegirGabinete(e.target.value)} required>
+              <option value="">Seleccione…</option>
+              {[['De los centros de la hoja', true], ['Otros gabinetes', false]].map(([titulo, deLaHoja]) => {
+                const grupo = catalogos.gabinetes.filter((g) => hoja.centros.includes(g.centro) === deLaHoja);
+                return grupo.length > 0 && (
+                  <optgroup key={titulo} label={titulo}>
+                    {grupo.map((g) => <option key={g.id} value={g.nombre}>{g.nombre}{g.centro_codigo ? ` · ${g.centro_codigo}` : ''}{g.total_regletas ? ` · ${g.total_regletas} regletas` : ''}</option>)}
+                  </optgroup>
+                );
+              })}
+            </select>
+          </label>
+        )}
+        {categoria !== 'ORDEN_TRABAJO' && !(eligioGabinete && catalogos.gabinetes.length > 0) && (
           <label>{eligioGabinete ? 'Nombre del gabinete' : 'Número de servicio'}
             <input value={servicio} onChange={(e) => setServicio(e.target.value)} placeholder={eligioGabinete ? 'Ej.: Ger3G, SH1B, SI1A' : 'Ej.: 46-326407'} required />
           </label>
@@ -316,6 +336,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
           <strong>Visita anterior ({accion.visita_anterior.fecha.slice(8, 10)}/{accion.visita_anterior.fecha.slice(5, 7)}):</strong>{' '}
           {{ SIN_OK: 'cerrada sin OK', OK: 'OK', PASADA_A_BRIGADA: 'pasada a otra brigada', NO_VISITADA: 'no se visitó' }[accion.visita_anterior.estado] || ''}
           {accion.visita_anterior.claves.length > 0 && ` · claves ${accion.visita_anterior.claves.join(', ')}`}
+          {accion.visita_anterior.regletas > 0 && ` · ${accion.visita_anterior.regletas} regleta(s) hechas (anote ahora solo las de esta jornada)`}
           {accion.visita_anterior.observaciones && ` · «${accion.visita_anterior.observaciones}»`}
         </p>
       )}
@@ -347,6 +368,14 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
       )}
 
       {accion.es_gabinete && <Regletas accion={accion} editable={editable && abierta} ejecutar={ejecutar} />}
+      {accion.avance_gabinete?.trabajadas > 0 && (
+        <p className="suave">
+          <strong>Ejecución del gabinete: {accion.avance_gabinete.pct !== null
+            ? `${accion.avance_gabinete.pct} % (${accion.avance_gabinete.trabajadas} de ${accion.avance_gabinete.total} regletas)`
+            : `${accion.avance_gabinete.trabajadas} regleta(s) hechas`}</strong>
+          {accion.avance_gabinete.pct === null && ' · sin el total en el catálogo no se calcula el porcentaje'}
+        </p>
+      )}
 
       {abierta && accion.norma_min !== null && (
         <p className="suave">

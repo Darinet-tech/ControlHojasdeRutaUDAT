@@ -1,7 +1,12 @@
 from django.contrib import admin
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.http import HttpResponse
+from django.shortcuts import redirect, render
+from django.urls import path
 
+from . import gabinetes_excel
 from .campos import texto_norma
-from .models import (Brigada, CausaIncidencia, Centro, Clave, ClaveOrdenServicio, GrupoClave, NormaMantenimiento, NormaTiempo,
+from .models import (Gabinete, RegletasDeGabinete, Brigada, CausaIncidencia, Centro, Clave, ClaveOrdenServicio, GrupoClave, NormaMantenimiento, NormaTiempo,
                      NormaTipoOrden, NormaTrabajo, Operario,
                      TipoMantenimiento, TipoOrden, TipoTrabajo, Vehiculo)
 
@@ -172,3 +177,59 @@ class TipoMantenimientoAdmin(admin.ModelAdmin):
 
 for modelo in (Brigada, GrupoClave):
     admin.site.register(modelo)
+
+
+class RegletasInline(admin.TabularInline):
+    model = RegletasDeGabinete
+    extra = 0
+
+
+@admin.register(Gabinete)
+class GabineteAdmin(admin.ModelAdmin):
+    """Gabinetes y sus regletas. Se pueden cargar y actualizar desde Excel con los botones de arriba."""
+
+    list_display = ("nombre", "centro", "total", "activo")
+    list_filter = ("centro", "activo")
+    search_fields = ("nombre",)
+    inlines = [RegletasInline]
+    change_list_template = "admin/catalogos/gabinete/change_list.html"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("centro").prefetch_related("regletas")
+
+    @admin.display(description="Regletas")
+    def total(self, gabinete):
+        return gabinete.total_regletas or "—"
+
+    def get_urls(self):
+        propias = [
+            path("plantilla/", self.admin_site.admin_view(self.plantilla), name="catalogos_gabinete_plantilla"),
+            path("importar/", self.admin_site.admin_view(self.importar_excel), name="catalogos_gabinete_importar"),
+        ]
+        return propias + super().get_urls()
+
+    def plantilla(self, request):
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+        return HttpResponse(gabinetes_excel.plantilla_xlsx(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            headers={"Content-Disposition": 'attachment; filename="UDAT_plantilla_gabinetes.xlsx"'})
+
+    def importar_excel(self, request):
+        if not (self.has_add_permission(request) and self.has_change_permission(request)):
+            raise PermissionDenied
+        errores = []
+        if request.method == "POST":
+            archivo = request.FILES.get("archivo")
+            try:
+                if archivo is None or not archivo.name.lower().endswith(".xlsx") or archivo.size > 5 * 1024 * 1024:
+                    raise ValidationError("Seleccione un Excel .xlsx de menos de 5 MB.")
+                resultado = gabinetes_excel.importar(archivo.read())
+            except ValidationError as error:
+                errores = [{"fila": "—", "mensaje": " ".join(error.messages)}]
+            else:
+                errores = resultado["errores"]
+                if not errores:
+                    self.message_user(request, f"Gabinetes importados: {resultado['creados']} nuevo(s) y {resultado['actualizados']} actualizado(s).")
+                    return redirect("admin:catalogos_gabinete_changelist")
+        contexto = {**self.admin_site.each_context(request), "title": "Importar gabinetes desde Excel", "errores": errores, "opts": self.model._meta}
+        return render(request, "admin/catalogos/gabinete/importar.html", contexto)
