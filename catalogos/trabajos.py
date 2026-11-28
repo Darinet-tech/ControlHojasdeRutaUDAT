@@ -1,36 +1,61 @@
+"""Trabajos de las órdenes de trabajo: las actividades de Cable y de Línea de la instrucción firmada IT-OR-001/24 y los trabajos propios.
 
-"""Cómo se mide cada trabajo de las órdenes de trabajo y los tipos de caja terminal (valores iniciales).
+Cada actividad de la instrucción se norma «por unidad» o «por metro»: el probador anota la cantidad y la norma de la orden es la **suma** de sus
+actividades. Los tiempos van sin redondear y con la nota de la instrucción (válida hasta el 16/7/2026, hasta que se firme su renovación)."""
+import json
+from pathlib import Path
 
-Los de la caja terminal vienen de la instrucción de normas (en proceso de firma): sustituir la caja son 70 min (Cable 18) y la de cola lleva
-además el módulo de empalme (30 min, Cable 76). Son provisionales hasta revisarlos con el especialista; los pares que se empalmen en el
-módulo se pueden normar agregando un trabajo «por unidad» (Cable 48: 1 min por par). Las normas de postes y cables las define el especialista."""
-from datetime import date
-from decimal import Decimal
+from .normas_2026 import INICIO, NOTA, minutos
 
-INICIO = date(2000, 1, 1)
-NOTA = "Provisional: pendiente de revisar con el especialista"
+ARCHIVO = Path(__file__).with_name("actividades_cable_linea.json")
 
-# (nombre, cómo se norma, unidad)
-TRABAJOS = [
+# Trabajos propios de la Mesa de Prueba (anteriores a la carga de la instrucción): nombre, cómo se norma, unidad.
+PROPIOS = [
     ("Sustitución de poste(s)", "UNIDADES", "poste(s)"),
-    ("Sustitución de caja(s) terminal(es)", "TIPO", ""),
+    ("Sustitución de caja(s) terminal(es)", "UNIDADES", "caja(s)"),
     ("Sustitución de cable de cobre", "METROS", "metro(s)"),
 ]
-CAJAS = {"Multiservicios": "70:00", "Con cola": "100:00"}
+# La sustitución de una caja terminal se norma como en la instrucción (Cable 18: 70 min); el módulo de empalme y los pares empalmados
+# se suman con sus propias actividades (Cable 76 y Cable 48).
+CAJA = "Sustitución de caja(s) terminal(es)"
+MINUTOS_CAJA = "70:00"
+
+
+def cargar_actividades(TipoTrabajo, NormaTrabajo):
+    """Crea (o completa) las actividades de la instrucción con su norma. No pisa lo que el especialista haya cambiado: solo crea lo que falta."""
+    creadas = 0
+    for a in json.loads(ARCHIVO.read_text(encoding="utf-8")):
+        trabajo = TipoTrabajo.objects.filter(especialidad=a["especialidad"], clave=a["clave"]).first()
+        if trabajo is None:
+            trabajo = TipoTrabajo.objects.create(
+                nombre=a["nombre"], especialidad=a["especialidad"], clave=a["clave"], medida=a["medida"], unidad=a["unidad"],
+                fuerza_trabajo=a["fuerza_trabajo"], descripcion=a["descripcion"])
+            creadas += 1
+        if not NormaTrabajo.objects.filter(tipo_trabajo=trabajo, opcion__isnull=True).exists():
+            NormaTrabajo.objects.create(tipo_trabajo=trabajo, minutos=round(a["minutos"], 4), vigente_desde=INICIO, nota=NOTA)
+    return creadas
 
 
 def configurar(TipoTrabajo, OpcionDeTrabajo, NormaTrabajo):
-    """Crea los trabajos que falten, les da su forma de medirse (solo si no la tienen) y crea los tipos de caja con su norma."""
-    from .normas_2026 import minutos
-    for nombre, medida, unidad in TRABAJOS:
+    """Crea los trabajos propios que falten (con su forma de medirse, solo si no la tienen) y carga las actividades de la instrucción."""
+    for nombre, medida, unidad in PROPIOS:
         trabajo, _ = TipoTrabajo.objects.get_or_create(nombre=nombre)
         if not trabajo.medida:
             trabajo.medida, trabajo.unidad = medida, unidad
             trabajo.save()
-    caja = TipoTrabajo.objects.get(nombre="Sustitución de caja(s) terminal(es)")
-    if caja.medida == "TIPO":
-        for nombre, tiempo in CAJAS.items():
-            opcion, creada = OpcionDeTrabajo.objects.get_or_create(tipo_trabajo=caja, nombre=nombre)
-            if creada:
-                NormaTrabajo.objects.create(tipo_trabajo=caja, opcion=opcion, minutos=minutos(tiempo), vigente_desde=INICIO, nota=NOTA)
-        NormaTrabajo.objects.filter(tipo_trabajo=caja, opcion__isnull=True).delete()  # la norma fija anterior: ahora depende del tipo
+    caja = TipoTrabajo.objects.get(nombre=CAJA)
+    if caja.medida == "UNIDADES" and not NormaTrabajo.objects.filter(tipo_trabajo=caja, opcion__isnull=True).exists():
+        NormaTrabajo.objects.create(tipo_trabajo=caja, minutos=minutos(MINUTOS_CAJA), vigente_desde=INICIO, nota=NOTA)
+    cargar_actividades(TipoTrabajo, NormaTrabajo)
+
+
+def caja_segun_la_instruccion(TipoTrabajo, OpcionDeTrabajo, NormaTrabajo):
+    """Base que ya tenía la caja terminal «según el tipo» (Multiservicios / Con cola): pasa a la norma de la instrucción y las opciones se desactivan."""
+    caja = TipoTrabajo.objects.filter(nombre=CAJA).first()
+    if caja is None or caja.medida != "TIPO":
+        return
+    caja.medida, caja.unidad = "UNIDADES", "caja(s)"
+    caja.save()
+    OpcionDeTrabajo.objects.filter(tipo_trabajo=caja).update(activa=False)
+    NormaTrabajo.objects.filter(tipo_trabajo=caja, opcion__isnull=True).delete()
+    NormaTrabajo.objects.create(tipo_trabajo=caja, minutos=minutos(MINUTOS_CAJA), vigente_desde=INICIO, nota=NOTA)

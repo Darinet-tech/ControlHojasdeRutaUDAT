@@ -21,3 +21,17 @@ def fijar():
     NormaTipoOrden.objects.all().delete()
     NormaMantenimiento.objects.all().delete()
     crear(TipoOrden, TipoMantenimiento, NormaTipoOrden, NormaMantenimiento)
+
+
+def trabajo_por_tipo():
+    """Trabajo de prueba «según el tipo» (como el que usaría un especialista): Multiservicios 70 min y Con cola 100 min."""
+    from datetime import date
+
+    from .models import NormaTrabajo, OpcionDeTrabajo, TipoTrabajo
+    trabajo, creado = TipoTrabajo.objects.get_or_create(nombre="Sustitución de caja por tipo (prueba)", defaults={"medida": "TIPO"})
+    if creado:
+        for nombre, minutos in (("Multiservicios", 70), ("Con cola", 100)):
+            opcion = OpcionDeTrabajo.objects.create(tipo_trabajo=trabajo, nombre=nombre)
+            NormaTrabajo.objects.create(tipo_trabajo=trabajo, opcion=opcion, minutos=minutos, vigente_desde=date(2000, 1, 1))
+    return trabajo
+

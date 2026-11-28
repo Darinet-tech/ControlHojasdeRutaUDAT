@@ -1,13 +1,10 @@
 from django.db import migrations
 
-from catalogos.trabajos import configurar
-
-
-def aplicar(apps, schema_editor):
-    configurar(apps.get_model("catalogos", "TipoTrabajo"), apps.get_model("catalogos", "OpcionDeTrabajo"), apps.get_model("catalogos", "NormaTrabajo"))
-
 
 class Migration(migrations.Migration):
+    """La forma de medir cada trabajo y los tipos de caja terminal se cargaron aquí en su día. Ahora lo hace la migración 0022 (que ya tiene
+    los campos de las actividades) y `cargar_inicial`; este paso quedó vacío para que una base nueva no dependa de campos que aún no existen."""
+
     dependencies = [("catalogos", "0018_opciondetrabajo_and_more")]
 
-    operations = [migrations.RunPython(aplicar, migrations.RunPython.noop)]
+    operations = []

@@ -44,8 +44,10 @@ class CargaInicialTests(TestCase):
         self.assertEqual(causas, {
             "100": "Lluvia", "101": "Traslado de personal", "102": "Esperando materiales",
             "105": "Esperando por probador", "106": "Problemas con el transporte",
-            "107": "Realizando actividades comerciales", "108": "Otras causas", "110": "Autorizado por el jefe"})
-        self.assertTrue(all(c.descuenta_tiempo for c in CausaIncidencia.objects.all()))
+            "107": "Realizando actividades comerciales", "108": "Otras causas", "110": "Autorizado por el jefe",
+            "111": "Tiempo de poda", "112": "Tiempo trasladado"})
+        # AT-1 de la instrucción: 105, 107, 111 y 112 cuentan como tiempo efectivo (no descuentan); las demás, como no efectivo
+        self.assertEqual({c.codigo for c in CausaIncidencia.objects.filter(descuenta_tiempo=False)}, {"105", "107", "111", "112"})
 
     def test_centros_con_codigo(self):
         self.assertEqual(dict(Centro.objects.values_list("codigo", "nombre")),

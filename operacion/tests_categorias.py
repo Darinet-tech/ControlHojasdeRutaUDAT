@@ -4,6 +4,7 @@ from datetime import date
 
 from django.core.exceptions import ValidationError
 
+from catalogos import normas_de_prueba
 from catalogos.models import Clave, NormaTrabajo, TipoMantenimiento, TipoOrden, TipoTrabajo, Centro, Brigada
 from .informes import generar_informe
 from .models import OrdenServicio, HojaDeRuta
@@ -22,7 +23,7 @@ class BaseCategorias(BaseOperacion):
         self.mpi = TipoMantenimiento.objects.get(codigo="MPI")
         self.ta = TipoOrden.objects.get(codigo="TA")
         self.poste = TipoTrabajo.objects.get(nombre="Sustitución de poste(s)")
-        self.caja = TipoTrabajo.objects.get(nombre="Sustitución de caja(s) terminal(es)")
+        self.caja = normas_de_prueba.trabajo_por_tipo()
         self.h = self.hoja(DIA, operarios=[self.op1])
 
     def correctivo(self, numero="46 6001"):

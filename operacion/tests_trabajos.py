@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from rest_framework.test import APIClient
 
 from catalogos.models import NormaTrabajo, OpcionDeTrabajo, TipoTrabajo
-from catalogos import trabajos as configuracion
+from catalogos import normas_de_prueba, trabajos as configuracion
 
 from .models import CantidadDeTrabajo
 from .parte import parte_diario
@@ -21,7 +21,7 @@ class OrdenesDeTrabajoPorCantidadTests(BaseOperacion):
     def setUp(self):
         self.poste = TipoTrabajo.objects.get(nombre="Sustitución de poste(s)")
         self.cable = TipoTrabajo.objects.get(nombre="Sustitución de cable de cobre")
-        self.caja = TipoTrabajo.objects.get(nombre="Sustitución de caja(s) terminal(es)")
+        self.caja = normas_de_prueba.trabajo_por_tipo()
         NormaTrabajo.objects.create(tipo_trabajo=self.poste, minutos=110, vigente_desde=date(2026, 1, 1))  # por poste
         NormaTrabajo.objects.create(tipo_trabajo=self.cable, minutos=0.5, vigente_desde=date(2026, 1, 1))  # por metro
         self.hoja_x = self.hoja(fecha=DIA)
@@ -39,7 +39,8 @@ class OrdenesDeTrabajoPorCantidadTests(BaseOperacion):
         medidas = {t["nombre"]: (t["medida"], t["unidad"], [o["nombre"] for o in t["opciones"]]) for t in self.api.get("/api/tipos-trabajo/").data}
         self.assertEqual(medidas["Sustitución de poste(s)"], ("UNIDADES", "poste(s)", []))
         self.assertEqual(medidas["Sustitución de cable de cobre"], ("METROS", "metro(s)", []))
-        self.assertEqual(medidas["Sustitución de caja(s) terminal(es)"], ("TIPO", "", ["Con cola", "Multiservicios"]))
+        self.assertEqual(medidas["Sustitución de caja(s) terminal(es)"], ("UNIDADES", "caja(s)", []))  # como en la instrucción (Cable 18: 70 min)
+        self.assertEqual(medidas["Sustitución de caja por tipo (prueba)"], ("TIPO", "", ["Con cola", "Multiservicios"]))
 
     def test_postes_y_metros_se_multiplican_por_la_cantidad(self):
         a = self.ot("9001", self.poste, self.cable)
@@ -92,15 +93,20 @@ class OrdenesDeTrabajoPorCantidadTests(BaseOperacion):
         self.patch(a, cantidades=[{"trabajo": self.poste.pk, "cantidad": 3}, {"trabajo": self.cable.pk, "cantidad": 12.5},
                                   {"trabajo": self.caja.pk, "opcion": opcion.pk}])
         texto = parte_diario(DIA)["notas"][0]["texto"]
-        for esperado in ("Sustitución de poste(s): 3", "Sustitución de cable de cobre: 12,5 m", "Sustitución de caja(s) terminal(es): Con cola"):
+        for esperado in ("Sustitución de poste(s): 3", "Sustitución de cable de cobre: 12,5 m", "Sustitución de caja por tipo (prueba): Con cola"):
             self.assertIn(esperado, texto)
 
     def test_la_configuracion_inicial_se_puede_repetir_sin_pisar_cambios(self):
-        self.caja.opciones.filter(nombre="Con cola").update(nombre="Con cola (modificada)")
-        NormaTrabajo.objects.filter(tipo_trabajo=self.caja).update(minutos=75)
+        real = TipoTrabajo.objects.get(nombre="Sustitución de caja(s) terminal(es)")
+        NormaTrabajo.objects.filter(tipo_trabajo=real).update(minutos=75)  # el especialista la cambió
+        cable31 = TipoTrabajo.objects.get(especialidad="Cable", clave="31")
+        NormaTrabajo.objects.filter(tipo_trabajo=cable31).update(minutos=7)
         self.poste.unidad = "postes"
         self.poste.save()
+        antes = (TipoTrabajo.objects.count(), NormaTrabajo.objects.count())
         configuracion.configurar(TipoTrabajo, OpcionDeTrabajo, NormaTrabajo)
         self.poste.refresh_from_db()
         self.assertEqual(self.poste.unidad, "postes")  # ya tenía su forma de medirse: no se cambia
-        self.assertEqual(NormaTrabajo.objects.filter(tipo_trabajo=self.caja, opcion__nombre="Multiservicios").get().minutos, 75)
+        self.assertEqual(NormaTrabajo.objects.get(tipo_trabajo=real).minutos, 75)
+        self.assertEqual(NormaTrabajo.objects.get(tipo_trabajo=cable31).minutos, 7)  # no se pisan los cambios
+        self.assertEqual((TipoTrabajo.objects.count(), NormaTrabajo.objects.count()), antes)  # y no se duplica nada

@@ -1,0 +1,1472 @@
+[
+ {
+  "especialidad": "Cable",
+  "clave": "1",
+  "nombre": "Armar aéreo con tabla de escalera",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 7.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende colocar escaleras, tabla, señalizaciones y subir herramientas."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "2",
+  "nombre": "Desarmar aéreo con tabla de escalera",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 7.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende bajar herramientas, retirar tabla, escaleras y señalizaciones"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "5",
+  "nombre": "Preparar empate aéreo",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 60.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Armar aéreo, enderezar cable, grampear si es pared, quitar alambre spinner si es cable cosido, abrir coraza y distribuir pares por código de colores, tapar con hule o destapar si es necesario. El ramal o cable lateral adicional se reportará de acuerdo a la cantidad de pares"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "15",
+  "nombre": "Instalar caja terminal",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 45.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Armar aéreo, fijar la caja con tornillos o fleje metálico, si es con cola, voltear y preparar la cola de la caja y preparar cable, empalmar o conectar pares. Rotular caja terminal, desarmar aéreo."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "18",
+  "nombre": "Sustituir caja terminal",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 70.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Armar aéreo, desmontar caja terminal existente, fijar caja terminal nueva con tornillos o fleje metálico. Si es con cola voltear y preparar la cola y cable. Empalmar o conectar pares. Rotular la caja terminal, conectar bajantes exteriores, desarmar aéreo."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "19",
+  "nombre": "Chequear caja terminal",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 12.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Armar aéreo, chequear con el probador de cable o con el ayudante, desarmar aéreo."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "23",
+  "nombre": "Abrir tape en empate.",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 20.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Armar aéreo, abrir los diferentes tipos de tapes y acceder de esta forma a los pares interrumpidos, desarmar aéreo."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "27",
+  "nombre": "Sellar empate con tapes",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 45.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Armar aéreo, dar continuidad de tierra a la pantalla del cable y emplear diferentes tipos de tapes para el sellaje, desarmar aéreo."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "31",
+  "nombre": "Instalar tramo aéreo hasta 200 pares",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 6.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Armar aéreo, colocar tramo de cable, voltearlo y fijarlo, desarmar aéreo. Se incluye la operación del desmonte, se reporta de acuerdo a la cantidad de metros por pareja"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "32",
+  "nombre": "Instalar cable autosoportado aéreo",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 1.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Armar aéreo, instalar cable autosoportado mediante las mordazas de sujeción, bajar herramientas, desarmar aéreo. Se incluye la operación del desmonte si es una sustitución."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "34",
+  "nombre": "Armar registro en la red soterrada",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 60.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: fijar aro, armar caseta, instalar motobombas, luces, señalizaciones y fijar aro."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "35",
+  "nombre": "Desarmar registro en la red soterrada",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 45.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: fijar módulo y cable, limpiar registro, desarmar caseta, retirar luces, señalizaciones y aro"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "36",
+  "nombre": "Preparar empate soterrado hasta 202 pares",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: voltear el cable a su posición correcta, medir cable, abrir coraza y distribuir pares por código de colores. El cable lateral o cable adicional se reportará de acuerdo a la cantidad de pares."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "37",
+  "nombre": "Preparar ramal ó cable lateral adicional hasta 200 pares.",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 45.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "38",
+  "nombre": "Preparar empate soterrado hasta 606 pares",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 55.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "39",
+  "nombre": "Preparar ramal ó cable lateral adicional de 404 a 606 pares",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 55.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "40",
+  "nombre": "Preparar empate soterrado de 909 a 1212 pares",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 120.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "41",
+  "nombre": "Preparar ramal adicional de 909 a 1212 pares",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 60.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "42",
+  "nombre": "Preparar empate soterrado de 1818 a 2424 pares",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 140.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "43",
+  "nombre": "Colocar pedazo hasta 202 pares/m",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 10.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Colocar pedazo de cable, voltearlo y grampearlo, la colocación se reportará de acuerdo a la cantidad de metros a instalar."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "44",
+  "nombre": "Colocar pedazo de 404 a 606 pares/m",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 12.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "45",
+  "nombre": "Colocar pedazo de 909 a 2424 pares",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 15.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "46",
+  "nombre": "Extraer pedazo de cable sustituido",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 10.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Extraer el pedazo de cable sustituido del registro"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "47",
+  "nombre": "Prueba de hermeticidad",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Inyectar presión de aire al módulo de empalme instalado, aplicar solución jabonosa incluyendo a todas las corazas y revisar"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "48",
+  "nombre": "Empatar par derecho",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 1.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende empatar por código o por identificación empleando conector picabond o telesplice."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "49",
+  "nombre": "Empatar par múltiple",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 1.5,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "50",
+  "nombre": "Puentear par",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 1.8,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "51",
+  "nombre": "Rehacer par",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 1.3,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Rehacer el par empleando conector picabond o telesplice"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "52",
+  "nombre": "Rehacer par múltiple",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 2.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende empatar por código o por identificación empleando conector picabond o telesplice"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "53",
+  "nombre": "Empatar par derecho por prueba /pareja",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 2.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende empate de pares en correa o cortar con equipo de prueba, secciones, pedazo o forma de cable empleando conector picabond o telesplice."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "54",
+  "nombre": "Empatar par derecho por prueba/2 pareja",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 1.5,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "55",
+  "nombre": "Empatar par múltiple por prueba en el aéreo",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 2.5,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "57",
+  "nombre": "Rehacer par por prueba",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 2.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "58",
+  "nombre": "Empatar par derecho por correa",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 2.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "59",
+  "nombre": "Empatar par múltiple por prueba soterrado/pareja",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 3.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "60",
+  "nombre": "Empatar par puenteado",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 2.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "61",
+  "nombre": "Empatar par múltiple puenteado",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 3.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "62",
+  "nombre": "Dejar par en punta o par muerto",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 0.5,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Colocar al par que no se empalma por quedar en punta o muerto conector picabond o telesplice por banda para mantener el aislamiento o cortar cuidadosamente de menor a mayor"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "63",
+  "nombre": "Preparar registro para pruebas de abierto, corto, cruce y tierra",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 45.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende abrir registro, colocar baranda, caseta, preparar cable y limpiar punta en un extremo, probar para corto, cruce, abierto y tierra en otro extremo. El tiempo es aplicable también para el aéreo."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "68",
+  "nombre": "Meter par del cable en correa",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 0.75,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Identificar pares con el probador de cable o el ayudante para instalarlos en la correa (las correas chequeadas se cargan a la prueba efectiva; las labores se dividen en la siguiente forma: 1 Cuando se mete en correa un cable completo o en punta 2 Cuando se identifica y mete en correa par en un empate"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "69",
+  "nombre": "Identificar par en el cable hasta 202 pares",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 1.5,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Identificar pares con el probador de cable o el ayudante"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "70",
+  "nombre": "Identificar par en el cable de 404 ó más",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 3.5,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "72",
+  "nombre": "Abrir módulo de empalme hasta 404 pares",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Armar aéreo. Si es módulo termocontraíble abrir con martillo y cuchilla de cable, para los módulos mecánicos abrir con la herramienta especializada. Retirar módulo de empalme."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "73",
+  "nombre": "Abrir módulo de empalme entre 606 y 909 pares",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 40.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "74",
+  "nombre": "Abrir módulo de empalme entre 1202 y 2424 pares",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 50.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Si es módulo termocontraíble abrir con martillo y cuchilla de cable, para los módulos mecánicos abrir con la herramienta especializada. Retirar módulo de empalme."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "75",
+  "nombre": "Abrir módulo de empate mecánico vertical",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 12.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Armar aéreo, abrir con la herramienta especializada. Retirar módulo de empalme."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "76",
+  "nombre": "Instalar módulo de empalme hasta 400 pares",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Revisar empate, conexión de tierra, cerrar y fijar módulo, prueba de aire para la red soterrada. En el aéreo está incluido el tiempo de desarme."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "77",
+  "nombre": "Instalar módulo de empalme hasta 606 pares",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 40.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende revisar empate, conexión de tierras, cerrar y fijar módulo, prueba de aire para el soterrado. En el aéreo está incluido el tiempo de desarme."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "78",
+  "nombre": "Instalar módulo de empalme entre 606 y 909 pares",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 50.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende revisar empate, conexión de tierras, cerrar y fijar módulo, prueba de aire para el soterrado. En el aéreo está incluido el tiempo de desarme."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "79",
+  "nombre": "Instalar módulo de empalme entre 1202 y 1818 pares",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 60.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Revisar el módulo de empate, conexión de tierras, cerrar y fijar módulo, prueba de aire."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "80",
+  "nombre": "Instalar módulo de empalme de 2400 pares",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 80.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "81",
+  "nombre": "Instalar módulo de empalme mecánico vertical",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 25.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Armar aéreo, revisar módulo de empalme, conexión de tierra, cerrar y fijar módulo. Está incluido el tiempo de desarme."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "83",
+  "nombre": "Preparar forma y colocar forma",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 100.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Medir cable, abrir coraza y peinar, vincular la pantalla de la coraza a la barra de tierra del MDF. Distribuir brazos en abanico y conectarlos."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "90",
+  "nombre": "Revisar cables cosidos (por metro)",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 2.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Revisar detalladamente el estado de la coraza del cable cosido al cable tensor."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "91",
+  "nombre": "Rotular caja terminal o armario de distribución flexible",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 22.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Rotular caja terminal o armario de distribución flexible, empleando brocha, pintura o números y letras reflejantes. Para la caja terminal comprende los tiempo de arme y desarme."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "92",
+  "nombre": "Fijar cable hasta 202 pares",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 1.5,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Estirar alambre spinner y colocar amarras que falten en los empalmes, comprende los tiempos de arme y desarme."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "93",
+  "nombre": "Fijar cables de 404 ó más pares",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 2.5,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "94",
+  "nombre": "Mudada a mano",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 15.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende el traslado de la carretilla y la escalera a una distancia no mayor de 100 metros."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "95",
+  "nombre": "Vaciar registro de agua",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 15.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Extraer el agua del registro empleando motobomba."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "96",
+  "nombre": "Instalar módulo protector dieléctrico",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 15.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Armar aéreo, instalar protector dieléctrico con sus topes y bridas sobre el cable telefónico o cable tensor, desarmar aéreo."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "98",
+  "nombre": "Instalar regleta de inserción.",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 12.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Instalar regleta en el soporte del (MDF o en armario de distribución flexible), distribuir los pares y conectarlos empleando herramientas de inserción."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "99",
+  "nombre": "Podar árboles",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 15.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Cortar las ramas que interfieren la ruta y recogerlas."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "111",
+  "nombre": "Chequear, preparar y localizar interrupción de pares en corto, cruce, tierra, abierto y bajo aislamiento",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 120.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Trabajar coordinadamente con el probador de cable del MDF o medidores. Para la red soterrada incluye sacar agua del registro, bajar al mismo, precisar si la interrupción se queda enmarcada en el registro o para la sección de cables. Comprende el tiempo de comunicación con la mesa de prueba para certificar el OK o no del servicio."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "112",
+  "nombre": "Chequear por el Volt-ohms meter interrupción de pares abiertos.",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 0.5,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Incluye solamente medir los pares por el por el Volt-ohms meter"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "117",
+  "nombre": "Reparar par interrumpido",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 1.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Se realiza cuando la abertura del cable es pequeña y existen pocos pares afectados. Se empalman los pares con conectores picabond o telesplice"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "118",
+  "nombre": "Reparar pares interrumpidos empleando puentes",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 2.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Se hace cuando la abertura del cable es grande y existan muchos pares afectados. Se emplea puente y se empalman los pares con conectores picabond o telesplice."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "121",
+  "nombre": "Extraer o sacar par defectuoso por fuera de la caja terminal con cola",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 20.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Armar aéreo. Extraer par afectado por fuera de la caja terminal para restaurar el servicio en espera de que se cambie la caja terminal. Desarmar aéreo"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "123",
+  "nombre": "Chequear pares en caja terminal",
+  "medida": "UNIDADES",
+  "unidad": "par(es)",
+  "minutos": 1.5,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Meter en correa con las brigadas de cable y chequear con el probador de cables del MDF y Mesa de Prueba los pares de una caja terminal"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "124",
+  "nombre": "Tapar y destapar empate(1 tape/jornada)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 20.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Armar aéreo, tapar con hule o destapar, desarmar aéreo."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "130",
+  "nombre": "Realizar Tapón (bloqueo) en cable lateral hasta 202 pares",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 60.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Abrir coraza dejando un nervio, retirar cintas, armar bote, introducir capilar, colocar presilla para restringir el paso de la resina hacia áreas no deseadas de la coraza, preparar la resina e inyectarla"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "131",
+  "nombre": "Realizar Tapón (bloqueo) en cable lateral entre 404 y 606 pares",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 75.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "132",
+  "nombre": "Realizar tapón (bloqueo) en corazas de 900 pares o más en sótano o registro",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 300.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "133",
+  "nombre": "Deshacer tapón",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 60.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Abrir la coraza y retirar cuidadosamente la resina del interior de la coraza."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "136",
+  "nombre": "Instalar fitting en cable poliétileno.",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 60.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Abrir hueco en la coraza con el trompo, fijar el fitting o montura, colocar las dos presillas sinfín y ajustarlas o instalar pedazo de módulo termocontraíble."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "138",
+  "nombre": "Desmontar fitting en cables de polietileno.",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 40.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: desmontar las dos presillas sinfín, retirar fititng , emplear un pedazo de módulo termocontraíble o módulo pequeño para sellar el hueco que se realizó cuando se instaló el fitting."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "141",
+  "nombre": "Instalar válvulas de aire, tapón, codos y conectores para acoplar mangueras plásticas.",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 15.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Insertar estos componentes en el flange y en el fitting"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "142",
+  "nombre": "Instalar capuchones a sección de coraza instalada o en tambor",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Contempla el tiempo de instalar los capuchones y su enfriamiento natural, para el caso de las secciones instaladas en los registros incluye el traslado de un registro al otro."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "102",
+  "nombre": "Instalar módulo de empate aislante en coraza",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 40.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Retirar la cubierta de la coraza 20 centímetros, conectar conductor de aterramiento a la pantalla de la coraza en el lado calle, instalar el módulo termocontraíble y conectar conductor de aterramiento a la barra de tierra del túnel de cable. Aplicable también al operario de cable."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "145",
+  "nombre": "Instalar botellones de nitrógeno en los registros para la inyección de aire a coraza.",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende bajar el botellón de nitrógeno al registro, emplear regulador e inyectar el aire."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "146",
+  "nombre": "Realizar mediciones de presión de aire en las corazas",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 25.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende el tiempo de bajar al registro, medir y probar con solución jabonosa todas las corazas."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "147",
+  "nombre": "Tomar lectura de consumo por cada rotámetro en las centrales telefónicas.",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 15.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Leer y anotar el consumo de todas las corazas instaladas en el panel de rotámetros."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "148",
+  "nombre": "Marcar e instalar cintillo para identificar las corazas en túneles y registros.",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 25.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Marcar e instalar cintillo para identificar las corazas en túneles y registros."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "149",
+  "nombre": "Inyectar aire a sección de coraza instalada o en tambor.",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 60.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Inyectar 15 libras de aire a la sección de cable o tambor empleando botellones de nitrógeno y regulador."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "150",
+  "nombre": "Localizar salidero",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 90.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Tomar lecturas de presión, realizar gráfico de pérdidas, localizar el salidero y marcar con cinta o nylon módulo de empate, cable lateral o sección de cable donde se localiza el salidero."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "152",
+  "nombre": "Eliminar salideros en los conectores de las mangueras que unen los contenedores que alojen transductores de presión con las corazas.",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 25.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Cambiar tapita que se fija y hermetiza la manguera."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "153",
+  "nombre": "Instalar manguera plástica en túneles o registros",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 10.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Instalar mangueras en los túneles de cable o registros de la red soterrada."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "154",
+  "nombre": "Instalar contenedor para transductores de presión",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 60.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Barrenar pared de registro, instalar base del contendor e instalar el mismo."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "155",
+  "nombre": "Sustituir transductor de presión defectuoso instalado en contenedor",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 25.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: abrir el contenedor, desmontar transductor defectuoso e instalar otro"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "156",
+  "nombre": "Comprobar presencia de agua en botellones de nitrógeno.",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 15.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Inclinar la parte superior del botellón hacía un espejo y comprobar si este se nubla al salir el nitrógeno."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "157",
+  "nombre": "Desmontar canal protectora del poste o pared",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 20.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Desmontar la canal protectora del cable lateral retirando las grapas o cortando los flejes metálicos."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "158",
+  "nombre": "Instalar canal protectora en poste o pared",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 25.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende instalar la canal protectora del cable lateral empleando grapas o flejes metálicos"
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "159",
+  "nombre": "Marcar módulos de empates, cable laterales o secciones de cables",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 10.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Marcar con cinta o nylon los módulos de empate, cable lateral o sección de cables para facilitar las labores de reparación de las brigadas de cables. Aplicable también al operario de cable."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "160",
+  "nombre": "Mover coraza en túnel o registro para facilitar realizar trabajos en algún cable en específico.",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 10.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Tener en cuenta condiciones del registro."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "161",
+  "nombre": "Sellar salidero en cubierta de coraza",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 40.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Emplear un pedazo de módulo termocontraíble o módulo termocontraíble pequeño para sellar grieta en la cubierta de la coraza."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "162",
+  "nombre": "Desmontar manguera plástica en túneles o registros",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 10.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende: Desmontar mangueras plásticas en los túneles de cable o registros de la red soterrada."
+ },
+ {
+  "especialidad": "Cable",
+  "clave": "163",
+  "nombre": "Instalar transductor de presión en contenedor",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 15.0,
+  "fuerza_trabajo": "1 pareja",
+  "descripcion": "Comprende codificar el transductor, comprobarlo con el equipo portátil e instalarlo en el contenedor."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "5",
+  "nombre": "Instalar poste 7,5 metros en tierra manualmente",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 110.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo manualmente de profundidad (0,8-1,20 m) y diámetro (50-60 cm). Izar el poste, colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "6",
+  "nombre": "Instalar poste 9,0 metros en tierra manualmente",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 138.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo manualmente de profundidad de1,60 m y diámetro 55-60 cm. Izar el poste, colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación"
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "7",
+  "nombre": "Instalar poste 10,5 metros en tierra manualmente",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 155.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo manualmente de profundidad de 1,70 m y diámetro 60- 65 cm. Izar elposte, colocación en el hoyo, Alineación,relleno, apisonado y recogida del sobrante de la excavación"
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "8",
+  "nombre": "Instalar poste 12 metros en tierra manualmente",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 170.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo manualmente de profundidad de 1,80 m y diámetro 65-70 cm. Izar el poste, colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "9",
+  "nombre": "Instalar poste 7,5 metros en zona rocosa manualmente",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 110.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo manualmente de profundidad de 0,80 m y diámetro 60 cm. Izar el poste,colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "10",
+  "nombre": "Instalar poste 9,0 metros en zona rocosa manualmente",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 138.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo manualmente de profundidadde 1 m y diámetro 60-65 cm. Izar el poste,colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "11",
+  "nombre": "Instalar poste 10,5 metros en zona rocosa manualmente",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 155.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo manualmente de profundidad de 1,10 m y diámetro 60-65 cm. Izar el poste, colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "12",
+  "nombre": "Instalar poste 12 metros en zona rocosa manualmente",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 170.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo manualmente de profundidad de 1,20 m y diámetro 65-70 cm. Izar el poste, colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "16",
+  "nombre": "Instalar poste 7,5 metros en tierra con barrenadora",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 90.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo con barrenadora de profundidad (0,8-1,20 m) y diámetro (50-60 cm). Sacar la tierra y limpiar los bordes del hoyo e Izar el poste, colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "17",
+  "nombre": "Instalar poste 9,0 metros en tierra con barrenadora",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 93.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo con barrenadora de profundidad de 1,60 m y diámetro 55-60 cm. Sacar la tierra y limpiar los bordes del hoyo. Izar el poste, colocar en el hoyo, alinear, rellenar, apisonar y recoger sobrante de la excavación"
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "18",
+  "nombre": "Instalar poste 10,5 metros en tierra con barrenadora",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 95.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo con barrenadora de profundidad de 1,70 m y diámetro 60- 65 cm. Sacar la tierra y limpiar los bordes del hoyo. Izar el poste, colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "19",
+  "nombre": "Instalar poste 12 metros en tierra con barrenadora",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 100.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo con barrenadora de profundidad de 1,80 m y diámetro 65-70 cm. Izar el poste, colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "20",
+  "nombre": "Instalar poste 7,5 metros en zona rocosa con barrenadora",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 240.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo con barrenadora de profundidad de 0,80 m y diámetro 60 cm. Izar el poste, colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "21",
+  "nombre": "Instalar poste 9,0 metros en zona rocosa",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 243.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo con barrenadora de profundidad de 1 m y diámetro 60-65 cm. Izar el poste, colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "22",
+  "nombre": "Instalar poste 10,5 metros en zona rocosa con barrenadora",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 245.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo con barrenadora de profundidad de 1,10 m y diámetro 60-65 cm. Sacar la tierra y limpiar los bordes del hoyo. Izar el poste, colocación en el hoyo, Alineación, relleno apisonado y recogida del sobrante de la excavación"
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "23",
+  "nombre": "Instalar poste 12 metros en zona rocosa con barrenadora",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 100.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo con barrenadora de profundidad de 1,20 m y diámetro 65-70 cm. Sacar la tierra y limpiar los bordes del hoyo Izar el poste, colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "28",
+  "nombre": "Instalar tornapunta en tierra",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 135.0,
+  "fuerza_trabajo": "1 liniero A 2 linieros B",
+  "descripcion": "Cargar y descargar el poste, hacerle chanfle, barrenarlo, abrir hoyo, Instalar tornapunta, rellenar el hoyo, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "29",
+  "nombre": "Instalar tornapunta en zona rocosa",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 225.0,
+  "fuerza_trabajo": "2 liniero A 2 linieros B",
+  "descripcion": "Cargar y descargar el poste, hacerle chanfle, barrenarlo, abrir hoyo, Instalar tornapunta, rellenar el hoyo, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "43",
+  "nombre": "Instalar poste en tierra manualmente",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 143.0,
+  "fuerza_trabajo": "1 liniero A 3 linieros B",
+  "descripcion": "Abrir hoyo manualmente con la profundidad y diámetro requerido. Izar el poste, colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación"
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "44",
+  "nombre": "Instalar poste en zona rocosa manualmente",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 250.0,
+  "fuerza_trabajo": "1 liniero A3 linieros B",
+  "descripcion": "Abrir hoyo manualmente con la profundidad y diámetro requerido. Izar el poste, colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "45",
+  "nombre": "Instalar poste en Tierra con barrenadora",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 95.0,
+  "fuerza_trabajo": "1 liniero A 2 linieros B yOperario debarrenadora",
+  "descripcion": "Abrir hoyo con barrenadora con la profundidad y diámetro requerido. Sacar la tierra y limpiar los bordes del hoyo e Izar el poste, colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "46",
+  "nombre": "Instalar poste en zona rocosa con barrenadora",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 245.0,
+  "fuerza_trabajo": "1 liniero A 2 linieros B y Operario de barrenadora",
+  "descripcion": "Abrir hoyo con barrenadora con la profundidad y diámetro requerido. Sacar la tierra y limpiar los bordes del hoyo e Izar el poste, colocación en el hoyo, Alineación, relleno, apisonado y recogida del sobrante de la excavación."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "47",
+  "nombre": "Instalar Chapas o rotular poste",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 15.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Comprende clavar la chapa o rotular el número y tipo de poste, así como el caminar de un poste a otro."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "49",
+  "nombre": "Instalar viento en tierra manualmente",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 130.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo manualmente de profundidad de 1,20 m y diámetro 50 cm, colocarle la cabilla al muerto de roseta de hierro, Instalar, tapar y apisonar. Instalar tornillo de ojo, tensor, mordazas, guarda cabos, tesar el viento y remates del tensor en cada lado."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "50",
+  "nombre": "Instalar viento en zona rocosa",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 185.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo con barrenadora o manualmente con profundidad de 1,20 m y diámetro 50 cm, colocarle la cabilla al muerto de roseta de hierro, Instalar, tapar y apisonar. Instalar tornillo de ojo, tensor, mordazas, guarda cabos, tesar el viento y remates del tensor en cada lado."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "51",
+  "nombre": "Instalar viento en tierra",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 88.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Abrir hoyo con barrenadora o manualmente con profundidad de 1,20 m y diámetro 50 cm, colocarle la cabilla al muerto de roseta de hierro, Instalar, tapar y apisonar. Instalar tornillo de ojo, tensor, mordazas, guarda cabos, tesar el viento y remates del tensor en cada lado."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "52",
+  "nombre": "Instalar viento rematado manualmente",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "1 liniero A 1 liniero B",
+  "descripcion": "Instalar tornillo de ojo, tensor, guarda cabos, tesar el viento y remates del tensor en cada lado"
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "55",
+  "nombre": "Instalar violín",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "1 liniero A 1 liniero B",
+  "descripcion": "Barrenar el poste e instalar el violín."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "56",
+  "nombre": "Instalar cruceta de extensión (banderola) en poste de hormigón",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 20.0,
+  "fuerza_trabajo": "1 liniero A 2 linieros B",
+  "descripcion": "Llevar la cruceta y la abrazadera, izarlas con la soga, colocar el tornillo pasante en la punta de la cruceta y tornillo pasante de la varilla (ambos tornillos al poste)."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "57",
+  "nombre": "Instalar cruceta de extensión (banderola) en poste de madera",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 25.0,
+  "fuerza_trabajo": "1 liniero A 2 linieros B",
+  "descripcion": "Llevar la cruceta, izarla con la soga, barrenar, colocar el tornillo pasante en la punta de la cruceta, llevarla a su posición y colocar los dos tornillos tirafondos de la varilla con el poste."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "61",
+  "nombre": "Instalar tensor 5/16, 3/8 en poste",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 0.63,
+  "fuerza_trabajo": "2 linieros A 4 linieros B",
+  "descripcion": "Colocar módulo de soporte L, tender el tensor, tesarlo, rematarlo y apretar tornillo de la tapa de la mordaza."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "65",
+  "nombre": "Instalar o desmontar aro",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 0.5,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Colocar escalera o carrito en el tensor e Instalar o desmontar aros."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "66",
+  "nombre": "Instalar o desmontar pateca",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 5.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Colocar escalera o carrito en el tensor e Instalar o desmontar pateca."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "67",
+  "nombre": "Instalar cable aéreo de polietileno y coser",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 0.91,
+  "fuerza_trabajo": "2 linieros A 4 linieros B",
+  "descripcion": "Ubicar el tambor en comienzo, amarrar el cable con soga mediante un cepo, pasar soga por aros o patecas, halar la soga e instalar el cable, montar máquina de coser y carabina, coser el cable y rematar con alambre de coser."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "69",
+  "nombre": "Instalar cable autosoportado hasta 400 pares",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 0.8,
+  "fuerza_trabajo": "2 linieros A 4 linieros B",
+  "descripcion": "Ubicar el tambor en el comienzo, Instalar patecas en los postes, halar e Instalar el cable por sobre las patecas utilizando soga y cepo y cada 200 m estirar y colocar el cable en las mordazas de suspensión."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "70",
+  "nombre": "Instalar cable FO aéreo",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 0.84,
+  "fuerza_trabajo": "3 linieros A 4 linieros B",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "81",
+  "nombre": "Instalar cable en fachada",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 1.67,
+  "fuerza_trabajo": "1 liniero A 3 linieros B",
+  "descripcion": "Instalar cable de adosado a la pared utilizando grapas."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "83",
+  "nombre": "Instalar cable por tubería, falso techo o bandeja.",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 0.83,
+  "fuerza_trabajo": "2 linieros A 4 linieros B",
+  "descripcion": "Instalar el cable pasado por tubería, falso techo o bandeja (amarrado), utilizando cinta de acero."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "85",
+  "nombre": "Instalar cable lateral hasta 200 pares en poste",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 3.5,
+  "fuerza_trabajo": "1 liniero A 2 linieros B",
+  "descripcion": "Varillar o pasar cintas de aceros al conducto, halar cable desde el tambor previamente ubicado e Instalar cable por el lateral, volteándolo en el registro y junto al tensor, fijar el cable mediante grapas o cinta metálica al poste o pared y colocar canal."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "86",
+  "nombre": "Instalar cable lateral de 400 o más pares en poste",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 6.0,
+  "fuerza_trabajo": "1 liniero A 2 linieros B",
+  "descripcion": "Varillar o pasar cintas de aceros al conducto, halar cable desde el tambor previamente ubicado e Instalar cable por el lateral, volteándolo en el registro y junto al tensor, fijar el cable mediante grapas o cinta metálica al poste o pared y colocar canal."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "90",
+  "nombre": "Instalar cable soterrado principal de polietileno.",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 1.3,
+  "fuerza_trabajo": "2 linieros A 4 linieros B",
+  "descripcion": "Varillar o pasar cintas de aceros al conducto, pasar soga o tensor de winche y fijar al cable mediante cepo, halar cable desde el tambor previamente ubicado, Instalar la sección de cable y sellar las puntas."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "91",
+  "nombre": "Instalar cable FO soterrado",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 0.42,
+  "fuerza_trabajo": "3 linieros A 4 linieros B",
+  "descripcion": ""
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "95",
+  "nombre": "Instalación de cable enterrado",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 0.5,
+  "fuerza_trabajo": "1 liniero A 4 linieros B",
+  "descripcion": "Colocación del cable en la zanja, alar desde el tambor previamente ubicado, sellar punta. (no incluye abrir y tapar zanja)"
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "99",
+  "nombre": "Instalar protector dieléctrico",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 15.0,
+  "fuerza_trabajo": "1 liniero A 1 liniero B",
+  "descripcion": "Instalar protector dieléctrico con sus topes sobre el cable o tensor telefónico"
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "102",
+  "nombre": "Instalar pasos y varillas (portapasos) en el registro soterrado.",
+  "medida": "METROS",
+  "unidad": "metro(s)",
+  "minutos": 12.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Comprende instalar las varillas en las paredes del registro y colocar los pasos."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "104",
+  "nombre": "Instalar cable de aterramiento en poste",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 10.0,
+  "fuerza_trabajo": "1 liniero A 1 liniero B",
+  "descripcion": "Comprende grampear o amarrar el alambre de cobre # 8 ó 6 desde la parte superior del poste hasta la cabilla de tierra que se instala a 50 cm como mínimo de la base del poste. (incluye las conexiones del alambre)"
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "105",
+  "nombre": "Instalar suplemento para dar altura al poste",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 35.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Comprende la instalación de 2 vigas U que se fijan a la parte superior del poste mediante 2 tornillos pasantes."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "106",
+  "nombre": "Instalar soporte L en poste de hormigón.",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 5.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Colocar soporte L mediante tornillo pasante y ponerle la tapa con sus dos tornillos."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "107",
+  "nombre": "Instalar soporte L en poste de madera.",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 10.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Barrenar, colocar soporte L mediante tornillo pasante y ponerle la tapa con sus dos tornillos."
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "108",
+  "nombre": "Instalar y desmontar cruce aéreo",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 7.5,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Colocar escalera e instalar mordazas en el punto de cruzamiento de los 2 tensores"
+ },
+ {
+  "especialidad": "Línea",
+  "clave": "109",
+  "nombre": "Instalar cáncamo en pared",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 25.0,
+  "fuerza_trabajo": "2 linieros B",
+  "descripcion": "Hacer hueco en pared Instalar cáncamo y cementarlo."
+ }
+]

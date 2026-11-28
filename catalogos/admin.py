@@ -151,8 +151,10 @@ class TipoTrabajoAdmin(admin.ModelAdmin):
     """Trabajos de las órdenes de trabajo. Cada uno lleva su norma de tiempo (para cambiarla sin alterar el pasado,
     ponga fecha fin a la vigente y cree otra con su fecha de inicio)."""
 
-    list_display = ("nombre", "medida", "norma_actual", "activo")
+    list_display = ("nombre", "especialidad", "clave", "medida", "norma_actual", "activo")
     list_editable = ("activo",)
+    list_filter = ("especialidad", "medida", "activo")
+    search_fields = ("nombre", "clave", "descripcion")
     inlines = [OpcionDeTrabajoInline, NormaTrabajoInline]
 
     @admin.display(description="Norma vigente (min)")

@@ -231,3 +231,9 @@ a.boton { text-decoration: none; color: var(--texto); display: inline-block; }
 .estadistica-nivel { font-size: .78rem; font-weight: 600; }
 .estadistica-cumple { border-color: var(--ok); } .estadistica-cumple .estadistica-nivel { color: var(--ok); }
 .estadistica-bajo { border-color: var(--mal); } .estadistica-bajo .estadistica-nivel { color: var(--mal); }
+/* Órdenes de trabajo: el dato de cada actividad y su buscador (la lista de la instrucción es larga). */
+.dato-trabajo { display: grid; grid-template-columns: minmax(0, 1fr) 9rem; align-items: center; gap: .6rem; font-weight: 400; }
+.dato-trabajo span { overflow-wrap: anywhere; }
+.agregar-trabajo { display: grid; gap: .4rem; }
+.agregar-trabajo select, .agregar-trabajo input { width: 100%; }
+@media (max-width: 600px) { .dato-trabajo { grid-template-columns: 1fr; } }

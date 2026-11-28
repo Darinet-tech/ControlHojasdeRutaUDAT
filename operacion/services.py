@@ -39,11 +39,11 @@ def norma_de_trabajo(trabajo, cantidad, opcion_id, fecha):
 def texto_trabajo(trabajo, cantidad, opcion):
     """«Sustitución de poste(s): 3», «…: 12,5 m», «…: Con cola»."""
     if trabajo.medida == "TIPO" and opcion:
-        return f"{trabajo.nombre}: {opcion.nombre}"
+        return f"{trabajo.etiqueta}: {opcion.nombre}"
     if trabajo.medida in ("UNIDADES", "METROS") and cantidad:
         n = f"{cantidad:g}".replace(".", ",")
-        return f"{trabajo.nombre}: {n} m" if trabajo.medida == "METROS" else f"{trabajo.nombre}: {n}"
-    return trabajo.nombre
+        return f"{trabajo.etiqueta}: {n} m" if trabajo.medida == "METROS" else f"{trabajo.etiqueta}: {n}"
+    return trabajo.etiqueta
 
 
 def datos_de_trabajos(accion):

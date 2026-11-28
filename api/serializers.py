@@ -63,10 +63,11 @@ class GabineteSerializer(serializers.ModelSerializer):
 class TipoTrabajoSerializer(serializers.ModelSerializer):
     norma_min = serializers.SerializerMethodField(help_text="Norma vigente hoy (minutos); por unidad o por metro según el trabajo.")
     opciones = serializers.SerializerMethodField()
+    etiqueta = serializers.CharField(read_only=True)
 
     class Meta:
         model = TipoTrabajo
-        fields = ["id", "nombre", "medida", "unidad", "norma_min", "opciones", "activo"]
+        fields = ["id", "nombre", "etiqueta", "especialidad", "clave", "fuerza_trabajo", "descripcion", "medida", "unidad", "norma_min", "opciones", "activo"]
 
     def _vigente(self, tipo, opcion_id):
         hoy = timezone.localdate()

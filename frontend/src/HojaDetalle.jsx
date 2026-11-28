@@ -81,7 +81,7 @@ function DatoDeTrabajo({ trabajo, detalle, deshabilitado, alGuardar }) {
   useEffect(() => { setTexto(detalle?.cantidad ?? ''); }, [detalle?.cantidad]);
   if (trabajo.medida === 'TIPO') {
     return (
-      <label className="en-linea">Tipo de caja terminal
+      <label className="dato-trabajo"><span>{trabajo.etiqueta}: tipo</span>
         <select value={detalle?.opcion ?? ''} disabled={deshabilitado} onChange={(e) => e.target.value && alGuardar({ trabajo: trabajo.id, opcion: Number(e.target.value) })}>
           <option value="">Seleccione…</option>
           {trabajo.opciones.map((o) => <option key={o.id} value={o.id}>{o.nombre}{o.norma_min ? ` · ${normaATexto(o.norma_min)} min` : ''}</option>)}
@@ -91,7 +91,7 @@ function DatoDeTrabajo({ trabajo, detalle, deshabilitado, alGuardar }) {
   }
   const metros = trabajo.medida === 'METROS';
   return (
-    <label className="en-linea">{metros ? 'Metros sustituidos' : `Cantidad de ${trabajo.unidad || 'unidades'}`}
+    <label className="dato-trabajo"><span>{trabajo.etiqueta}: {metros ? 'metros' : `cantidad de ${trabajo.unidad || 'unidades'}`}</span>
       <input type="number" min={metros ? '0.1' : '1'} step={metros ? '0.1' : '1'} inputMode="decimal" value={texto} disabled={deshabilitado}
         onChange={(e) => setTexto(e.target.value)}
         onBlur={(e) => { const v = e.target.value.trim(); if (v !== '' && Number(v) !== detalle?.cantidad) alGuardar({ trabajo: trabajo.id, cantidad: v }); }} />
@@ -99,34 +99,55 @@ function DatoDeTrabajo({ trabajo, detalle, deshabilitado, alGuardar }) {
   );
 }
 
-function SelectorDeTrabajos({ catalogo, seleccionados, detalle = [], alCambiar, alAnotar, deshabilitado }) {
+const sinTildes = (texto) => texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+// Actividades agrupadas por especialidad, primero la de la brigada de la hoja y al final los trabajos propios.
+function agrupar(trabajos, brigada) {
+  const grupos = new Map();
+  trabajos.forEach((t) => { const g = t.especialidad || 'Trabajos propios'; if (!grupos.has(g)) grupos.set(g, []); grupos.get(g).push(t); });
+  const orden = (g) => (g === brigada ? 0 : g === 'Trabajos propios' ? 2 : 1);
+  const porClave = (a, b) => (Number(a.clave) || 0) - (Number(b.clave) || 0) || a.nombre.localeCompare(b.nombre);
+  return [...grupos].sort(([a], [b]) => orden(a) - orden(b) || a.localeCompare(b)).map(([nombre, lista]) => [nombre, [...lista].sort(porClave)]);
+}
+
+function SelectorDeTrabajos({ catalogo, seleccionados, detalle = [], brigada, alCambiar, alAnotar, deshabilitado, soloElegir = false }) {
+  const [busqueda, setBusqueda] = useState('');
   const ids = seleccionados.map((t) => t.id);
   const faltan = catalogo.filter((t) => !ids.includes(t.id));
+  const palabras = sinTildes(busqueda).split(/\s+/).filter(Boolean);
+  const coinciden = faltan.filter((t) => palabras.every((p) => sinTildes(`${t.etiqueta} ${t.descripcion || ''}`).includes(p)));
   const dato = (id) => detalle.find((d) => d.trabajo === id);
   return (
     <div className="claves">
       <div className="fila fila-chips">
-        {seleccionados.length === 0 && <span className="suave">Sin trabajos seleccionados</span>}
+        {seleccionados.length === 0 && <span className="suave">Sin actividades seleccionadas</span>}
         {seleccionados.map((t) => {
           const d = dato(t.id);
           const completo = t.medida === 'TIPO' ? d?.opcion != null : !['UNIDADES', 'METROS'].includes(t.medida) || d?.cantidad > 0;
           return (
-            <Chip key={t.id} tipo={completo ? 'info' : 'aviso'}>
-              {t.nombre}
-              {d?.norma_min != null ? ` · ${normaATexto(d.norma_min)} min` : completo ? ' · sin norma' : ' · falta el dato'}
-              {!deshabilitado && <button className="chip-quitar" aria-label={`Quitar trabajo ${t.nombre}`} onClick={() => alCambiar(ids.filter((i) => i !== t.id))}>×</button>}
+            <Chip key={t.id} tipo={completo || soloElegir ? 'info' : 'aviso'} titulo={[t.descripcion, t.fuerza_trabajo && `Fuerza de trabajo: ${t.fuerza_trabajo}`].filter(Boolean).join(' · ') || undefined}>
+              {t.etiqueta}
+              {!soloElegir && (d?.norma_min != null ? ` · ${normaATexto(d.norma_min)} min` : completo ? ' · sin norma' : ' · falta el dato')}
+              {!deshabilitado && <button type="button" className="chip-quitar" aria-label={`Quitar ${t.etiqueta}`} onClick={() => alCambiar(ids.filter((i) => i !== t.id))}>×</button>}
             </Chip>
           );
         })}
       </div>
-      {seleccionados.filter((t) => t.medida).map((t) => (
+      {!soloElegir && seleccionados.filter((t) => t.medida).map((t) => (
         <DatoDeTrabajo key={t.id} trabajo={t} detalle={dato(t.id)} deshabilitado={deshabilitado} alGuardar={alAnotar} />
       ))}
       {!deshabilitado && faltan.length > 0 && (
-        <select aria-label="Agregar trabajo" value="" onChange={(e) => e.target.value && alCambiar([...ids, Number(e.target.value)])}>
-          <option value="">Agregar trabajo de la orden…</option>
-          {faltan.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
-        </select>
+        <div className="agregar-trabajo">
+          <input type="search" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar actividad: poste, empate, autosoportado, Línea 67…" aria-label="Buscar actividad" />
+          <select aria-label="Agregar actividad" value="" onChange={(e) => { if (e.target.value) { alCambiar([...ids, Number(e.target.value)]); setBusqueda(''); } }}>
+            <option value="">{palabras.length ? `${coinciden.length} actividad(es) encontradas: elija una…` : 'Agregar actividad a la orden…'}</option>
+            {agrupar(coinciden, brigada).map(([grupo, lista]) => (
+              <optgroup key={grupo} label={grupo}>
+                {lista.map((t) => <option key={t.id} value={t.id}>{t.etiqueta}{t.medida === 'METROS' ? ' (por metro)' : ''}</option>)}
+              </optgroup>
+            ))}
+          </select>
+        </div>
       )}
     </div>
   );
@@ -157,7 +178,6 @@ function FormularioAsignar({ catalogos, hoja, centrosDeLaHoja, ejecutar, verHist
   const cambiarCategoria = (nueva) => {
     setCategoria(nueva); setServicio(''); setMantenimiento(''); setTipoOrden(''); setNumeroOrden(''); setTrabajos(new Set()); setVariante('');
   };
-  const alternarTrabajo = (id) => setTrabajos((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   // el check «Nauta Hogar» solo existe cuando la orden de servicio es un alta
   const esAlta = categoria === 'ORDEN_SERVICIO' && catalogos.tiposOrden.find((t) => String(t.id) === String(tipoOrden))?.fila_parte === 'ALTAS';
@@ -266,16 +286,10 @@ function FormularioAsignar({ catalogos, hoja, centrosDeLaHoja, ejecutar, verHist
       </div>
       {categoria === 'ORDEN_TRABAJO' && (
         <fieldset>
-          <legend>Trabajos de la orden ({trabajos.size} seleccionado{trabajos.size === 1 ? '' : 's'})</legend>
-          <div className="rejilla-centros">
-            {catalogos.tiposTrabajo.length === 0 && <span className="suave">No hay trabajos definidos: el administrador debe crearlos en el catálogo.</span>}
-            {catalogos.tiposTrabajo.map((t) => (
-              <label key={t.id} className="casilla">
-                <input type="checkbox" checked={trabajos.has(t.id)} onChange={() => alternarTrabajo(t.id)} />
-                <span>{t.nombre}</span>
-              </label>
-            ))}
-          </div>
+          <legend>Actividades de la orden ({trabajos.size} seleccionada{trabajos.size === 1 ? '' : 's'})</legend>
+          {catalogos.tiposTrabajo.length === 0 && <span className="suave">No hay actividades definidas: el administrador debe crearlas en el catálogo.</span>}
+          <SelectorDeTrabajos soloElegir catalogo={catalogos.tiposTrabajo} seleccionados={catalogos.tiposTrabajo.filter((t) => trabajos.has(t.id))}
+            brigada={hoja.brigada_nombre} alCambiar={(ids) => setTrabajos(new Set(ids))} />
         </fieldset>
       )}
       <div className="fila">
@@ -384,7 +398,7 @@ function TarjetaAccion({ accion, hoja, editable, catalogos, ejecutar, verHistori
       )}
 
       {esOT ? (
-        <SelectorDeTrabajos catalogo={catalogos.tiposTrabajo} seleccionados={accion.trabajos} detalle={accion.detalle_trabajos} deshabilitado={!editable || !abierta}
+        <SelectorDeTrabajos catalogo={catalogos.tiposTrabajo} seleccionados={accion.trabajos} detalle={accion.detalle_trabajos} brigada={hoja.brigada_nombre} deshabilitado={!editable || !abierta}
           alCambiar={(ids) => ejecutar(() => api.patch(`/acciones/${accion.id}/`, { trabajos: ids }))}
           alAnotar={(dato) => ejecutar(() => api.patch(`/acciones/${accion.id}/`, { cantidades: [dato] }))} />
       ) : (
@@ -576,7 +590,7 @@ function PanelIncidencias({ hoja, causas, editable, ejecutar }) {
           <form className="fila" onSubmit={(e) => { e.preventDefault(); ejecutar(() => api.post(`/hojas/${hoja.id}/incidencias/iniciar/`, { causa: Number(causa) })).then(() => setCausa('')); }}>
             <select value={causa} onChange={(e) => setCausa(e.target.value)} aria-label="Causa de la incidencia" required>
               <option value="">Seleccione la causa…</option>
-              {causas.map((c) => <option key={c.id} value={c.id}>{c.codigo} · {c.nombre}</option>)}
+              {causas.map((c) => <option key={c.id} value={c.id}>{c.codigo} · {c.nombre}{c.descuenta_tiempo ? '' : ' (tiempo efectivo)'}</option>)}
             </select>
             <button className="boton" disabled={!causa}>Iniciar contador</button>
           </form>

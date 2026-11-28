@@ -9,6 +9,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from catalogos import normas_de_prueba
+from catalogos import normas_de_prueba
 from catalogos.models import Brigada, CausaIncidencia, Centro, Clave, Operario, TipoMantenimiento, TipoOrden, TipoTrabajo
 from operacion.models import HojaDeRuta
 from operacion.tests import BaseOperacion, crear_hoja
@@ -110,7 +111,7 @@ class SesionYPermisosTests(BaseAPI):
         Clave.objects.filter(codigo="25-R").update(activa=False)
         self.assertNotIn("25-R", [c["codigo"] for c in self.api.get("/api/claves/").data])
         self.assertEqual(len(self.api.get("/api/tipos-orden/").data), 15)  # incluye CMIS, CD y CA, del parte diario
-        self.assertEqual(len(self.api.get("/api/causas-incidencia/").data), 8)
+        self.assertEqual(len(self.api.get("/api/causas-incidencia/").data), 10)
         self.assertEqual(len(self.api.get(f"/api/operarios/?brigada={self.cable.pk}").data), 1)
 
 
@@ -588,7 +589,7 @@ class CategoriasAPITests(BaseAPI):
         self.mppe = TipoMantenimiento.objects.get(codigo="MPPE")
         self.ta = TipoOrden.objects.get(codigo="TA")
         self.poste = TipoTrabajo.objects.get(nombre="Sustitución de poste(s)")
-        self.caja = TipoTrabajo.objects.get(nombre="Sustitución de caja(s) terminal(es)")
+        self.caja = normas_de_prueba.trabajo_por_tipo()
         self.hoja = self.crear_hoja()
 
     def post(self, **datos):
@@ -626,7 +627,7 @@ class CategoriasAPITests(BaseAPI):
         self.assertEqual((r.status_code, [t["nombre"] for t in r.data["trabajos"]]), (200, [self.caja.nombre]))
         r = self.api.post(f"/api/acciones/{a}/ok/", {}, format="json")
         self.assertEqual(r.status_code, 400)  # la caja terminal pide su tipo, que define la norma
-        self.assertIn("el tipo de sustitución de caja", str(r.data))
+        self.assertIn("el tipo de sustitución de caja por tipo", str(r.data))
         opcion = next(o for o in next(t for t in self.api.get("/api/tipos-trabajo/").data if t["id"] == self.caja.pk)["opciones"] if o["nombre"] == "Con cola")
         r = self.api.patch(f"/api/acciones/{a}/", {"cantidades": [{"trabajo": self.caja.pk, "opcion": opcion["id"]}]}, format="json")
         self.assertEqual((r.status_code, r.data["detalle_trabajos"][0]["opcion_nombre"], r.data["norma_min"], r.data["trabajos_incompletos"]), (200, "Con cola", 100, []))
@@ -644,9 +645,12 @@ class CategoriasAPITests(BaseAPI):
 
     def test_catalogos_para_el_formulario(self):
         self.assertEqual([t["codigo"] for t in self.api.get("/api/tipos-mantenimiento/").data], ["GAB", "MPI", "MPPE", "MPPI", "MTP"])
-        trabajos = self.api.get("/api/tipos-trabajo/").data
-        self.assertEqual([(t["nombre"], t["norma_min"]) for t in trabajos],
-                         [("Sustitución de cable de cobre", None), ("Sustitución de caja(s) terminal(es)", None), ("Sustitución de poste(s)", None)])  # las normas por cantidad las define el especialista
+        trabajos = {t["nombre"]: t for t in self.api.get("/api/tipos-trabajo/").data}
+        self.assertEqual(len(trabajos), 3 + 147 + 1)  # los tres trabajos propios, las 147 actividades de Cable y Línea de la instrucción y el trabajo de prueba «según el tipo»
+        self.assertEqual((trabajos["Sustitución de cable de cobre"]["norma_min"], trabajos["Sustitución de poste(s)"]["norma_min"]), (None, None))  # las define el especialista
+        self.assertEqual(trabajos["Sustitución de caja(s) terminal(es)"]["norma_min"], 70)  # como en la instrucción (Cable 18)
+        e = trabajos["Instalar cable aéreo de polietileno y coser"]
+        self.assertEqual((e["etiqueta"], e["medida"], e["norma_min"], e["fuerza_trabajo"]), ("Línea 67 · Instalar cable aéreo de polietileno y coser", "METROS", 0.91, "2 linieros A 4 linieros B"))
 
     def test_traer_los_pendientes_a_la_hoja_de_la_brigada(self):
         fi = Centro.objects.get(codigo="FI")

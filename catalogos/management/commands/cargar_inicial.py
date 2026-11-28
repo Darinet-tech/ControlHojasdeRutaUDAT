@@ -21,15 +21,18 @@ from catalogos.models import (NormaTrabajo, OpcionDeTrabajo, Brigada, CausaIncid
 
 BRIGADAS = ["Red de Abonados", "Reconstrucción", "Cable", "Línea", "Fibra Óptica"]
 # Claves oficiales de incidencia.
+# Causas de incidencia (anexo 2 de la IT-OR-001/24, AT-1): código, nombre y si descuenta tiempo. 105, 107, 111 y 112 cuentan como tiempo efectivo.
 CAUSAS = [
-    ("100", "Lluvia"),
-    ("101", "Traslado de personal"),
-    ("102", "Esperando materiales"),
-    ("105", "Esperando por probador"),
-    ("106", "Problemas con el transporte"),
-    ("107", "Realizando actividades comerciales"),
-    ("108", "Otras causas"),
-    ("110", "Autorizado por el jefe"),
+    ("100", "Lluvia", True),
+    ("101", "Traslado de personal", True),
+    ("102", "Esperando materiales", True),
+    ("105", "Esperando por probador", False),
+    ("106", "Problemas con el transporte", True),
+    ("107", "Realizando actividades comerciales", False),
+    ("108", "Otras causas", True),
+    ("110", "Autorizado por el jefe", True),
+    ("111", "Tiempo de poda", False),
+    ("112", "Tiempo trasladado", False),
 ]
 # Centros conocidos (el administrador agrega el resto desde la administración).
 CENTROS = [("NG", "Nueva Gerona"), ("FI", "La Fé"), ("FO", "La Reforma")]
@@ -108,8 +111,8 @@ class Command(BaseCommand):
     def handle(self, *args, **opts):
         for nombre in BRIGADAS:
             Brigada.objects.get_or_create(nombre=nombre, defaults={"informa_con_texto": nombre == "Línea"})
-        for codigo, nombre in CAUSAS:
-            CausaIncidencia.objects.get_or_create(codigo=codigo, defaults={"nombre": nombre})
+        for codigo, nombre, descuenta in CAUSAS:
+            CausaIncidencia.objects.get_or_create(codigo=codigo, defaults={"nombre": nombre, "descuenta_tiempo": descuenta})
         for codigo, nombre in CENTROS:
             Centro.objects.get_or_create(codigo=codigo, defaults={"nombre": nombre})
         for codigo, nombre in TIPOS_MANTENIMIENTO:

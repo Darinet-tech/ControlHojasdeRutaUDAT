@@ -250,7 +250,7 @@ class TipoMantenimiento(models.Model):
 class TipoTrabajo(models.Model):
     """Trabajo de una orden de trabajo (sustitución de postes, de cajas terminales...). Lo gestionan los especialistas."""
 
-    nombre = models.CharField(max_length=100, unique=True)
+    nombre = models.CharField(max_length=250, unique=True)
     activo = models.BooleanField(default=True)
 
     class Medida(models.TextChoices):
@@ -264,14 +264,24 @@ class TipoTrabajo(models.Model):
         help_text="Por unidad o por metro: el probador indica la cantidad y la norma es por cada una. Según el tipo: el probador elige una opción y cada opción tiene su norma.",
     )
     unidad = models.CharField(max_length=20, blank=True, help_text="Para «por unidad»: ej. poste(s), caja(s).")
+    especialidad = models.CharField(max_length=30, blank=True, help_text="Cable, Línea…: si viene de la instrucción de normas de tiempo.")
+    clave = models.CharField(max_length=10, blank=True, help_text="Clave de la actividad en la instrucción (se repite entre especialidades).")
+    fuerza_trabajo = models.CharField("fuerza de trabajo", max_length=80, blank=True, help_text="Brigada que exige la norma (ej.: 1 pareja, 2 linieros B).")
+    descripcion = models.TextField(blank=True, help_text="Qué comprende la actividad, según la instrucción.")
 
     class Meta:
         verbose_name = "tipo de trabajo (orden de trabajo)"
         verbose_name_plural = "tipos de trabajo (órdenes de trabajo)"
-        ordering = ["nombre"]
+        ordering = ["especialidad", "nombre"]
+        constraints = [models.UniqueConstraint(fields=["especialidad", "clave"], condition=~Q(especialidad=""), name="actividad_unica_por_especialidad")]
 
     def __str__(self):
-        return self.nombre
+        return self.etiqueta
+
+    @property
+    def etiqueta(self):
+        """«Cable 31 · Instalar tramo aéreo hasta 200 pares»; sin especialidad, solo el nombre."""
+        return f"{self.especialidad} {self.clave} · {self.nombre}" if self.especialidad else self.nombre
 
 
 class NormaTipoOrden(models.Model):
