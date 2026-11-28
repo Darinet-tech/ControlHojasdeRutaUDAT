@@ -84,7 +84,7 @@ Las normas vigentes son las de la **instrucción firmada IT-OR-001/24** (firmada
 - Las órdenes de servicio y los preventivos se norman por su **tipo**; los correctivos, por su **clave de mayor tiempo**. Las claves que no están en la instrucción conservan su norma anterior.
 - **No se usó el borrador V2** para las claves: pierde 24 minutos en las claves de más de 24 min (error de formato de Excel: 38:27 aparece como 14:27). Una prueba compara las normas cargadas con las de la firmada para que no se repita.
 - Decisiones de la Mesa de Prueba: AS y REC 30:29 (el total impreso); CTS y CD 24; CMIS y CA como CMONT; CPU cuenta en la fila de CVIV y CTS del parte y BS en la de Bajas. No se agregaron las claves 1, 2, 840 y 0 de la instrucción (el catálogo lo definió el negocio) ni la 09-R (excluida).
-- Pendiente: las actividades de las demás especialidades (fibra óptica, SPI, acondicionadores, registros y restauración).
+- Pendiente: las actividades de SPI, acondicionadores, registros y restauración (la instrucción las da en horas; en la app van en minutos).
 
 ### Gabinetes (GAB)
 El preventivo GAB se identifica por el **nombre del gabinete** (Ger3G, SH1B…) y en la ventana de la acción se anotan las **regletas trabajadas** (mantenimiento, reparadas y sustituidas). Cada regleta se norma en **50 min** (norma del tipo GAB en `/admin`, por regleta); sin regletas anotadas no se puede dar el OK. La fila **Gabinetes (regletas)** del parte cuenta regletas y «Visitadas en el día» cuenta cada gabinete una sola vez.
@@ -96,10 +96,12 @@ El preventivo GAB se identifica por el **nombre del gabinete** (Ger3G, SH1B…) 
 ### Productividad: punto de evaluación
 La productividad (tiempo normado de lo efectivo entre tiempo real) se evalúa contra el **90 %** (`META_PRODUCTIVIDAD`): pantalla, PDF, Excel y correo marcan si lo cumple (90 % o más) o queda por debajo.
 
-### Órdenes de trabajo: actividades de Cable y Línea
-El catálogo de *Tipos de trabajo* trae las **147 actividades de Cable (1 pareja) y de Línea** de la instrucción firmada IT-OR-001/24 (`catalogos/actividades_cable_linea.json`), identificadas por **especialidad y clave** («Línea 67 · Instalar cable aéreo de polietileno y coser»; los números de clave se repiten entre especialidades). Cada una se norma **por unidad** (U o par) o **por metro** y conserva lo que comprende y la fuerza de trabajo que exige (informativa: no cambia el tiempo). La actividad 144 («72 horas», una espera) no se carga.
-El probador **busca** la actividad (primero se muestran las de la brigada de la hoja), anota la **cantidad** y la norma de la orden es la **suma** de todas; sin las cantidades no se puede dar el OK, y la orden de trabajo no necesita confirmación de un cliente. El especialista puede cambiar normas o agregar trabajos en `/admin` (también existe la forma «según el tipo», con opciones).
-Quedan los tres trabajos propios anteriores (poste, caja terminal y cable de cobre): la caja terminal se norma como en la instrucción (70 min; el módulo de empalme y los pares se suman con Cable 76 y Cable 48). Poste y cable de cobre no tienen norma oficial: conviene desactivarlos y usar las actividades.
+### Órdenes de trabajo: actividades de Cable, Línea y Fibra Óptica
+El catálogo de *Tipos de trabajo* trae las **173 actividades de Cable (1 pareja, 96), Línea (51) y Fibra Óptica (26)** de la instrucción firmada IT-OR-001/24 (`catalogos/actividades_cable_linea.json`), identificadas por **especialidad y clave** («Línea 67 · Instalar cable aéreo de polietileno y coser»; los números de clave se repiten entre especialidades). Cada una se norma **por unidad** (U, par o fibra) o **por metro** y conserva lo que comprende y la fuerza de trabajo que exige (informativa: no cambia el tiempo).
+- Fibra óptica: se distingue aéreo, soterrado y enterrado. Las de «**2XFO**» (empalme y medición) se normaron a **2 minutos por fibra** y piden la cantidad de fibras (interpretación por confirmar con el especialista). La **169** (preparación del registro) no tiene tiempo en la instrucción.
+- La actividad 144 de Cable («72 horas», una espera) no se carga.
+
+El probador **busca** la actividad (primero se muestran las de la brigada de la hoja), anota la **cantidad** y la norma de la orden es la **suma** de todas; sin las cantidades no se puede dar el OK, y la orden de trabajo no necesita confirmación de un cliente. La caja terminal se norma como en la instrucción (Cable 18; el módulo de empalme y los pares se suman con Cable 76 y Cable 48). El especialista puede cambiar normas o agregar trabajos en `/admin` (también existe la forma «según el tipo», con opciones). Al importar, las actividades se pueden indicar como «Línea 67; Cable 31».
 
 ### Incidencias
 Según el AT-1 (anexo 2 de la instrucción), las causas **105, 107, 111 (poda) y 112 (traslado)** cuentan como **tiempo efectivo**: no se restan del tiempo real ni del disponible. Las demás (100, 101, 102, 106, 108 y 110) sí se descuentan. Se cambia en `/admin` → *Causas de incidencia*.

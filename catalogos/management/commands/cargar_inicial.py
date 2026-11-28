@@ -15,7 +15,7 @@ from django.db import transaction
 from catalogos.claves_orden import crear as crear_claves_de_orden
 from catalogos import normas_2026, trabajos
 from catalogos.parte_datos import completar as completar_filas_parte
-from catalogos.models import (NormaTrabajo, OpcionDeTrabajo, Brigada, CausaIncidencia, Centro, Clave, GrupoClave, NormaMantenimiento, NormaTiempo, NormaTipoOrden,
+from catalogos.models import (NormaTrabajo, Brigada, CausaIncidencia, Centro, Clave, GrupoClave, NormaMantenimiento, NormaTiempo, NormaTipoOrden,
                               TipoMantenimiento, TipoOrden,
                               TipoTrabajo)
 
@@ -117,7 +117,7 @@ class Command(BaseCommand):
             Centro.objects.get_or_create(codigo=codigo, defaults={"nombre": nombre})
         for codigo, nombre in TIPOS_MANTENIMIENTO:
             TipoMantenimiento.objects.get_or_create(codigo=codigo, defaults={"nombre": nombre})
-        trabajos.configurar(TipoTrabajo, OpcionDeTrabajo, NormaTrabajo)  # trabajos de las órdenes de trabajo y tipos de caja terminal
+        trabajos.cargar_actividades(TipoTrabajo, NormaTrabajo)  # actividades de las órdenes de trabajo (Cable, Línea y Fibra Óptica)
         for codigo, nombre in TIPOS_ORDEN:
             TipoOrden.objects.get_or_create(codigo=codigo, defaults={"nombre": nombre})
 

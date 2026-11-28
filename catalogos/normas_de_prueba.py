@@ -17,10 +17,23 @@ def fijar():
     for norma in NormaTiempo.objects.select_related("clave"):
         if norma.clave.codigo in minutos:
             NormaTiempo.objects.filter(pk=norma.pk).update(minutos=minutos[norma.clave.codigo], vigente_desde=INICIO, nota="")
+    trabajos_de_prueba()
     TipoOrden.objects.filter(codigo__in=["CPU", "BS"]).delete()  # tipos posteriores: no están en los números de prueba
     NormaTipoOrden.objects.all().delete()
     NormaMantenimiento.objects.all().delete()
     crear(TipoOrden, TipoMantenimiento, NormaTipoOrden, NormaMantenimiento)
+
+
+def trabajos_de_prueba():
+    """Tres trabajos sencillos para las pruebas de cálculo (postes por unidad, caja terminal a 70 min por caja y cable por metro)."""
+    from datetime import date
+
+    from .models import NormaTrabajo, TipoTrabajo
+    for nombre, medida, unidad in (("Sustitución de poste(s)", "UNIDADES", "poste(s)"), ("Sustitución de caja(s) terminal(es)", "UNIDADES", "caja(s)"),
+                                   ("Sustitución de cable de cobre", "METROS", "metro(s)")):
+        trabajo, _ = TipoTrabajo.objects.get_or_create(nombre=nombre, defaults={"medida": medida, "unidad": unidad})
+        if nombre.startswith("Sustitución de caja") and not NormaTrabajo.objects.filter(tipo_trabajo=trabajo).exists():
+            NormaTrabajo.objects.create(tipo_trabajo=trabajo, minutos=70, vigente_desde=date(2000, 1, 1))
 
 
 def trabajo_por_tipo():

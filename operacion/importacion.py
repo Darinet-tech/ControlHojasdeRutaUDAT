@@ -55,7 +55,7 @@ EJEMPLOS = [
     ["Correctivo", "46-318102", "", "", "", "TP", "", ""],
     ["Preventivo", "46-455012", "", "", "MPPE", "", "", ""],
     ["Orden de servicio", "46-300981", "A", "1234", "", "NH", "", ""],
-    ["Orden de trabajo", "", "", "567", "", "", "", "Sustitución de poste(s); Sustitución de caja(s) terminal(es)"],
+    ["Orden de trabajo", "", "", "567", "", "", "", "Línea 5; Cable 18"],
 ]
 
 
@@ -163,6 +163,17 @@ def _buscar(modelo, campo, valor, descripcion):
     return objeto
 
 
+def _actividad(texto):
+    """La actividad de una orden de trabajo por su especialidad y clave («Línea 67», «Cable 31») o por su nombre."""
+    buscado = normalizar(texto)
+    especialidad, _, clave = buscado.rpartition(" ")
+    if especialidad and clave.isdigit():
+        for t in TipoTrabajo.objects.filter(clave=clave):
+            if normalizar(t.especialidad) == especialidad:
+                return t
+    return _buscar(TipoTrabajo, "nombre", texto, "El trabajo")
+
+
 def _centro_del_archivo(texto):
     """El centro por su código (NG) o por su nombre (Nueva Gerona), sin importar mayúsculas ni tildes."""
     buscado = normalizar(texto)
@@ -182,7 +193,7 @@ def _crear_accion(hoja, datos, usuario):
     tipo_orden = _buscar(TipoOrden, "codigo", datos["tipo_orden"], "El tipo de orden") if datos.get("tipo_orden") else None
     mantenimiento = (_buscar(TipoMantenimiento, "codigo", datos["mantenimiento"], "El tipo de mantenimiento")
                      if datos.get("mantenimiento") else None)
-    trabajos = [_buscar(TipoTrabajo, "nombre", n.strip(), "El trabajo") for n in datos.get("trabajos", "").split(";") if n.strip()]
+    trabajos = [_actividad(n.strip()) for n in datos.get("trabajos", "").split(";") if n.strip()]
     centro = _centro_del_archivo(datos["centro"]) if datos.get("centro") else None
     orden = obtener_orden(categoria, usuario, numero_servicio=datos.get("servicio", ""), tipo_mantenimiento=mantenimiento, tipo_orden=tipo_orden,
                           numero_orden=datos.get("orden", ""), trabajos=trabajos, variante=variante)
@@ -234,7 +245,7 @@ def plantilla_xlsx():
         ["mantenimiento", "Solo preventivos: " + ", ".join(TipoMantenimiento.objects.filter(activo=True).order_by("codigo").values_list("codigo", flat=True))],
         ["variante", "Opcional. Correctivo: TP (Telefonía Pública) o NH+ (Nauta Hogar Plus). Alta de orden de servicio: NH (Nauta Hogar)."],
         ["centro", "Opcional. Código del centro, si la hoja trabaja en varios: " + ", ".join(Centro.objects.filter(activo=True).order_by("codigo").values_list("codigo", flat=True))],
-        ["trabajos", "Solo órdenes de trabajo: nombres de los trabajos separados por «;»."],
+        ["trabajos", "Solo órdenes de trabajo: actividades separadas por «;», con su especialidad y clave (Línea 67; Cable 31) o con su nombre."],
     ]
     for linea in lineas:
         ayuda.append(linea)

@@ -104,7 +104,7 @@ class OrdenesDeTrabajoPorCantidadTests(BaseOperacion):
         self.poste.unidad = "postes"
         self.poste.save()
         antes = (TipoTrabajo.objects.count(), NormaTrabajo.objects.count())
-        configuracion.configurar(TipoTrabajo, OpcionDeTrabajo, NormaTrabajo)
+        configuracion.cargar_actividades(TipoTrabajo, NormaTrabajo)
         self.poste.refresh_from_db()
         self.assertEqual(self.poste.unidad, "postes")  # ya tenía su forma de medirse: no se cambia
         self.assertEqual(NormaTrabajo.objects.get(tipo_trabajo=real).minutos, 75)

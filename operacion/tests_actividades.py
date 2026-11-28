@@ -21,7 +21,7 @@ class ActividadesDeLaInstruccionTests(BaseOperacion):
         return TipoTrabajo.objects.get(especialidad=especialidad, clave=clave)
 
     def test_estan_las_actividades_de_cable_y_linea_con_su_norma(self):
-        self.assertEqual((TipoTrabajo.objects.filter(especialidad="Cable").count(), TipoTrabajo.objects.filter(especialidad="Línea").count()), (96, 51))
+        self.assertEqual([TipoTrabajo.objects.filter(especialidad=e).count() for e in ("Cable", "Línea", "Fibra Óptica")], [96, 51, 26])
         norma = lambda t: NormaTrabajo.objects.get(tipo_trabajo=t, opcion__isnull=True).minutos  # noqa: E731
         casos = [(("Cable", "31"), "METROS", 6), (("Cable", "48"), "UNIDADES", 1), (("Cable", "49"), "UNIDADES", 1.5), (("Cable", "18"), "UNIDADES", 70),
                  (("Línea", "69"), "METROS", 0.8), (("Línea", "67"), "METROS", 0.91), (("Línea", "91"), "METROS", 0.42), (("Línea", "5"), "UNIDADES", 110)]
@@ -51,6 +51,32 @@ class ActividadesDeLaInstruccionTests(BaseOperacion):
         b = asignar_orden(self.hoja(fecha=date(2026, 10, 6)), orden2, self.user, trabajos=linea)
         CantidadDeTrabajo.objects.create(accion=b, trabajo=linea[0], cantidad=30)
         self.assertAlmostEqual(norma_accion(b), 27.3, places=2)
+
+    def test_fibra_optica_distingue_la_instalacion_y_norma_por_fibra_lo_que_dice_2xfo(self):
+        empalme = self.actividad("Fibra Óptica", "164")
+        self.assertEqual((empalme.nombre, empalme.medida, empalme.unidad), ("Empalme (fusión o mecánica) (aéreo)", "UNIDADES", "fibra(s)"))
+        self.assertEqual([self.actividad("Fibra Óptica", c).nombre.split("(")[-1] for c in ("161", "173", "186")], ["aéreo)", "soterrado)", "enterrado)"])
+        norma = lambda c: NormaTrabajo.objects.get(tipo_trabajo=self.actividad("Fibra Óptica", c)).minutos  # noqa: E731
+        self.assertEqual([norma(c) for c in ("161", "163", "164", "166", "178")], [30, 40, 2, 2, 240])
+        self.assertFalse(NormaTrabajo.objects.filter(tipo_trabajo=self.actividad("Fibra Óptica", "169")).exists())  # la instrucción no le da tiempo
+        trabajos = [self.actividad("Fibra Óptica", c) for c in ("162", "164", "166", "169")]
+        orden = obtener_orden("ORDEN_TRABAJO", self.user, numero_orden="9200", trabajos=trabajos)
+        a = asignar_orden(self.hoja(fecha=DIA), orden, self.user, trabajos=trabajos)
+        for t, cantidad in zip(trabajos, (1, 24, 24, 1)):
+            CantidadDeTrabajo.objects.create(accion=a, trabajo=t, cantidad=cantidad)
+        self.assertEqual(norma_accion(a), 30 + 24 * 2 + 24 * 2)  # 24 fibras; la preparación del registro (169) no suma porque no tiene norma
+
+    def test_una_instalacion_nueva_no_trae_trabajos_de_prueba(self):
+        from importlib import import_module
+        from django.apps import apps
+        import_module("catalogos.migrations.0023_actividades_de_fibra_optica_sin_trabajos_de_prueba").aplicar(apps, None)
+        self.assertFalse(TipoTrabajo.objects.filter(especialidad="", nombre__startswith="Sustitución de").exclude(medida="TIPO").exists())
+        self.assertEqual(TipoTrabajo.objects.exclude(especialidad="").count(), 173)
+
+    def test_la_importacion_acepta_la_especialidad_y_la_clave(self):
+        from .importacion import _actividad
+        self.assertEqual([_actividad(t).clave for t in ("Línea 67", "linea 5", "Cable 18", "FIBRA OPTICA 164")], ["67", "5", "18", "164"])
+        self.assertEqual(_actividad("Instalar poste 7,5 metros en tierra manualmente").etiqueta[:7], "Línea 5")
 
     def test_cargar_de_nuevo_no_duplica(self):
         from django.core.management import call_command

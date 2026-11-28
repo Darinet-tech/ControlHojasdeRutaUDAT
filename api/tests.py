@@ -574,7 +574,7 @@ class InicioAPITests(BaseOperacion):
         admin = get_user_model().objects.create_superuser("adm_inicio", "a@a.cu", "x")
         self.api.force_authenticate(admin)
         self.assertEqual(self.api.get("/api/inicio/").data["catalogos"], {
-            "claves_por_revisar": 5, "claves_sin_norma": 0, "trabajos_sin_norma": 2, "tipos_sin_norma": ["CMONT", "GAB"],  # los trabajos de las órdenes de trabajo aún no tienen norma
+            "claves_por_revisar": 5, "claves_sin_norma": 0, "trabajos_sin_norma": 3, "tipos_sin_norma": ["CMONT", "GAB"],  # la actividad de fibra óptica 169 (sin tiempo en la instrucción) y los dos trabajos de prueba sin norma
             "informe_diario": {"destinatarios": 0, "ultimo": None}})
         Clave.objects.create(codigo="99-Z", grupo=GrupoClave.objects.first(), clasificacion="EFECTIVA")  # una clave nueva sin norma
         self.assertEqual(self.api.get("/api/inicio/").data["catalogos"]["claves_sin_norma"], 1)
@@ -646,7 +646,7 @@ class CategoriasAPITests(BaseAPI):
     def test_catalogos_para_el_formulario(self):
         self.assertEqual([t["codigo"] for t in self.api.get("/api/tipos-mantenimiento/").data], ["GAB", "MPI", "MPPE", "MPPI", "MTP"])
         trabajos = {t["nombre"]: t for t in self.api.get("/api/tipos-trabajo/").data}
-        self.assertEqual(len(trabajos), 3 + 147 + 1)  # los tres trabajos propios, las 147 actividades de Cable y Línea de la instrucción y el trabajo de prueba «según el tipo»
+        self.assertEqual(len(trabajos), 173 + 3 + 1)  # las 173 actividades de la instrucción, los tres trabajos de prueba y el de prueba «según el tipo»
         self.assertEqual((trabajos["Sustitución de cable de cobre"]["norma_min"], trabajos["Sustitución de poste(s)"]["norma_min"]), (None, None))  # las define el especialista
         self.assertEqual(trabajos["Sustitución de caja(s) terminal(es)"]["norma_min"], 70)  # como en la instrucción (Cable 18)
         e = trabajos["Instalar cable aéreo de polietileno y coser"]
@@ -738,7 +738,7 @@ class AvisosDelEnvioEnInicioTests(BaseOperacion):
         especialista.groups.add(Group.objects.get(name="Especialista"))
         self.api.force_authenticate(especialista)
         catalogos = self.api.get("/api/inicio/").data["catalogos"]
-        self.assertEqual((catalogos["trabajos_sin_norma"], catalogos["informe_diario"]), (2, None))
+        self.assertEqual((catalogos["trabajos_sin_norma"], catalogos["informe_diario"]), (3, None))
 
 
 class FlujoDeLaHojaAPITests(BaseAPI):

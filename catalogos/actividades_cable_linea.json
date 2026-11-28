@@ -1468,5 +1468,265 @@
   "minutos": 25.0,
   "fuerza_trabajo": "2 linieros B",
   "descripcion": "Hacer hueco en pared Instalar cáncamo y cementarlo."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "161",
+  "nombre": "Bajar reserva (aéreo)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Es la operación de liberar la reserva para poder trabajar el empalme dentro del vehículo especializado."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "162",
+  "nombre": "Preparación del cable (aéreo)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Implica retirar la cubierta exterior del cable, elementos anti humedad, elementos de relleno elementos de tracción,"
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "163",
+  "nombre": "Preparación de la caja de empalme (aéreo)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 40.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Consiste en armar y montar la caja de empalme, fijar el cable en la caja de empalme, retirar cubierta de los tubos holgados y retirar el gel antihumedad de las FO, acomodo de la FO en el casete."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "164",
+  "nombre": "Empalme (fusión o mecánica) (aéreo)",
+  "medida": "UNIDADES",
+  "unidad": "fibra(s)",
+  "minutos": 2.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Colocar la protección del empalme, pelar, limpiar, cortar y empalmar."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "165",
+  "nombre": "Acomodo de la fibra en la caja de empalme (aéreo)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Es el proceso mediante el cual se acomoda la fibra en el casete de la caja de empalme una vez efectuada la unión de la FO."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "166",
+  "nombre": "Medición de la fibra (aéreo)",
+  "medida": "UNIDADES",
+  "unidad": "fibra(s)",
+  "minutos": 2.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Se realiza en ambos sentidos sumando y promediando los valores de pérdidas del empalme."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "167",
+  "nombre": "Cierre de caja y prueba de hermeticidad (aéreo)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Consiste en el cierre de la caja de empalme de acuerdo al tipo de fabricante y modelo y la prueba de aire para verificar la hermeticidad del cierre."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "168",
+  "nombre": "Acomodo de la reserva (aéreo)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Consiste en acomodar la reserva al poste incluyendo fijación y sujeción con bridas."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "169",
+  "nombre": "Preparación del registro (soterrado)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": null,
+  "fuerza_trabajo": "",
+  "descripcion": "Implica limpieza, sellar las entradas de agua y conectar el suministro eléctrico para poder iniciar los trabajos de empalme."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "170",
+  "nombre": "Subir reserva (soterrado)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Es la operación de liberar la reserva para poder trabajar el empalme dentro del vehículo especializado."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "171",
+  "nombre": "Preparación del cable (soterrado)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Implica retirar la cubierta exterior del cable, elementos anti humedad, elementos de relleno elementos de tracción,"
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "172",
+  "nombre": "Preparación de la caja de empalme (soterrado)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 40.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Consiste en armar y montar la caja de empalme, fijar el cable en la caja de empalme, retirar cubierta de los tubos holgados y retirar el gel antihumedad de las FO, acomodo de la FO en el casete."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "173",
+  "nombre": "Empalme (fusión o mecánica) (soterrado)",
+  "medida": "UNIDADES",
+  "unidad": "fibra(s)",
+  "minutos": 2.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Colocar la protección del empalme, pelar, limpiar, cortar y empalmar."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "174",
+  "nombre": "Acomodo de la fibra en la caja de empalme (soterrado)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Es el proceso mediante el cual se acomoda la fibra en el casete de la caja de empalme una vez efectuada la unión de la FO."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "175",
+  "nombre": "Medición de la fibra (soterrado)",
+  "medida": "UNIDADES",
+  "unidad": "fibra(s)",
+  "minutos": 2.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Se realiza en ambos sentidos sumando y promediando los valores de pérdidas del empalme."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "176",
+  "nombre": "Cierre de caja y prueba de hermeticidad (soterrado)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Consiste en el cierre de la caja de empalme de acuerdo al tipo de fabricante y modelo y la prueba de aire para verificar la hermeticidad del cierre."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "177",
+  "nombre": "Acomodo de la reserva (soterrado)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Consiste en acomodar la reserva al poste incluyendo fijación y sujeción con bridas."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "178",
+  "nombre": "Identificación del registro (enterrado)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 240.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Consiste en determinar la ubicación del registro mediante el detector."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "179",
+  "nombre": "Subir reserva (enterrado)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Es la operación de liberar la reserva para poder trabajar el empalme dentro del vehículo especializado."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "180",
+  "nombre": "Preparación del cable (enterrado)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Implica retirar la cubierta exterior del cable, elementos anti humedad, elementos de relleno elementos de tracción,"
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "181",
+  "nombre": "Preparación de la caja de empalme (enterrado)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 40.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Consiste en armar y montar la caja de empalme, fijar el cable en la caja de empalme, retirar cubierta de los tubos holgados y retirar el gel antihumedad de las FO, acomodo de la FO en el casete."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "182",
+  "nombre": "Empalme (fusión o mecánica) (enterrado)",
+  "medida": "UNIDADES",
+  "unidad": "fibra(s)",
+  "minutos": 2.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Colocar la protección del empalme, pelar, limpiar, cortar y empalmar."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "183",
+  "nombre": "Acomodo de la fibra en la caja de empalme (enterrado)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Es el proceso mediante el cual se acomoda la fibra en el casete de la caja de empalme una vez efectuada la unión de la FO."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "184",
+  "nombre": "Medición de la fibra (enterrado)",
+  "medida": "UNIDADES",
+  "unidad": "fibra(s)",
+  "minutos": 2.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Se realiza en ambos sentidos sumando y promediando los valores de pérdidas del empalme."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "185",
+  "nombre": "Cierre de caja y prueba de hermeticidad (enterrado)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Consiste en el cierre de la caja de empalme de acuerdo al tipo de fabricante y modelo y la prueba de aire para verificar la hermeticidad del cierre."
+ },
+ {
+  "especialidad": "Fibra Óptica",
+  "clave": "186",
+  "nombre": "Acomodo de la reserva (enterrado)",
+  "medida": "UNIDADES",
+  "unidad": "unidad(es)",
+  "minutos": 30.0,
+  "fuerza_trabajo": "",
+  "descripcion": "Consiste en acomodar la reserva al poste incluyendo fijación y sujeción con bridas."
  }
 ]
