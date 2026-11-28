@@ -79,11 +79,12 @@ preventivo solo ofrece las de reparación; el sistema rechaza mezclarlas). Son l
 Se cargan con `migrate` / `cargar_inicial` (no se pisan los cambios del administrador). Las claves ya usadas no se eliminan: se desmarca «activa».
 
 ## Normas de tiempo por tipo
-Las normas vigentes son las de la **Instrucción de Normas de Tiempo de Red de Acceso (V2, 2026), en proceso de firma** (`catalogos/normas_2026.py`): llevan la nota «En proceso de firma» y no una fecha de vigencia oficial. Cuando se firme, el especialista puede cambiar la nota y las fechas en `/admin`.
+Las normas vigentes son las de la **instrucción firmada IT-OR-001/24** (firmada el 16/7/2024, válida hasta el 16/7/2026; se sigue aplicando hasta que se firme su renovación, la V2): `catalogos/normas_2026.py`. Llevan la nota «IT-OR-001/24 (válida hasta 16/7/2026)». Cuando se firme la V2, el especialista carga sus valores con su fecha de vigencia desde `/admin`.
 - Son el **total** (intervención + documentación) y **no se redondean**: se muestran como minutos:segundos (`48:34`). En `/admin` se escriben como `24`, `48:34` o `0,42`.
 - Las órdenes de servicio y los preventivos se norman por su **tipo**; los correctivos, por su **clave de mayor tiempo**. Las claves que no están en la instrucción conservan su norma anterior.
-- Decisiones sobre el documento: AS y REC 31:58, 22-G 24:27 y 26-M 24:00 (sumas mal hechas); 07-ZC y 07-EC 16:18; CTS y CD 24; CMIS y CA como CMONT. CPU cuenta en la fila de CVIV y CTS del parte; BS, en la de Bajas.
-- Pendiente: las actividades de Cable, Línea y demás especialidades.
+- **No se usó el borrador V2** para las claves: pierde 24 minutos en las claves de más de 24 min (error de formato de Excel: 38:27 aparece como 14:27). Una prueba compara las normas cargadas con las de la firmada para que no se repita.
+- Decisiones de la Mesa de Prueba: AS y REC 30:29 (el total impreso); CTS y CD 24; CMIS y CA como CMONT; CPU cuenta en la fila de CVIV y CTS del parte y BS en la de Bajas. No se agregaron las claves 1, 2, 840 y 0 de la instrucción (el catálogo lo definió el negocio) ni la 09-R (excluida).
+- Pendiente: las actividades de Cable, Línea y demás especialidades, y el tratamiento de las incidencias 105, 107, 111 y 112 (el AT-1 las cuenta como tiempo efectivo).
 
 ### Gabinetes (GAB)
 El preventivo GAB se identifica por el **nombre del gabinete** (Ger3G, SH1B…) y en la ventana de la acción se anotan las **regletas trabajadas** (mantenimiento, reparadas y sustituidas). Cada regleta se norma en **50 min** (norma del tipo GAB en `/admin`, por regleta); sin regletas anotadas no se puede dar el OK. La fila **Gabinetes (regletas)** del parte cuenta regletas y «Visitadas en el día» cuenta cada gabinete una sola vez.

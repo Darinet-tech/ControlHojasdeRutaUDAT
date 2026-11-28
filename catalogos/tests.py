@@ -53,7 +53,7 @@ class CargaInicialTests(TestCase):
         self.assertEqual(str(Centro.objects.get(codigo="NG")), "Nueva Gerona (NG)")
 
     def test_normas_importadas(self):
-        self.assertEqual(NormaTiempo.vigente(Clave.objects.get(codigo="25-R"), None, date(2026, 10, 1)).minutos, 3.45)  # 3:27 en la instrucción
+        self.assertEqual(NormaTiempo.vigente(Clave.objects.get(codigo="25-R"), None, date(2026, 10, 1)).minutos, 27.45)  # 27:27 en la instrucción firmada
         self.assertEqual(NormaTiempo.objects.count(), 177)
 
     def test_es_idempotente(self):
@@ -92,12 +92,12 @@ class NormaVigenciaTests(TestCase):
     def test_norma_especifica_tiene_prioridad(self):
         NormaTiempo.objects.create(clave=self.clave, tipo_orden=self.tipo, minutos=60, vigente_desde=date(2026, 1, 1))
         self.assertEqual(NormaTiempo.vigente(self.clave, self.tipo, date(2026, 10, 1)).minutos, 60)
-        self.assertEqual(NormaTiempo.vigente(self.clave, None, date(2026, 10, 1)).minutos, 3.45)
+        self.assertEqual(NormaTiempo.vigente(self.clave, None, date(2026, 10, 1)).minutos, 27.45)
 
     def test_cambio_de_norma_no_altera_el_pasado(self):
         NormaTiempo.objects.filter(clave=self.clave).update(vigente_hasta=date(2026, 6, 30))
         NormaTiempo.objects.create(clave=self.clave, minutos=50, vigente_desde=date(2026, 7, 1))
-        self.assertEqual(NormaTiempo.vigente(self.clave, None, date(2026, 6, 15)).minutos, 3.45)
+        self.assertEqual(NormaTiempo.vigente(self.clave, None, date(2026, 6, 15)).minutos, 27.45)
         self.assertEqual(NormaTiempo.vigente(self.clave, None, date(2026, 7, 15)).minutos, 50)
 
 

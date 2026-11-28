@@ -155,13 +155,13 @@ class FlujoDelProbadorTests(BaseAPI):
         self.assertEqual((len(detalle["acciones"]), len(detalle["incidencias"])), (2, 1))
 
     def test_la_fecha_y_la_hora_de_inicio_las_pone_el_servidor(self):
-        antes = timezone.localtime().replace(microsecond=0)
-        r = self.api.post("/api/hojas/", {"justificacion_inicio": "prueba", "fecha": "2026-01-01", "hora_inicio": "03:00", "brigada": self.rep.pk,
-                                          "centros": [self.ng.pk], "operarios": [self.op1.pk]}, format="json")
-        despues = timezone.localtime()
+        ahora = timezone.make_aware(datetime.combine(timezone.localdate(), time(10, 5, 20)))  # después de las 08:00: cuenta la hora de creación
+        with mock.patch("django.utils.timezone.now", return_value=ahora):
+            r = self.api.post("/api/hojas/", {"justificacion_inicio": "prueba", "fecha": "2026-01-01", "hora_inicio": "03:00", "brigada": self.rep.pk,
+                                              "centros": [self.ng.pk], "operarios": [self.op1.pk]}, format="json")
         self.assertEqual(r.status_code, 201, r.data)
-        self.assertEqual(r.data["fecha"], str(antes.date()))  # lo enviado a mano se ignora
-        self.assertTrue(antes.time().isoformat() <= r.data["hora_inicio"] <= despues.time().isoformat(), r.data["hora_inicio"])
+        self.assertEqual(r.data["fecha"], str(ahora.date()))  # lo enviado a mano se ignora
+        self.assertEqual(r.data["hora_inicio"], "10:05:20")
 
     def test_no_se_crean_hojas_despues_de_la_hora_de_cierre(self):
         tarde = timezone.make_aware(datetime.combine(timezone.localdate(), time(21, 5)))

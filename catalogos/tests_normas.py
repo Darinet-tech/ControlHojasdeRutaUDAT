@@ -42,7 +42,7 @@ class NormasOficialesTests(TestCase):
     def test_tipos_de_orden_sin_redondear(self):
         esperado = {"A": "48:34", "AE": "48:34", "TA": "48:34", "TI": "48:34", "TE": "70:20", "B": "23:21", "BS": "17:24", "CPU": "21:30",
                     "CL": "29:19", "CMONT": "29:19", "CMIS": "29:19", "CA": "29:19", "CVIV": "23:42", "CTS": "24", "CD": "24",
-                    "AS": "31:58", "REC": "31:58"}
+                    "AS": "30:29", "REC": "30:29"}
         self.assertEqual({c: self.orden(c) for c in esperado}, esperado)
 
     def test_preventivos_y_claves(self):
@@ -50,11 +50,11 @@ class NormasOficialesTests(TestCase):
         self.assertEqual(texto_norma(mant.pop("GAB").minutos), "50")  # por regleta trabajada
         self.assertEqual({c: texto_norma(n.minutos) for c, n in mant.items() if n}, {"MPI": "40", "MPPI": "24:02", "MPPE": "27:48", "MTP": "22:47"})
         self.assertEqual([self.clave(c) for c in ("23", "24", "07-ZC", "07-EC", "21-R", "21-C", "22-G", "26-M")],
-                         ["15:46", "15:46", "16:18", "16:18", "22:37", "9:25", "24:27", "24"])
+                         ["39:46", "39:46", "25:33", "25:33", "22:37", "33:25", "24:27", "96"])  # los de la firmada, no los del borrador V2
 
     def test_las_normas_nuevas_van_marcadas_en_proceso_de_firma(self):
-        self.assertEqual(set(NormaTipoOrden.objects.values_list("nota", flat=True)), {"En proceso de firma"})
-        self.assertEqual(NormaTiempo.objects.filter(nota="En proceso de firma").count(), 68)
+        self.assertEqual(set(NormaTipoOrden.objects.values_list("nota", flat=True)), {"IT-OR-001/24 (válida hasta 16/7/2026)"})
+        self.assertEqual(NormaTiempo.objects.filter(nota="IT-OR-001/24 (válida hasta 16/7/2026)").count(), 68)
 
     def test_cpu_va_en_la_fila_de_cviv_y_bs_en_la_de_bajas(self):
         fila = lambda c: TipoOrden.objects.get(codigo=c).fila_parte  # noqa: E731
@@ -68,7 +68,7 @@ class NormasOficialesTests(TestCase):
         otra = NormaTiempo.objects.get(clave__codigo="70")  # no está en la instrucción: conserva la suya
         antes = otra.minutos
         import_module("catalogos.migrations.0015_normas_instruccion_2026").aplicar(apps, None)
-        self.assertEqual([texto_norma(n.minutos) for n in NormaTiempo.objects.filter(clave=clave)], ["15:46"])
+        self.assertEqual([texto_norma(n.minutos) for n in NormaTiempo.objects.filter(clave=clave)], ["39:46"])
         self.assertEqual(NormaTiempo.objects.get(clave__codigo="70").minutos, antes)
 
 
@@ -106,3 +106,30 @@ class InicioDeJornadaTests(TestCase):
         self.assertEqual((r.status_code, r.data["hora_inicio"], r.data["justificacion_inicio"]), (201, "09:15:20", "Vehículo roto"), r.data)
         r = api.patch(f"/api/hojas/{r.data['id']}/", {"justificacion_inicio": "otra"}, format="json")  # no se reescribe después
         self.assertEqual((r.status_code, r.data["justificacion_inicio"]), (200, "Vehículo roto"))
+
+
+class ClavesFrenteALaInstruccionFirmadaTests(TestCase):
+    """Total de cada clave en el escaneo de la IT-OR-001/24 (leído página por página). Detecta que se cargue otra cosa (p. ej. el borrador V2)."""
+
+    FIRMADA = {
+        "01-C": "19:00", "02-C": "19:00", "01-R": "18:29", "24": "39:46", "23": "39:46", "23-C": "31:56", "24-C": "31:56", "09-C": "11:12",
+        "21-R": "22:37", "21": "22:37", "22-G": "24:27", "27-G": "16:47", "36": "9:53", "39": "9:53", "25": "15:00", "37": "15:00",
+        "07-ZC": "25:33", "07-EC": "25:33", "07-EP": "16:02", "07-IC": "17:53", "21-C": "33:25", "25-C": "46:06", "26-T": "46:06",
+        "25-R": "27:27", "38-R": "27:27", "35-A": "9:16", "08-FA": "15:00", "60-A": "31:41", "15-Z": "25:00", "26-M": "96:00",
+        "39-FA": "8:00", "14-R": "16:57", "14-RD": "7:37", "10DQ-TXD": "24:27", "1DMC-TXD": "43:51", "27RI-TXD": "74:00",
+        "36D-TXD": "9:53", "9DI-TXD": "74:00",
+    }
+
+    def test_las_normas_cargadas_son_las_de_la_firmada(self):
+        call_command("cargar_inicial", verbosity=0)
+        cargadas = {c: texto_norma(NormaTiempo.vigente(Clave.objects.get(codigo=c), None, HOY).minutos) for c in self.FIRMADA}
+        esperadas = {c: texto_norma(float(leer_norma(t))) for c, t in self.FIRMADA.items()}
+        self.assertEqual(cargadas, esperadas)
+
+    def test_el_error_del_borrador_no_se_repite(self):
+        """Ninguna clave puede quedar 24 minutos por debajo de la firmada (el borrador V2 perdía 24 al pasar de 24 «horas»)."""
+        call_command("cargar_inicial", verbosity=0)
+        for codigo, texto in self.FIRMADA.items():
+            minutos = NormaTiempo.vigente(Clave.objects.get(codigo=codigo), None, HOY).minutos
+            self.assertGreater(minutos, 24 * 0 + 5, codigo)
+            self.assertAlmostEqual(minutos, float(leer_norma(texto)), places=3, msg=codigo)
